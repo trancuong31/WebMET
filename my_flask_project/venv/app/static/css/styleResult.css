@@ -1,0 +1,32 @@
+*{
+    background-color: antiquewhite;
+}
+h1{
+    text-align: center;
+    line-height: 50%;
+    height: 100%;
+    font-size: 40px;
+    color: rgb(255, 0, 0);
+}
+button{
+    background-color: blanchedalmond;
+    color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;  
+    padding: 15px;
+    margin: 0 auto;
+    border-radius: 10px;
+    transition-duration: 0.4s;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+}
+button:hover{
+    background-color: aquamarine;
+}
+#but{
+    text-decoration: none;
+}
+#but:hover {
+    color: orangered;
+    box-shadow: 0 3px yellow;
+}
