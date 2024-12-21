@@ -9,7 +9,7 @@
     <title>THC</title>
 </head>
 <body>
-    <header>Welcome to Website</header>
+    <header class="textAnimation">Welcome to Website</header>
     <nav>
         <ul class="menu">
             <li><a href="">Mục A</a></li>
@@ -37,11 +37,25 @@
         <div class="snowflake">❆</div>
         <div class="snowflake">❅</div>
         <div class="snowflake">❆</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
         <div class="snowflake">❅</div>
         <div class="snowflake">❆</div>
       </div>
     <div class="mainContent">
-        <div class="contRight">
+        <div class="contRightTop">
             <div class="form">
                 <form action="/tasks/submitConfig" method="POST">
                     <table>
@@ -88,11 +102,17 @@
                        
                     </tbody>
                 </table>
-                <div id="pagination">
+                
+                <!-- <div id="pagination">
                     <button id="prev-page">Previous</button>
-                    <span id="current-page">Page 1</span>
+                    <span id="current-page" style="color: black;">Page 1</span>
                     <button id="next-page">Next</button>
-                </div>
+                </div> -->
+                <div id="pagination" class="pagination">
+                    <button id="prev-page" class="page-button">Previous</button>
+                    <span id="current-page" class="page-indicator">Page 1</span>
+                    <button id="next-page" class="page-button">Next</button>
+                  </div>
                 <script>
                     $(document).ready(function () {
                         var currentPage = 1; // Trang hiện tại
@@ -154,7 +174,7 @@
             </div>
             <div class="contLeft">
                 <div class="leftBot">
-                    <h1>Chart </h1>
+                    <h1 style="text-align: center;">Chart </h1>
                     <canvas id="myChart" style="max-width: 400px; max-height: 400px;"></canvas>
                     <script>
                         let myChart; // Biến lưu trữ chart instance
@@ -204,13 +224,28 @@
         </div>
         <hr>
         <div class="conTBottom">
-            <div class="leftBot">
-                
-            </div>
             <div class="rightBot">
-
+                <div class="modeFullScreen">
+                    <a href="#" id="toggle_fullscreen">
+                        <img src="/static/images/fullscreen.png" alt="Fullscreen Icon" style="width: 20px; height: 20px;">
+                    </a>
+                </div>
             </div>
         </div>
+        <script>
+            document.getElementById('toggle_fullscreen').addEventListener('click', function (e) {
+              e.preventDefault(); // Ngăn chặn hành vi mặc định của thẻ <a>
+              const container = document.documentElement; // Lấy toàn bộ tài liệu làm fullscreen
+              if (document.fullscreenElement) {
+                // Thoát fullscreen nếu đang ở fullscreen
+                document.exitFullscreen();
+              } else {
+                // Vào fullscreen nếu chưa ở fullscreen
+                container.requestFullscreen();
+              }
+
+            });
+          </script>
     </div>
     
     <!-- <footer>Thank you</footer> -->
