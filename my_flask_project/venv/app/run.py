@@ -43,9 +43,7 @@ def get_tasks():
         # Đếm tổng số bản ghi
         cursor.execute("SELECT COUNT(*) FROM CNT_MACHINE_SUMMARY")
         total_records = cursor.fetchone()[0]  # Tổng số bản ghi
-        total_pages = (total_records + per_page - 1) // per_page  # Tính tổng số trang (làm tròn lên)
-
-        # Truy vấn dữ liệu theo phân trang
+        total_pages = (total_records + per_page - 1) // per_page 
         query = """
             SELECT MACHINE_NO, WORK_DATE, RUN_TIME, NG_QTY
             FROM CNT_MACHINE_SUMMARY
@@ -54,14 +52,10 @@ def get_tasks():
         """
         cursor.execute(query, {"offset": offset, "per_page": per_page})
         rows = cursor.fetchall()
-
-        # Chuẩn bị dữ liệu trả về
         tasks = [
             {"MACHINE_NO": row[0], "WORK_DATE": row[1], "RUN_TIME": row[2], "NG_QTY": row[3] or 0}
             for row in rows
         ]
-
-        # Tạo phản hồi JSON
         response = {
             "data": tasks,
             "page": page,
@@ -76,12 +70,8 @@ def get_tasks():
         return jsonify({"error": str(e)}), 500
 
     finally:
-        # Đảm bảo đóng kết nối cơ sở dữ liệu
         cursor.close()
         connection.close()
-
-
-# API: Lấy công việc theo ID
 @app.route('/tasks/<int:task_id>', methods=['GET'])
 def get_task(task_id):
     connection = get_db_connection()
@@ -129,8 +119,6 @@ def update_task(MACHINE_NO):
     
     connection = get_db_connection()
     cursor = connection.cursor()
-    
-    # Cập nhật thông tin MACHINE_NO và RUN_TIME
     cursor.execute(
         """
         UPDATE CNT_MACHINE_SUMMARY 
@@ -153,16 +141,15 @@ def update_task(MACHINE_NO):
     return jsonify({"MACHINE_NO": MACHINE_NO, "RUN_TIME": run_time})
 
 @app.route('/tasks/<string:MACHINE_NO>', methods=['DELETE'])
-def delete_task(MACHINE_NO):  # Tham số trùng với định nghĩa route
+def delete_task(MACHINE_NO):
     connection = get_db_connection()
     cursor = connection.cursor()
     if MACHINE_NO == "null" or MACHINE_NO.strip() == "":
         MACHINE_NO = None
         jsonify({"error": "Machine_no không tồn tại"}), 400
-    # Thực thi lệnh DELETE với MACHINE_NO
     cursor.execute(
         "DELETE FROM CNT_MACHINE_SUMMARY WHERE MACHINE_NO = :machine_no OR (:machine_no IS NULL AND MACHINE_NO IS NULL)", 
-        {"machine_no": MACHINE_NO}  # Truyền đúng tên tham số
+        {"machine_no": MACHINE_NO}  
     )
     deleted_rows = cursor.rowcount
     connection.commit()
@@ -254,6 +241,47 @@ def chart_data():
             "hoverOffset": 4
         }]
     }
+    return jsonify(data)
+@app.route('/chartData2')
+def chart_data2():
+    # Kết nối tới cơ sở dữ liệu
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    
+    # Câu lệnh SQL lấy dữ liệu từ bảng CNT_MACHINE_SUMMARY
+    sql = """
+        SELECT WORK_DATE, RUN_TIME, ERROR_TIME
+        FROM CNT_MACHINE_SUMMARY
+        ORDER BY WORK_DATE DESC
+    """
+    cursor.execute(sql)
+    result = cursor.fetchall()
+    
+    # Tạo danh sách labels và data
+    labels = [str(row[0]) for row in result] 
+    data1 = [row[1] for row in result]
+    data2 = [row[2] for row in result] 
+
+    # Cấu trúc dữ liệu trả về
+    data = {
+        "labels": labels,
+        "datasets": [
+            {
+                "label": "RUN TIME",
+                "data": data1,
+                "borderColor": "rgb(54, 162, 235)",
+                "fill": False
+            },
+            {
+                "label": "ERROR TIME",
+                "data": data2,
+                "borderColor": "rgb(255, 99, 132)",
+                "fill": False
+            }
+        ]
+    }
+    cursor.close()
+    connection.close()
     return jsonify(data)
 if __name__=='__main__':
     app.run(debug=True)

@@ -1,253 +1,400 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/apexcharts.js') }}"></script>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css')}}"
+    />
     <title>THC</title>
-</head>
-<body>
-    <header class="textAnimation">Welcome to Website</header>
+  </head>
+  <body>
+    <header class="textAnimation">
+      <h1 id="welcome">❆Welcome to Website❆</h1>
+    </header>
     <nav>
-        <ul class="menu">
-            <li><a href="">Mục A</a></li>
-            <li class="menuFa">
-                <a href="">Mục B</a>
-                <ul class="dropdow">
-                    <li><a href="">Mục B.1</a></li>
-                    <li><a href="">Mục B.2</a></li>
-                    <li><a href="">Mục B.3</a></li>
-                </ul>
-            </li>
-            <li><a href="">Mục C</a></li>
-            <li><a href="">Mục D</a></li>
-            <li><a href="">Mục E</a></li>
-        </ul>
+      <ul class="menu">
+        <li><a href="">Mục A</a></li>
+        <li class="menuFa">
+          <a href="">Mục B</a>
+          <ul class="dropdow">
+            <li><a href="">Mục B.1</a></li>
+            <li><a href="">Mục B.2</a></li>
+            <li><a href="">Mục B.3</a></li>
+          </ul>
+        </li>
+        <li><a href="">Mục C</a></li>
+        <li><a href="">Mục D</a></li>
+        <li><a href="">Mục E</a></li>
+      </ul>
     </nav>
     <div class="snowflakes" aria-hidden="true">
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-      </div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+      <div class="snowflake">❅</div>
+      <div class="snowflake">❆</div>
+    </div>
     <div class="mainContent">
-        <div class="contRightTop">
-            <div class="form">
-                <form action="/tasks/submitConfig" method="POST">
-                    <table>
-                        <tr>
-                            <td colspan="2" style="text-align: center; font-size: 25px; font-weight: bold;">Config</td>
-                        </tr>
-                        <tr>
-                            <td><label for="machineNo">Machine no</label></td>
-                            <td><input id="machineNo" name="machineNo" type="text" value="" > <br></td>
-                        </tr>
-                        <tr>
-                            <td><label for="factory">Factory</label></td>
-                            <td><input id="factory" name="factory" type="text" value="" > <br></td>
-                        </tr>
-                        <tr>
-                            <td><label for="status">Status</label></td>
-                            <td><input id="status" name="status" type="number" min="0" max="4" step="1" value="0" > <br></td>
-                        </tr>
-                        <tr>
-                            <td><label for="projectName">Project name</label></td>
-                            <td><input id="projectName" name="projectName" type="text" value="" > <br></td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" style="padding: 15px;">
-                                <input type="submit" style="background-color: rgb(67, 67, 250); color: #ffff; font-weight: bold; border-color: aliceblue; text-align: center; width: 100%;"  value="Send data" />
-                                <input type="reset" style="background-color: rgb(67, 67, 250); color: #ffff; font-weight: bold;  border-color: aliceblue; text-align: center; width: 100%; margin-top: 10px;" value="Reset" />
-                            </td>
-                        </tr>
-                    </table>
-                </form>
-            </div>
-            <div class="tableMain">
-                <table id="tasks-table" cellpadding="10">
-                    <thead>
-                        <tr>
-                            <th>Machine No</th>
-                            <th>NG Quantity</th>
-                            <th>Run Time</th>
-                            <th>Work Date</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                       
-                    </tbody>
-                </table>
-                
-                <!-- <div id="pagination">
-                    <button id="prev-page">Previous</button>
-                    <span id="current-page" style="color: black;">Page 1</span>
-                    <button id="next-page">Next</button>
-                </div> -->
-                <div id="pagination" class="pagination">
-                    <button id="prev-page" class="page-button">Previous</button>
-                    <span id="current-page" class="page-indicator">Page 1</span>
-                    <button id="next-page" class="page-button">Next</button>
-                  </div>
-                <script>
-                    $(document).ready(function () {
-                        var currentPage = 1; // Trang hiện tại
-                        var perPage = 5;
-                        // Hàm tải dữ liệu từ backend
-                            function loadTasks(page) {
-                            $.get(`http://localhost:5000/tasks?page=${page}&per_page=${perPage}`, function (response) {
-                                var data = response.data;
-                                var tableBody = $('#tasks-table tbody');
-                                tableBody.empty();
-                                data.forEach(function (task) {
-                                    var row = '<tr>';
-                                    row += '<td>' + task.MACHINE_NO + '</td>';
-                                    row += '<td>' + (task.NG_QTY !== null ? task.NG_QTY : 0) + '</td>';
-                                    row += '<td>' + task.RUN_TIME + '</td>';
-                                    row += '<td>' + task.WORK_DATE + '</td>';
-                                    row += `<td><button class="delete-btn" data-id="${task.MACHINE_NO}">Delete</button></td>`;
-                                    row += '</tr>';
-                                    tableBody.append(row);
-                                });
-                                $('#current-page').text(`Page ${response.page}`);
-                                $('#prev-page').prop('disabled', response.page <= 1);
-                                $('#next-page').prop('disabled', response.page >= response.total_pages);
-                            });
+      <div class="contRightTop">
+        <div class="form">
+          <form action="/tasks/submitConfig" method="POST">
+            <table>
+              <tr>
+                <td
+                  colspan="2"
+                  style="text-align: center; font-size: 25px; font-weight: bold"
+                >
+                  Config
+                </td>
+              </tr>
+              <tr>
+                <td><label for="machineNo">Machine no</label></td>
+                <td>
+                  <input id="machineNo" name="machineNo" type="text" value="" />
+                  <br />
+                </td>
+              </tr>
+              <tr>
+                <td><label for="factory">Factory</label></td>
+                <td>
+                  <input id="factory" name="factory" type="text" value="" />
+                  <br />
+                </td>
+              </tr>
+              <tr>
+                <td><label for="status">Status</label></td>
+                <td>
+                  <input
+                    id="status"
+                    name="status"
+                    type="number"
+                    min="0"
+                    max="4"
+                    step="1"
+                    value="0"
+                  />
+                  <br />
+                </td>
+              </tr>
+              <tr>
+                <td><label for="projectName">Project name</label></td>
+                <td>
+                  <input
+                    id="projectName"
+                    name="projectName"
+                    type="text"
+                    value=""
+                  />
+                  <br />
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2">
+                  <input class="btn_summit"
+                    type="submit"
+                  />
+                  <input class="btn_summit"
+                    type="reset"
+                    value="Reset"
+                  />
+                </td>
+              </tr>
+            </table>
+          </form>
+          <script>
+            $(document).ready(function() {
+                $('#form').on('submit', function(event) {
+                    event.preventDefault();
+                    $.ajax({
+                        url: '/tasks/submitConfig',
+                        type: 'POST',
+                        data: $(this).serialize(),
+                        success: function(response) {
+                            if (response.success) {
+                                alert('Data submitted successfully!');
+                            }
+                        },
+                        error: function(xhr) {
+                            alert('Error submitting data: ' + xhr.responseJSON.error);
                         }
-                        loadTasks(currentPage);
-                        // Sự kiện chuyển trang
-                        $('#prev-page').click(function () {
-                            if (currentPage > 1) {
-                                currentPage--;
-                                loadTasks(currentPage);
-                            }
-                        });
-
-                        $('#next-page').click(function () {
-                            currentPage++;
-                            loadTasks(currentPage);
-                        });
-
-                        // Sự kiện nhấn nút "Delete"
-                        $(document).on('click', '.delete-btn', function () {
-                            var machineNo = $(this).data('id');
-                            if (confirm('Are you sure you want to delete this Machine ?')) {
-                                $.ajax({
-                                    url: `http://localhost:5000/tasks/${machineNo}`,
-                                    type: 'DELETE',
-                                    success: function (result) {
-                                        alert('Deleted successfully');
-                                        loadTasks(currentPage); // Tải lại bảng sau khi xóa
-                                    },
-                                    error: function (err) {
-                                        alert('Error deleting task: ' + err.responseJSON.description);
-                                    }
-                                });
-                            }
-                        });
                     });
-                </script>                
-            </div>
-            <div class="contLeft">
-                <div class="leftBot">
-                    <h1 style="text-align: center;">Chart </h1>
-                    <canvas id="myChart" style="max-width: 400px; max-height: 400px;"></canvas>
-                    <script>
-                        let myChart; // Biến lưu trữ chart instance
-                
-                        // Hàm lấy dữ liệu từ API
-                        async function fetchData() {
-                            const response = await fetch('/chartData'); 
-                            const data = await response.json();
-                            return data;                               
-                        }
-                        async function initChart() {
-                            const data = await fetchData(); 
-                
-                            const ctx = document.getElementById('myChart').getContext('2d');
-                            myChart = new Chart(ctx, {
-                                type: 'doughnut',
-                                data: data,
-                                options: {
-                                    responsive: true,
-                                    maintainAspectRatio: false
-                                }
-                            });
-                        }
-                
-                        // Hàm cập nhật biểu đồ
-                        async function updateChart() {
-                            const newData = await fetchData(); // Lấy dữ liệu mới từ API
-                
-                            // Cập nhật labels và datasets
-                            myChart.data.labels = newData.labels;
-                            myChart.data.datasets[0].data = newData.datasets[0].data;
-                
-                            // Nếu cần, cập nhật màu sắc (nếu dữ liệu thay đổi số lượng phần tử)
-                            myChart.data.datasets[0].backgroundColor = newData.datasets[0].backgroundColor;
-                
-                            myChart.update(); // Gọi hàm update để vẽ lại biểu đồ
-                        }
-                
-                        // Khởi tạo biểu đồ khi tải trang
-                        initChart();
-                
-                        // Cập nhật biểu đồ mỗi 5 giây
-                        setInterval(updateChart, 5000);
-                    </script>
-                </div>
-            </div>
+                });
+            });
+        </script>
         </div>
-        <hr>
-        <div class="conTBottom">
-            <div class="rightBot">
-                <div class="modeFullScreen">
-                    <a href="#" id="toggle_fullscreen">
-                        <img src="/static/images/fullscreen.png" alt="Fullscreen Icon" style="width: 20px; height: 20px;">
-                    </a>
-                </div>
-            </div>
-        </div>
-        <script>
-            document.getElementById('toggle_fullscreen').addEventListener('click', function (e) {
-              e.preventDefault(); // Ngăn chặn hành vi mặc định của thẻ <a>
-              const container = document.documentElement; // Lấy toàn bộ tài liệu làm fullscreen
-              if (document.fullscreenElement) {
-                // Thoát fullscreen nếu đang ở fullscreen
-                document.exitFullscreen();
-              } else {
-                // Vào fullscreen nếu chưa ở fullscreen
-                container.requestFullscreen();
+        <div class="tableMain">
+          <table id="tasks-table" cellpadding="10">
+            <thead>
+              <tr>
+                <th>Machine No</th>
+                <th>NG Quantity</th>
+                <th>Run Time</th>
+                <th>Work Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="pagination">
+            <button id="prev-page" class="page-button">Previous</button>
+            <span id="current-page" class="page-indicator">Page 1</span>
+            <button id="next-page" class="page-button">Next</button>
+          </div>
+          <script>
+            $(document).ready(function () {
+              var currentPage = 1; // Trang hiện tại
+              var perPage = 5;
+              // Hàm tải dữ liệu từ backend
+              function loadTasks(page) {
+                $.get(
+                  `http://localhost:5000/tasks?page=${page}&per_page=${perPage}`,
+                  function (response) {
+                    var data = response.data;
+                    var tableBody = $("#tasks-table tbody");
+                    tableBody.empty();
+                    data.forEach(function (task) {
+                      var row = "<tr>";
+                      row += "<td>" + task.MACHINE_NO + "</td>";
+                      row +=
+                        "<td>" +
+                        (task.NG_QTY !== null ? task.NG_QTY : 0) +
+                        "</td>";
+                      row += "<td>" + task.RUN_TIME + "</td>";
+                      row += "<td>" + task.WORK_DATE + "</td>";
+                      row += `<td><button class="delete-btn" data-id="${task.MACHINE_NO}">Delete</button></td>`;
+                      row += "</tr>";
+                      tableBody.append(row);
+                    });
+                    $("#current-page").text(`Page ${response.page}`);
+                    $("#prev-page").prop("disabled", response.page <= 1);
+                    $("#next-page").prop(
+                      "disabled",
+                      response.page >= response.total_pages
+                    );
+                  }
+                );
               }
+              loadTasks(currentPage);
+              // Sự kiện chuyển trang
+              $("#prev-page").click(function () {
+                if (currentPage > 1) {
+                  currentPage--;
+                  loadTasks(currentPage);
+                }
+              });
 
+              $("#next-page").click(function () {
+                currentPage++;
+                loadTasks(currentPage);
+              });
+
+              // Sự kiện nhấn nút "Delete"
+              $(document).on("click", ".delete-btn", function () {
+                var machineNo = $(this).data("id");
+                if (confirm("Are you sure you want to delete this Machine ?")) {
+                  $.ajax({
+                    url: `http://localhost:5000/tasks/${machineNo}`,
+                    type: "DELETE",
+                    success: function (result) {
+                      alert("Deleted successfully");
+                      loadTasks(currentPage);
+                    },
+                    error: function (err) {
+                      alert(
+                        "Error deleting task: " + err.responseJSON.description
+                      );
+                    },
+                  });
+                }
+              });
             });
           </script>
+        </div>
+        <div class="contLeft">
+          <div class="leftBot">
+            <h1 style="text-align: center">Chart</h1>
+            <canvas
+              id="myChart"
+              style="max-width: 400px; max-height: 400px"
+            ></canvas>
+            <script>
+              let myChart; // Biến lưu trữ chart instance
+              // Hàm lấy dữ liệu từ API
+              async function fetchData() {
+                const response = await fetch("/chartData");
+                const data = await response.json();
+                return data;
+              }
+              async function initChart() {
+                const data = await fetchData();
+                const ctx = document.getElementById("myChart").getContext("2d");
+                myChart = new Chart(ctx, {
+                  type: "doughnut",
+                  data: data,
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                  },
+                });
+              }
+
+              // Hàm cập nhật biểu đồ
+              async function updateChart() {
+                const newData = await fetchData(); 
+                myChart.data.labels = newData.labels;
+                myChart.data.datasets[0].data = newData.datasets[0].data;
+
+                // Nếu cần, cập nhật màu sắc (nếu dữ liệu thay đổi số lượng phần tử)
+                myChart.data.datasets[0].backgroundColor =
+                  newData.datasets[0].backgroundColor;
+
+                myChart.update(); // Gọi hàm update để vẽ lại biểu đồ
+              }
+
+              // Khởi tạo biểu đồ khi tải trang
+              initChart();
+
+              // Cập nhật biểu đồ mỗi 5 giây
+              setInterval(updateChart, 60000);
+            </script>
+          </div>
+        </div>
+      </div>
+      <div class="conRightBot">
+        <div class="leftBot">
+          <script>
+            function renderChart(data) {
+              // Tạo biểu đồ với dữ liệu mới
+              var options = {
+                series: [
+                  {
+                    name: "Run Time",
+                    type: "column",
+                    data: data.datasets[0].data,
+                  },
+                  {
+                    name: "Error Time",
+                    type: "line",
+                    data: data.datasets[1].data,
+                    dataLabels: {
+                      enabled: true,
+                      enabledOnSeries: [1],
+                      style: {
+                        colors: ["#2326c2"],
+                        fontSize: "12px",
+                      },
+                      offsetY: -20,
+                    },
+                  },
+                ],
+                chart: {
+                  height: 350,
+                  type: "line",
+                },
+                stroke: {
+                  width: [0, 4],
+                },
+                title: {
+                  text: "STATIC",
+                },
+                xaxis: {
+                  categories: data.labels,
+                },
+                yaxis: [
+                  {
+                    title: {
+                      text: "Run Time",
+                    },
+                  },
+                  {
+                    opposite: true,
+                    title: {
+                      text: "Error Time",
+                    },
+                  },
+                ],
+              };
+
+              var chartElement = document.querySelector(".conRightBot");
+              chartElement.innerHTML = "";
+              var chart = new ApexCharts(chartElement, options);
+              chart.render();
+            }
+
+            function fetchAndUpdateChart() {
+              fetch("/chartData2")
+                .then((response) => response.json())
+                .then((data) => {
+                  renderChart(data);
+                })
+                .catch((error) => console.log("Error fetching data:", error));
+            }
+            fetchAndUpdateChart();
+            setInterval(fetchAndUpdateChart, 60000);
+          </script>
+        </div>
+      </div>
+      <hr />
+
+      <div class="conTBottom">
+        <div class="rightBot">
+          <div class="modeFullScreen">
+            <a href="#" id="toggle_fullscreen">
+              <img
+                id="fullscreenic"
+                src="/static/images/fullscreen.png"
+                alt="Fullscreen Icon"
+                style="width: 25px; height: 25px"
+              />
+            </a>
+          </div>
+        </div>
+        <div class="centerBot"></div>
+      </div>
+      <script>
+        document
+          .getElementById("toggle_fullscreen")
+          .addEventListener("click", function (e) {
+            e.preventDefault();
+            const fullscreenIcon = document.getElementById("fullscreenic");
+            const container = document.documentElement;
+            if (document.fullscreenElement) {
+              document.exitFullscreen();
+              fullscreenIcon.src = "/static/images/fullscreen.png";
+            } else {
+              container.requestFullscreen();
+              fullscreenIcon.src = "/static/images/fullscreen2.png";
+            }
+          });
+      </script>
     </div>
-    
+
     <!-- <footer>Thank you</footer> -->
-</body>
+  </body>
 </html>
