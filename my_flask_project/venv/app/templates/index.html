@@ -14,8 +14,11 @@
   </head>
   <body>
     <header class="textAnimation">
-      <h1 id="welcome">❆Welcome to Website❆</h1>
-    </header>
+      <h1 id="welcome">❆Welcome {{ username }} to Website❆</h1>
+      <div class="logout">
+          <a href="{{ url_for('logout') }}"><span><img style="width: 25px; height: 25px; margin-top: 5px;" src="{{ url_for('static', filename='images/logout.png') }}" alt="Logout"></span></a>
+      </div>
+  </header>
     <nav>
       <ul class="menu">
         <li><a href="">Mục A</a></li>
@@ -46,19 +49,6 @@
       <div class="snowflake">❆</div>
       <div class="snowflake">❅</div>
       <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
     </div>
     <div class="mainContent">
       <div class="contRightTop">
@@ -67,30 +57,27 @@
             <table>
               <tr>
                 <td
-                  colspan="2"
-                  style="text-align: center; font-size: 25px; font-weight: bold"
-                >
-                  Config
+                  colspan="2"style="text-align: center; font-size: 25px; font-weight: bold">Config
                 </td>
               </tr>
               <tr>
                 <td><label for="machineNo">Machine no</label></td>
                 <td>
-                  <input id="machineNo" name="machineNo" type="text" value="" />
+                  <input style="outline: none;" id="machineNo" name="machineNo" type="text" value="" />
                   <br />
                 </td>
               </tr>
               <tr>
                 <td><label for="factory">Factory</label></td>
                 <td>
-                  <input id="factory" name="factory" type="text" value="" />
+                  <input style="outline: none;" id="factory" name="factory" type="text" value="" />
                   <br />
                 </td>
               </tr>
               <tr>
                 <td><label for="status">Status</label></td>
                 <td>
-                  <input
+                  <input style="outline: none;"
                     id="status"
                     name="status"
                     type="number"
@@ -105,7 +92,7 @@
               <tr>
                 <td><label for="projectName">Project name</label></td>
                 <td>
-                  <input
+                  <input style="outline: none;"
                     id="projectName"
                     name="projectName"
                     type="text"
@@ -346,7 +333,6 @@
               var chart = new ApexCharts(chartElement, options);
               chart.render();
             }
-
             function fetchAndUpdateChart() {
               fetch("/chartData2")
                 .then((response) => response.json())
@@ -361,7 +347,6 @@
         </div>
       </div>
       <hr />
-
       <div class="conTBottom">
         <div class="rightBot">
           <div class="modeFullScreen">
@@ -393,6 +378,7 @@
             }
           });
       </script>
+
     </div>
 
     <!-- <footer>Thank you</footer> -->

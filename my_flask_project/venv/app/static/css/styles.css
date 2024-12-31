@@ -3,7 +3,7 @@
   padding: 0;
 }
 body {
-  background-image: url("/static/images/BG6.jpg");
+  background-image: url("/static/images/BG7.jpg");
   margin: 0;
   padding: 0;
   background-size: cover;
@@ -86,10 +86,28 @@ header {
   font-weight: bold;
   overflow: hidden;
   position: relative;
+  position: relative;
   -webkit-animation: my 2000ms infinite;
   -moz-animation: my 2000ms infinite;
   -o-animation: my 2000ms infinite;
   animation: my 2000ms infinite;
+}
+.logout{
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 5px;
+  margin-right: 5px;
+  border-radius: 10px;
+  font-size: 20px;
+  height: 2em;
+  line-height: 2em;
+  font-weight: bold;
+  text-decoration: none;
+}
+.logout a{
+  text-decoration: none;
+  color: #fff;
 }
 nav {
   width: 100%;
@@ -235,6 +253,10 @@ nav {
   margin: 1em;
   justify-content: center;
 }
+.form:hover{
+  border-radius: unset;
+}
+
 .form select:focus {
   border-color: #5792ff;
   outline: none;
@@ -244,7 +266,7 @@ input {
   background-color: antiquewhite;
   border-radius: 10px;
   padding: 5px 10px;
-  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0);
   border-color: unset;
 }
 table, th, td {
@@ -255,7 +277,7 @@ table, th, td {
 .btn_summit {
   border-radius: 4px;
   background-color: transparent;
-  border: 3px solid white;
+  border: 2px solid white;
   color: #fff;
   text-align: center;
   font-size: 17px;
@@ -264,7 +286,7 @@ table, th, td {
   transition: all 0.5s ease;
   cursor: pointer;
   margin: 10px 0;
-  box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 5px 15px -5px rgba(0, 0, 0, 0.7);
   display: inline-block;
   position: relative;
   font-family: 'Montserrat', sans-serif;
@@ -272,15 +294,12 @@ table, th, td {
   line-height: 1;
   outline: none;
 }
-
 .btn_summit:after {
-  content: '»';
-  position: absolute;
   opacity: 0;
   top: 50%;
   right: -20px;
   transform: translateY(-50%);
-  transition: 0.5s;
+  transition: 1s;
 }
 
 .btn_summit:hover {

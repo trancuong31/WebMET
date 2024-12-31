@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Register Form</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/css2.css')}}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesLogin.css')}}"/>
+</head>
+<body>
+    <div class="background">
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+    <form id="form" action="{{ url_for('register') }}" method="POST" onsubmit="return validateForm(event)">
+        <h3>Register</h3>
+        <div id="alert">  </div>
+        <label for="username">Username</label>
+        <input style="color: #fff;" type="text" placeholder="Card ID" id="username" name="username">
+
+        <label for="password">Password</label>
+        <div style="position: relative;">
+            <input style="color: #fff;" type="password" placeholder="Password" id="password" name="password">
+            <span class="toggle-password" onclick="togglePassword('password')" style="position: absolute; top: 50%; right: 1px; transform: translateY(-50%); cursor: pointer; color: #414040;">🙈</span>
+        </div>
+
+        <label for="cfPassword">Confirm Password</label>
+        <div style="position: relative;">
+            <input style="color: #fff;" type="password" placeholder="Confirm Password" id="cfPassword" name="cfPassword">
+            <span class="toggle-password" onclick="togglePassword('cfPassword')" style="position: absolute; top: 50%; right: 1px; transform: translateY(-50%); cursor: pointer; color: #414040;">🙈</span>
+        </div>
+        <button type="submit">Sign Up</button>
+        <p style="text-align: center;">Already have an account? <a id="login" href="{{ url_for('login') }}">Log In</a></p>
+    </form>
+    <script>
+        function validateForm(event) {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const cfPassword = document.getElementById("cfPassword").value.trim();
+            // Kiểm tra điều kiện
+            if (!username || !password) {
+                event.preventDefault(); // Ngăn form gửi đi
+                showAlert("Username and password cannot be empty.");
+                return false;
+            }
+            if (password !== cfPassword) {
+                event.preventDefault();
+                showAlert("Password and confirm password do not match.");
+                return false;
+            }
+            return true;
+        }
+
+        function showAlert(message) {
+            const alertDiv = document.getElementById("alert");
+            alertDiv.style.display = "block";
+            alertDiv.textContent = message;
+            setTimeout(() => {
+                alertDiv.style.display = "none";
+            }, 5000);
+        }
+
+        function togglePassword(fieldId) {
+            var passwordField = document.getElementById(fieldId);
+            var togglePasswordIcon = passwordField.parentElement.querySelector('.toggle-password');  // Lấy icon mắt từ parent
+
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                togglePasswordIcon.textContent = "👁️"; // Đổi icon
+            } else {
+                passwordField.type = "password";
+                togglePasswordIcon.textContent = "🙈"; // Đổi icon
+            }
+        }
+    </script>
+    <div class="snowflakes" aria-hidden="true">
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+    </div>
+</body>
+</html>

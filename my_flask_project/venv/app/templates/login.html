@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Design by foolishdeveloper.com -->
+    <title>Login Form</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/css2.css')}}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesLogin.css')}}"/>
+</head>
+<body>
+    <div class="background">
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+    <form id="form" action="{{ url_for('login') }}" method="POST" onsubmit="return validateForm(event)">
+        <h3>Login</h3>
+        <div id="alert">  </div>
+        <label for="username">Username</label>
+        <input style="color: #fff;" type="text" placeholder="Card ID" id="username" name="username">
+        <label for="password">Password</label>
+        <div style="position: relative;">
+            <input style="color: #fff;" type="password" placeholder="Password" id="password" name="password">
+            <span class="toggle-password" onclick="togglePassword()" style="position: absolute; top: 50%; right: 1px; transform: translateY(-50%); cursor: pointer; color: #414040;">🙈</span>
+        </div>
+        <a href="#" id="forgotpw">Forgot Password?</a>
+        <button style="position: relative;" type="submit">Log In</button>
+       
+        <div class="social">
+          <div class="go">Google</div>
+          <div class="fb">Facebook</div>
+        </div>
+        <p style="text-align: center;">Don't have an account? <a id="signup" href="{{ url_for('register') }}">Sign Up</a></p>
+    </form>
+    <script>
+        function showAlert(message) {
+        const alertDiv = document.getElementById("alert");
+        alertDiv.style.display = "block";
+        alertDiv.textContent = message;
+        setTimeout(() => {
+            alertDiv.style.display = "none"; // Tự động ẩn sau 3 giây
+        }, 5000);
+    }
+        function togglePassword() {
+            var passwordField = document.getElementById("password");
+            var togglePassword = document.querySelector(".toggle-password");
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                togglePassword.textContent = "🙈";
+            } else {
+                passwordField.type = "password";
+                togglePassword.textContent = "👁️‍🗨️";
+            }
+        }
+        function validateForm(event) {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            // Kiểm tra điều kiện
+            if (!username || !password) {
+                event.preventDefault(); // Ngăn form gửi đi
+                showAlert("Username and password cannot be empty.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+    <div class="snowflakes" aria-hidden="true">
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        </div>
+</body>
+</html>
