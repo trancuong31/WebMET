@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styleNav.css')}}"
+    />
+    <title>THC</title>
+  </head>
+  <body>
+    <div class="wrapper">
+      <nav id="navbar">
+        <ul class="navbar-items flexbox-col">
+          <li class="navbar-logo flexbox-left">
+            <a class="navbar-item-inner flexbox">
+              <span class="logo"></span>
+                <polygon points="925.79 318.48 830.56 0 183.51 1384.12 510.41 1178.46 925.79 318.48"/>
+                <polygon points="1438.88 1663.28 1126.35 948.08 111.98 1586.26 0 1819.54 1020.91 1250.57 1123.78 1471.02 783.64 1663.28 1438.88 1663.28"/>
+              </svg>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="search-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục A</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="home-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục B</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="folder-open-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục C</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="pie-chart-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục D</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="people-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục E</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="chatbubbles-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục F</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left" href="{{ url_for('logout') }}">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="settings-outline"></ion-icon>
+              </div>
+              <span class="link-text">Logout</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="snowflakes" aria-hidden="true">
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❆</div>
+        <div class="snowflake">❅</div>
+        <div class="snowflake">❆</div>
+      </div>
+      <div class="container">
+        <header>MET
+        </header>
+        <div class="mainContent">
+          <div class="content">
+            <h1>Upload File</h1>
+            <form action="/upload" method="POST" enctype="multipart/form-data">
+              <label for="file">Choose Excel or Image:</label>
+              <input type="file" id="file" name="file" accept=".xlsx,.xls,.jpg,.jpeg,.png" required>
+              <button type="submit">Upload</button>
+            </form>
+          </div>
+  
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

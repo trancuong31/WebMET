@@ -12,16 +12,18 @@
     </div>
     <form id="form" action="{{ url_for('register') }}" method="POST" onsubmit="return validateForm(event)">
         <h3>Register</h3>
-        <div id="alert">  </div>
+        {% if error %}
+        <div id="alert"> {{error}} </div>
+        {% endif %}
         <label for="username">Username</label>
         <input style="color: #fff;" type="text" placeholder="Card ID" id="username" name="username">
-
+        <label for="username">Email</label>
+        <input style="color: #fff;" type="email" placeholder="Email" id="email" name="email">
         <label for="password">Password</label>
         <div style="position: relative;">
             <input style="color: #fff;" type="password" placeholder="Password" id="password" name="password">
             <span class="toggle-password" onclick="togglePassword('password')" style="position: absolute; top: 50%; right: 1px; transform: translateY(-50%); cursor: pointer; color: #414040;">🙈</span>
         </div>
-
         <label for="cfPassword">Confirm Password</label>
         <div style="position: relative;">
             <input style="color: #fff;" type="password" placeholder="Confirm Password" id="cfPassword" name="cfPassword">
@@ -60,14 +62,14 @@
 
         function togglePassword(fieldId) {
             var passwordField = document.getElementById(fieldId);
-            var togglePasswordIcon = passwordField.parentElement.querySelector('.toggle-password');  // Lấy icon mắt từ parent
+            var togglePasswordIcon = passwordField.parentElement.querySelector('.toggle-password');
 
             if (passwordField.type === "password") {
                 passwordField.type = "text";
-                togglePasswordIcon.textContent = "👁️"; // Đổi icon
+                togglePasswordIcon.textContent = "👁️"; 
             } else {
                 passwordField.type = "password";
-                togglePasswordIcon.textContent = "🙈"; // Đổi icon
+                togglePasswordIcon.textContent = "🙈"; 
             }
         }
     </script>

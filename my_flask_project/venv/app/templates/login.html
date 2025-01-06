@@ -5,6 +5,7 @@
     <title>Login Form</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/css2.css')}}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesLogin.css')}}"/>
+    <script type="module" src="{{ url_for('static', filename='js/auth.js')}}"></script>
 </head>
 <body>
     <div class="background">
@@ -13,7 +14,9 @@
     </div>
     <form id="form" action="{{ url_for('login') }}" method="POST" onsubmit="return validateForm(event)">
         <h3>Login</h3>
-        <div id="alert">  </div>
+        {% if error %}
+        <div id="alert"> {{error}} </div>
+        {% endif %}
         <label for="username">Username</label>
         <input style="color: #fff;" type="text" placeholder="Card ID" id="username" name="username">
         <label for="password">Password</label>
@@ -30,6 +33,7 @@
         </div>
         <p style="text-align: center;">Don't have an account? <a id="signup" href="{{ url_for('register') }}">Sign Up</a></p>
     </form>
+    
     <script>
         function showAlert(message) {
         const alertDiv = document.getElementById("alert");
@@ -62,6 +66,7 @@
             return true;
         }
     </script>
+
     <div class="snowflakes" aria-hidden="true">
         <div class="snowflake">❅</div>
         <div class="snowflake">❆</div>

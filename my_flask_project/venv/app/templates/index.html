@@ -6,6 +6,7 @@
     <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
     <script src="{{ url_for('static', filename='js/apexcharts.js') }}"></script>
+    
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/styles.css')}}"
@@ -16,7 +17,7 @@
     <header class="textAnimation">
       <h1 id="welcome">❆Welcome {{ username }} to Website❆</h1>
       <div class="logout">
-          <a href="{{ url_for('logout') }}"><span><img style="width: 25px; height: 25px; margin-top: 5px;" src="{{ url_for('static', filename='images/logout.png') }}" alt="Logout"></span></a>
+          <a href="{{ url_for('logout') }}"><span><img title="Logout" style="width: 25px; height: 25px; margin-top: 5px; margin-right: 5px;" src="{{ url_for('static', filename='images/logout.png') }}" alt="Logout"></span></a>
       </div>
   </header>
     <nav>
@@ -56,8 +57,8 @@
           <form action="/tasks/submitConfig" method="POST">
             <table>
               <tr>
-                <td
-                  colspan="2"style="text-align: center; font-size: 25px; font-weight: bold">Config
+                <td colspan="2" style="text-align: center; font-size: 25px; font-weight: bold">
+                  Config
                 </td>
               </tr>
               <tr>
@@ -70,7 +71,10 @@
               <tr>
                 <td><label for="factory">Factory</label></td>
                 <td>
-                  <input style="outline: none;" id="factory" name="factory" type="text" value="" />
+                  <select id="factory" name="factory" class="custom-select sources">
+                    <option value="">-- Select an option --</option>
+                  </select>
+                  <script src="{{ url_for('static', filename='js/styleselect.js') }}"></script>
                   <br />
                 </td>
               </tr>
@@ -92,28 +96,19 @@
               <tr>
                 <td><label for="projectName">Project name</label></td>
                 <td>
-                  <input style="outline: none;"
-                    id="projectName"
-                    name="projectName"
-                    type="text"
-                    value=""
-                  />
+                  <input style="outline: none;" id="projectName" name="projectName" type="text" value="" />
                   <br />
                 </td>
               </tr>
               <tr>
-                <td colspan="2">
-                  <input class="btn_summit"
-                    type="submit"
-                  />
-                  <input class="btn_summit"
-                    type="reset"
-                    value="Reset"
-                  />
+                <td colspan="2" style="text-align: center;">
+                  <input class="btn_submit" type="submit" value="Submit" />
+                  <input class="btn_submit" type="reset" value="Reset" />
                 </td>
               </tr>
             </table>
           </form>
+          
           <script>
             $(document).ready(function() {
                 $('#form').on('submit', function(event) {
@@ -168,10 +163,7 @@
                     data.forEach(function (task) {
                       var row = "<tr>";
                       row += "<td>" + task.MACHINE_NO + "</td>";
-                      row +=
-                        "<td>" +
-                        (task.NG_QTY !== null ? task.NG_QTY : 0) +
-                        "</td>";
+                      row +="<td>" +(task.NG_QTY !== null ? task.NG_QTY : 0) +"</td>";
                       row += "<td>" + task.RUN_TIME + "</td>";
                       row += "<td>" + task.WORK_DATE + "</td>";
                       row += `<td><button class="delete-btn" data-id="${task.MACHINE_NO}">Delete</button></td>`;
@@ -345,6 +337,20 @@
             setInterval(fetchAndUpdateChart, 60000);
           </script>
         </div>
+      </div>
+      <div class="ggmap">
+        <div class="container">
+          <div id="map"></div>
+      </div>
+      <script>
+        function initMap() {
+            var map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 21.0168864, lng: 105.7855574 },
+                zoom: 15
+            });
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCT61ROrIlygoNTLRRiMW5dil_TLETDFeI&callback=initMap" async defer></script>
       </div>
       <hr />
       <div class="conTBottom">

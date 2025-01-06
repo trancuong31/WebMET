@@ -1,7 +1,10 @@
-from flask import Flask, request, jsonify, abort, render_template, redirect, flash, session, make_response
+from flask import Flask, request, jsonify, abort, render_template, redirect, flash, session, make_response, url_for, send_from_directory
 import oracledb, datetime
 from flask_cors import CORS
 import jwt
+import os
+from werkzeug.utils import secure_filename
+import pandas as pd
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abc'
 # Thông tin kết nối đến Oracle Database
@@ -10,6 +13,12 @@ DB_CONFIG = {
     "password": "123456",
     "dsn": "localhost:1521/orcl3"
 }
+# Thư mục lưu file tải lên
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Cho phép các loại file
+ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'jpg', 'jpeg', 'png'}
 CORS(app) 
 # Hàm kết nối Oracle
 def get_db_connection():
@@ -38,6 +47,28 @@ def show_form():
         flash('Invalid token, please log in again.', 'error')
         return redirect(('login'))
     return render_template('index.html', username=username)
+@app.route('/adminDashboard', methods=['GET'])
+def admin_dashboard():
+    token = request.cookies.get('token')
+    if not token:
+        return redirect(url_for('login'))
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        username = data['username']
+        if username != 'admin':
+            return redirect(url_for('login'))
+    except jwt.ExpiredSignatureError:
+        flash('Token has expired, please log in again.', 'error')
+        return redirect(url_for('login'))
+    except jwt.InvalidTokenError:
+        flash('Invalid token, please log in again.', 'error')
+        return redirect(url_for('login'))
+    return render_template('adminDashboard.html', username=username)
+
+@app.route('/index1', methods=['GET'])
+def index1():
+    return render_template('index1.html')
+
 @app.route('/logout', methods=['GET'])
 def logout():
     resp = make_response(redirect(('login')))
@@ -48,28 +79,34 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username').strip()
         password = request.form.get('password').strip()
-        # Kiểm tra tài khoản admin
-        if username == 'admin' and password == '123':
-            return redirect('/configForm')
         # Kết nối tới cơ sở dữ liệu
         try:
             connection = get_db_connection()
             cursor = connection.cursor()
             query = """
-                SELECT COUNT(*)
+                SELECT 1
                 FROM USERS
                 WHERE USERNAME = :username AND PASSWORD = :password
             """
             cursor.execute(query, {"username": username, "password": password})
             rows = cursor.fetchone()
-            # Kiểm tra nếu tài khoản tồn tại
             if rows and rows[0] > 0:
                 token = jwt.encode({
                     'username': username,
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)  # Token có thời hạn 7 ngày
+                    'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1) ,
+                    'type': 'access'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
-                resp = make_response(redirect(('configForm')))
-                resp.set_cookie('token', token, httponly=True, max_age=7*24*60*60)  # Cookie có thời hạn 7 ngày
+                refresh_token = jwt.encode({
+                    'username' : username,
+                    'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=7),
+                    'type': 'refresh'
+                }, app.config['SECRET_KEY'], algorithm='HS256')
+                if username == 'admin':
+                    resp = make_response(redirect(('adminDashboard')))
+                else:
+                    resp = make_response(redirect(('configForm')))
+                resp.set_cookie('token', token, httponly=True, secure=True, max_age=60*60) #1h
+                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60) #7 days  
                 return resp
             else:
                 return render_template('login.html', error='Incorrect username or password')
@@ -83,38 +120,63 @@ def login():
 
     return render_template('login.html')
 
+@app.route('/refresh', methods=['POST'])
+def refresh():
+    refresh_token = request.cookies.get('refresh_token')
+    if not refresh_token:
+        return redirect(url_for('login'))
+    try:
+        data = jwt.decode(refresh_token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        if data['type'] != 'refresh':
+            return jsonify({"error": "Invalid token type"}), 401
+        
+        new_access_token = jwt.encode({
+            'username': data['username'],
+            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours= 1),
+            'type' : 'access'
+        }, app.config['SECRET_KEY'], algorithm='HS256')
+        resp = make_response(jsonify({"message": 'Token refreshed!'}))
+        resp.set_cookie('token', new_access_token, httponly=True, secure=True, max_age=60*60) #1h
+        return resp
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Refresh token has expired"}), 401
+    except jwt.invalidTokenError:
+        return jsonify({"error": "Invalid refresh token"}), 401
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        # Xử lý dữ liệu đăng ký
-        username = request.form.get('username')
-        password = request.form.get('password')
-        # Thêm logic để lưu thông tin người dùng vào cơ sở dữ liệu
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        query = """
-            SELECT USERNAME
-            FROM USERS
-            WHERE USERNAME = :username 
-        """
-        cursor.execute(query, {"username": username})
-        rows = cursor.fetchone()
-        if rows:
-            return render_template('register.html', error='User already exists')
-        else:
-            insert_query = """
-                INSERT INTO USERS (USERNAME, PASSWORD)
-                VALUES (:username, :password)
+    try:
+        if request.method == 'POST':
+            # Xử lý dữ liệu đăng ký
+            username = request.form.get('username')
+            password = request.form.get('password')
+            email = request.form.get('email')
+            # Thêm thông tin người dùng vào cơ sở dữ liệu
+            connection = get_db_connection()
+            cursor = connection.cursor()
+            query = """
+                SELECT 1
+                FROM USERS
+                WHERE USERNAME = :username 
             """
-            cursor.execute(insert_query, {"username": username, "password": password})
-            connection.commit()
-            cursor.close()
-            connection.close()
-            return render_template('login.html', error='')
-    return render_template('register.html')
+            cursor.execute(query, {"username": username})
+            rows = cursor.fetchone()
+            if rows:
+                return render_template('register.html', error='User already exists')
+            else:
+                insert_query = """
+                    INSERT INTO USERS (USERNAME, PASSWORD, EMAIL)
+                    VALUES (:username, :password, :email)
+                """
+                cursor.execute(insert_query, {"username": username, "password": password, "email" : email})
+                connection.commit()
+                cursor.close()
+                connection.close()
+                return redirect('login')
 
-
+        return render_template('register.html')
+    except Exception as e:
+        flash(f"Database error: {e}", "error")
 
 # API: Lấy danh sách thông tin bảng CNT_MACHINE_SUMMARY
 @app.route('/tasks', methods=['GET'])
@@ -125,7 +187,7 @@ def get_tasks():
 
     # Lấy tham số phân trang từ request
     page = int(request.args.get('page', 1))
-    per_page = int(request.args.get('per_page', 5))  # Số bản ghi mỗi trang (mặc định = 5)
+    per_page = int(request.args.get('per_page', 5))
 
     # Tính toán offset
     offset = (page - 1) * per_page
@@ -133,7 +195,7 @@ def get_tasks():
         # Đếm tổng số bản ghi
         cursor.execute("SELECT COUNT(*) FROM CNT_MACHINE_SUMMARY")
         total_records = cursor.fetchone()[0]  # Tổng số bản ghi
-        total_pages = (total_records + per_page - 1) // per_page 
+        total_pages = (total_records + per_page - 1) // per_page
         query = """
             SELECT MACHINE_NO, WORK_DATE, RUN_TIME, NG_QTY
             FROM CNT_MACHINE_SUMMARY
@@ -162,6 +224,27 @@ def get_tasks():
     finally:
         cursor.close()
         connection.close()
+
+# Route API để lấy danh sách options
+@app.route('/getOptions', methods=['GET'])
+def get_options():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Truy vấn dữ liệu từ bảng
+        cursor.execute("SELECT machine_no, factory FROM cnt_machine_info")
+        rows = cursor.fetchall()  # Lấy tất cả dữ liệu từ truy vấn
+
+        # Chuyển đổi dữ liệu thành danh sách dictionary
+        options = [{"machine_no": row[0], "factory": row[1]} for row in rows]
+        connection.close()
+
+        # Trả về dữ liệu dưới dạng JSON
+        return jsonify(options)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 @app.route('/tasks/<int:task_id>', methods=['GET'])
 def get_task(task_id):
     connection = get_db_connection()
@@ -174,61 +257,6 @@ def get_task(task_id):
         return jsonify({"MACHINE_NO": row[0], "WORK_DATE": row[1], "RUN_TIME": row[2]})
     else:
         abort(404, description="Công việc không tồn tại.")
-
-# API: Tạo công việc mới
-@app.route('/tasks', methods=['POST'])
-def create_task():
-    if not request.json:
-        abort(400, description="Yêu cầu không hợp lệ.")
-    machine_no = request.json["MACHINE_NO"]
-    run_time = request.json.get("RUN_TIME", False)
-
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute(
-        "INSERT INTO CNT_MACHINE_SUMMARY (MACHINE_NO, RUN_TIME) VALUES (:machine_no, :run_time)",
-        {"MACHINE_NO": machine_no, "RUN_TIME": int(run_time)}
-    )
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-    return jsonify({"MACHINE_NO": machine_no, "RUN_TIME": run_time}), 201
-
-@app.route('/tasks/<string:MACHINE_NO>', methods=['PUT'])
-def update_task(MACHINE_NO):
-    if not request.json:
-        abort(400, description="Yêu cầu không hợp lệ.")
-    
-    # Lấy dữ liệu từ JSON
-    run_time = request.json.get("RUN_TIME")
-    
-    # Nếu không có RUN_TIME, trả về lỗi
-    if run_time is None:
-        abort(400, description="Thiếu tham số RUN_TIME.")
-    
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute(
-        """
-        UPDATE CNT_MACHINE_SUMMARY 
-        SET RUN_TIME = NVL(:run_time, RUN_TIME) 
-        WHERE MACHINE_NO = :machine_no
-        """,
-        {"run_time": int(run_time), "machine_no": MACHINE_NO}
-    )
-    
-    updated_rows = cursor.rowcount
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-    # Kiểm tra xem có bản ghi nào được cập nhật không
-    if updated_rows == 0:
-        abort(404, description="Công việc không tồn tại.")
-    
-    # Trả về thông tin đã được cập nhật
-    return jsonify({"MACHINE_NO": MACHINE_NO, "RUN_TIME": run_time})
 
 @app.route('/tasks/<string:MACHINE_NO>', methods=['DELETE'])
 def delete_task(MACHINE_NO):
@@ -371,6 +399,43 @@ def chart_data2():
     cursor.close()
     connection.close()
     return jsonify(data)
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Trang tải lên file
+@app.route('/')
+def upload_page():
+    return render_template('upload.html')
+# Xử lý file tải lên
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return "No file part"
+    
+    file = request.files['file']
+    if file.filename == '':
+        return "No selected file"
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)  # Bảo mật tên file
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)  # Lưu file
+
+        # Phân loại và xử lý theo loại tệp
+        file_extension = filename.rsplit('.', 1)[1].lower()
+        if file_extension in {'jpg', 'jpeg', 'png'}:
+            return render_template('view_image.html', filename=filename)
+        elif file_extension in {'xlsx', 'xls'}:
+            # Đọc nội dung Excel
+            data = pd.read_excel(filepath)
+            return render_template('view_excel.html', tables=[data.to_html(classes='data', header=True)], filename=filename)
+    else:
+        return "File not allowed"
+
+# Route để hiển thị hình ảnh
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 if __name__=='__main__':
     app.run(debug=True)
 

@@ -42,7 +42,7 @@ body::before {
         #1845ad,
         #23a2f6
     );
-    left: -80px;
+    left: -120px;
     top: -80px;
 }
 .shape:last-child{
@@ -51,11 +51,11 @@ body::before {
         #ff512f,
         #f09819
     );
-    right: -30px;
+    right: -120px;
     bottom: -80px;
 }
 form{
-    height: 550px;
+    height: 700px;
     width: 400px;
     background-color: rgba(255,255,255,0.13);
     position: absolute;
@@ -305,7 +305,7 @@ button:hover{
   }
   #alert {
     position: absolute;
-    top: -40px; /* Đặt trên form */
+    top: -45px;
     left: 0;
     width: 100%;
     display: none;
@@ -313,6 +313,7 @@ button:hover{
     text-align: center; 
     font-size: 1.2em; 
     margin-top: 10px;
+    display: block;
 }
 #login:hover{
     color: #3543ff;
