@@ -108,7 +108,7 @@ def login():
                 if username == 'admin':
                     resp = make_response(redirect(('adminDashboard')))
                 else:
-                    resp = make_response(redirect(('configForm')))
+                    resp = make_response(redirect(('index1')))
                 resp.set_cookie('token', token, httponly=True, secure=True, max_age=60*60) #1h
                 resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60) #7 days  
                 return resp
@@ -249,18 +249,6 @@ def get_options():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-@app.route('/tasks/<int:task_id>', methods=['GET'])
-def get_task(task_id):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM CNT_MACHINE_SUMMARY WHERE NG_QTY = :id", {"id": task_id})
-    row = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    if row:
-        return jsonify({"MACHINE_NO": row[0], "WORK_DATE": row[1], "RUN_TIME": row[2]})
-    else:
-        abort(404, description="Công việc không tồn tại.")
 
 @app.route('/tasks/<string:MACHINE_NO>', methods=['DELETE'])
 def delete_task(MACHINE_NO):
@@ -403,6 +391,7 @@ def chart_data2():
     cursor.close()
     connection.close()
     return jsonify(data)
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -441,11 +430,6 @@ def upload_file():
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-from flask import send_file, flash, redirect, url_for
-import pandas as pd
-import io
-from datetime import datetime
-
 @app.route('/downloadExcel')
 def download_excel():
     try:
@@ -458,59 +442,43 @@ def download_excel():
         """
         cursor.execute(query)
         result = cursor.fetchall()
-
-        # Đóng kết nối database đúng cách bằng with hoặc finally
         cursor.close()
         connection.close()
-
-        # Tạo DataFrame với tên cột phù hợp
         df = pd.DataFrame(result, columns=[
             'LINE', 'NAME_MACHINE', 'FORCE_1', 'FORCE_2', 
             'FORCE_3', 'FORCE_4', 'STATE', 'TIME_UPDATE'
         ])
-
-        # Tạo timestamp cho tên file duy nhất
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f'du_lieu_luc_vit_{timestamp}.xlsx'
-
+        filename = f'dataScrewForce_{timestamp}.xlsx'
         # Tạo file Excel trong bộ nhớ
+
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Dữ liệu lực vít')
-            
-            # Lấy đối tượng workbook và worksheet để áp dụng định dạng
             workbook = writer.book
             worksheet = writer.sheets['Dữ liệu lực vít']
-            
-            # Thêm định dạng cơ bản
+        
             header_format = workbook.add_format({
                 'bold': True,
                 'font_size': 12,
                 'bg_color': '#D3D3D3'
             })
-            
-            # Áp dụng định dạng header
             for col_num, value in enumerate(df.columns.values):
                 worksheet.write(0, col_num, value, header_format)
-                
-            # Tự động điều chỉnh độ rộng cột
             for column in df:
                 column_length = max(df[column].astype(str).apply(len).max(), len(column))
                 col_idx = df.columns.get_loc(column)
                 worksheet.set_column(col_idx, col_idx, column_length + 2)
-
-        # Đặt lại vị trí buffer
         output.seek(0)
 
         return send_file(
             output,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             as_attachment=True,
-            download_name=filename  # Sử dụng download_name thay vì attachment_filename
+            download_name=filename
         )
 
     except Exception as e:
-        # Ghi log lỗi để debug
         app.logger.error(f"Lỗi tải xuống Excel: {str(e)}")
         flash("Đã xảy ra lỗi khi tạo file Excel. Vui lòng thử lại sau.", "error")
         return redirect(url_for('dashboard'))
