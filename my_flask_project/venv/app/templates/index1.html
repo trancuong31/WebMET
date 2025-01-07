@@ -6,7 +6,7 @@
     <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/styleNav.css')}}"
+      href="{{ url_for('static', filename='css/stylesmain.css')}}"
     />
     <title>THC</title>
   </head>
@@ -23,11 +23,11 @@
             </a>
           </li>
           <li class="navbar-item flexbox-left">
-            <a class="navbar-item-inner flexbox-left">
+            <a class="navbar-item-inner flexbox-left"  href="{{ url_for('dashboard') }}" >
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="search-outline"></ion-icon>
               </div>
-              <span class="link-text">Mục A</span>
+              <span class="link-text">Dashboard</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -80,34 +80,14 @@
           </li>
         </ul>
       </nav>
-      <div class="snowflakes" aria-hidden="true">
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-      </div>
+      
       <div class="container">
         <header>MET
         </header>
         <div class="mainContent">
           <div class="content">
-            <h1>Upload File</h1>
-            <form action="/upload" method="POST" enctype="multipart/form-data">
-              <label for="file">Choose Excel or Image:</label>
-              <input type="file" id="file" name="file" accept=".xlsx,.xls,.jpg,.jpeg,.png" required>
-              <button type="submit">Upload</button>
-            </form>
+            
           </div>
-  
         </div>
       </div>
     </div>

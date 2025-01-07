@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styledashboard.css')}}"
+    />
+    <title>THC</title>
+  </head>
+  <body>
+    <div class="wrapper">
+      <nav id="navbar">
+        <ul class="navbar-items flexbox-col">
+          <li class="navbar-logo flexbox-left">
+            <a class="navbar-item-inner flexbox">
+              <span class="logo"></span>
+                <polygon points="925.79 318.48 830.56 0 183.51 1384.12 510.41 1178.46 925.79 318.48"/>
+                <polygon points="1438.88 1663.28 1126.35 948.08 111.98 1586.26 0 1819.54 1020.91 1250.57 1123.78 1471.02 783.64 1663.28 1438.88 1663.28"/>
+              </svg>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left"  href="{{ url_for('logout') }}" >
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="search-outline"></ion-icon>
+              </div>
+              <span class="link-text">Dashboard</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="home-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục B</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="folder-open-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục C</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="pie-chart-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục D</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="people-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục E</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="chatbubbles-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục F</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left" href="{{ url_for('logout') }}">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="settings-outline"></ion-icon>
+              </div>
+              <span class="link-text">Logout</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <div class="container">
+        <header>MET
+        
+        </header>
+        <div class="mainContent">
+          <div class="content">
+            <h1 style="padding: 10px;">Infomation screw</h1>
+            <div class="tbl-header">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <thead>
+                  <tr>
+                    <th>LINE</th>
+                    <th>NAME MACHINE</th>
+                    <th>SCREW FORCE 1</th>
+                    <th>SCREW FORCE 2</th>
+                    <th>SCREW FORCE 3</th>
+                    <th>TIME UPDATE</th>
+                    <th>STATE</th>
+                  </tr>
+                </thead>
+              </table>
+            </div>
+            <div class="tbl-content">
+              <table cellpadding="0" cellspacing="0" border="0">
+                <tbody>
+                  <tr>
+                    <td>AAC</td>
+                    <td>AUSTRALIAN COMPANY </td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+2.01</td>
+                    <td>-0.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAD</td>
+                    <td>AUSENCO</td>
+                    <td>$2.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-0.01</td>
+                    <td>-1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAX</td>
+                    <td>ADELAIDE</td>
+                    <td>$3.22</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+0.01</td>
+                    <td>+1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>XXD</td>
+                    <td>ADITYA BIRLA</td>
+                    <td>$1.02</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-1.01</td>
+                    <td>+2.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAC</td>
+                    <td>AUSTRALIAN COMPANY </td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+2.01</td>
+                    <td>-0.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAD</td>
+                    <td>AUSENCO</td>
+                    <td>$2.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-0.01</td>
+                    <td>-1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAX</td>
+                    <td>ADELAIDE</td>
+                    <td>$3.22</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+0.01</td>
+                    <td>+1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>XXD</td>
+                    <td>ADITYA BIRLA</td>
+                    <td>$1.02</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-1.01</td>
+                    <td>+2.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAC</td>
+                    <td>AUSTRALIAN COMPANY </td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+2.01</td>
+                    <td>-0.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAD</td>
+                    <td>AUSENCO</td>
+                    <td>$2.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-0.01</td>
+                    <td>-1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAX</td>
+                    <td>ADELAIDE</td>
+                    <td>$3.22</td>
+                    <td>+0.01</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>XXD</td>
+                    <td>ADITYA BIRLA</td>
+                    <td>$1.02</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-1.01</td>
+                    <td>+2.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAC</td>
+                    <td>AUSTRALIAN COMPANY </td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+2.01</td>
+                    <td>-0.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAD</td>
+                    <td>AUSENCO</td>
+                    <td>$2.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-0.01</td>
+                    <td>-1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAX</td>
+                    <td>ADELAIDE</td>
+                    <td>$3.22</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+0.01</td>
+                    <td>+1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>XXD</td>
+                    <td>ADITYA BIRLA</td>
+                    <td>$1.02</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-1.01</td>
+                    <td>+2.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAC</td>
+                    <td>AUSTRALIAN COMPANY </td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+2.01</td>
+                    <td>-0.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAD</td>
+                    <td>AUSENCO</td>
+                    <td>$2.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-0.01</td>
+                    <td>-1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAX</td>
+                    <td>ADELAIDE</td>
+                    <td>$3.22</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+0.01</td>
+                    <td>+1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>XXD</td>
+                    <td>ADITYA BIRLA</td>
+                    <td>$1.02</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-1.01</td>
+                    <td>+2.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAC</td>
+                    <td>AUSTRALIAN COMPANY </td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+2.01</td>
+                    <td>-0.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAD</td>
+                    <td>AUSENCO</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>$2.38</td>
+                    <td>-0.01</td>
+                    <td>-1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAX</td>
+                    <td>ADELAIDE</td>
+                    <td>$3.22</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+0.01</td>
+                    <td>+1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>XXD</td>
+                    <td>ADITYA BIRLA</td>
+                    <td>$1.02</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-1.01</td>
+                    <td>+2.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAC</td>
+                    <td>AUSTRALIAN COMPANY </td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+2.01</td>
+                    <td>-0.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAD</td>
+                    <td>AUSENCO</td>
+                    <td>$2.38</td>
+                    <td>-0.01</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAX</td>
+                    <td>ADELAIDE</td>
+                    <td>$3.22</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+0.01</td>
+                    <td>+1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>XXD</td>
+                    <td>ADITYA BIRLA</td>
+                    <td>$1.02</td>
+                    <td>-1.01</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+2.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAC</td>
+                    <td>AUSTRALIAN COMPANY </td>
+                    <td>$1.38</td>
+                    <td>+2.01</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-0.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAD</td>
+                    <td>AUSENCO</td>
+                    <td>$2.38</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>-0.01</td>
+                    <td>-1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>AAX</td>
+                    <td>ADELAIDE</td>
+                    <td>$3.22</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+0.01</td>
+                    <td>+1.36%</td>
+                  </tr>
+                  <tr>
+                    <td>XXD</td>
+                    <td>ADITYA BIRLA</td>
+                    <td>$1.02</td>
+                    <td>-1.01</td>
+                    <td>$1.38</td>
+                    <td>$1.38</td>
+                    <td>+2.36%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <script>
+              $(window).on("load resize ", function() {
+              var scrollWidth = $('.tbl-content').width() - $('.tbl-content table').width();
+              $('.tbl-header').css({'padding-right':scrollWidth});
+              }).resize();
+            </script>
+            <div class="dowfile">
+              <a href="{{ url_for('download_excel') }}">Dowload</a>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

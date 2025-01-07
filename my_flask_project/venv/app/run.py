@@ -1,8 +1,8 @@
-from flask import Flask, request, jsonify, abort, render_template, redirect, flash, session, make_response, url_for, send_from_directory
+from flask import Flask, request, jsonify, abort, render_template, redirect, flash, send_file, make_response, url_for, send_from_directory
 import oracledb, datetime
 from flask_cors import CORS
 import jwt
-import os
+import os, io
 from werkzeug.utils import secure_filename
 import pandas as pd
 app = Flask(__name__)
@@ -68,6 +68,10 @@ def admin_dashboard():
 @app.route('/index1', methods=['GET'])
 def index1():
     return render_template('index1.html')
+
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    return render_template('dashboard.html')
 
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -436,6 +440,81 @@ def upload_file():
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+from flask import send_file, flash, redirect, url_for
+import pandas as pd
+import io
+from datetime import datetime
+
+@app.route('/downloadExcel')
+def download_excel():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        query = """
+            SELECT LINE, NAME_MACHINE, FORCE_1, FORCE_2, FORCE_3, FORCE_4, STATE, TIME_UPDATE
+            FROM SCREW_FORCE_INFO
+            ORDER BY TIME_UPDATE DESC
+        """
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        # Đóng kết nối database đúng cách bằng with hoặc finally
+        cursor.close()
+        connection.close()
+
+        # Tạo DataFrame với tên cột phù hợp
+        df = pd.DataFrame(result, columns=[
+            'LINE', 'NAME_MACHINE', 'FORCE_1', 'FORCE_2', 
+            'FORCE_3', 'FORCE_4', 'STATE', 'TIME_UPDATE'
+        ])
+
+        # Tạo timestamp cho tên file duy nhất
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'du_lieu_luc_vit_{timestamp}.xlsx'
+
+        # Tạo file Excel trong bộ nhớ
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Dữ liệu lực vít')
+            
+            # Lấy đối tượng workbook và worksheet để áp dụng định dạng
+            workbook = writer.book
+            worksheet = writer.sheets['Dữ liệu lực vít']
+            
+            # Thêm định dạng cơ bản
+            header_format = workbook.add_format({
+                'bold': True,
+                'font_size': 12,
+                'bg_color': '#D3D3D3'
+            })
+            
+            # Áp dụng định dạng header
+            for col_num, value in enumerate(df.columns.values):
+                worksheet.write(0, col_num, value, header_format)
+                
+            # Tự động điều chỉnh độ rộng cột
+            for column in df:
+                column_length = max(df[column].astype(str).apply(len).max(), len(column))
+                col_idx = df.columns.get_loc(column)
+                worksheet.set_column(col_idx, col_idx, column_length + 2)
+
+        # Đặt lại vị trí buffer
+        output.seek(0)
+
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename  # Sử dụng download_name thay vì attachment_filename
+        )
+
+    except Exception as e:
+        # Ghi log lỗi để debug
+        app.logger.error(f"Lỗi tải xuống Excel: {str(e)}")
+        flash("Đã xảy ra lỗi khi tạo file Excel. Vui lòng thử lại sau.", "error")
+        return redirect(url_for('dashboard'))
+
 if __name__=='__main__':
     app.run(debug=True)
 
