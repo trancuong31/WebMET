@@ -82,22 +82,33 @@
             </a>
           </li>
         </ul>
-      </nav>   
+      </nav>
+      <div id="loading" class="loading-overlay" style="display:none;">
+        <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading..."/>
+      </div> 
+      <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
       <div class="container">
+        
         <header>MET
         </header>
         <div class="mainContent">
           <div class="content">
             <h1 style="padding: 10px;">Infomation screw</h1>
+            <div class="dowfile">
+              <a href="{{ url_for('download_excel') }}">Dowload</a>
+            </div>
             <div class="tbl-header">
-              <table cellpadding="0" cellspacing="0" border="0">
+              
+              <table  cellpadding="0" cellspacing="0" border="0">
                 <thead>
                   <tr>
+                    <th>STT</th>
                     <th>LINE</th>
                     <th>NAME MACHINE</th>
                     <th>SCREW FORCE 1</th>
                     <th>SCREW FORCE 2</th>
                     <th>SCREW FORCE 3</th>
+                    <th>SCREW FORCE 4</th>
                     <th>TIME UPDATE</th>
                     <th>STATE</th>
                   </tr>
@@ -105,318 +116,53 @@
               </table>
             </div>
             <div class="tbl-content">
-              <table cellpadding="0" cellspacing="0" border="0">
+              <table id="result-table" cellpadding="0" cellspacing="0" border="0">
                 <tbody>
+                  {% for row in rows %}
                   <tr>
-                    <td>AAC</td>
-                    <td>AUSTRALIAN COMPANY </td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+2.01</td>
-                    <td>-0.36%</td>
+                      <td>{{ row.stt }}</td>
+                      <td>{{ row.line }}</td>
+                      <td>{{ row.name_machine }}</td>
+                      <td>{{ row.force_1 }}</td>
+                      <td>{{ row.force_2 }}</td>
+                      <td>{{ row.force_3 }}</td>
+                      <td>{{ row.force_4 }}</td>
+                      <td>{{ row.time_update }}</td>
+                      <td>{{ row.state }}</td>
                   </tr>
-                  <tr>
-                    <td>AAD</td>
-                    <td>AUSENCO</td>
-                    <td>$2.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-0.01</td>
-                    <td>-1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAX</td>
-                    <td>ADELAIDE</td>
-                    <td>$3.22</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+0.01</td>
-                    <td>+1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>XXD</td>
-                    <td>ADITYA BIRLA</td>
-                    <td>$1.02</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-1.01</td>
-                    <td>+2.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAC</td>
-                    <td>AUSTRALIAN COMPANY </td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+2.01</td>
-                    <td>-0.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAD</td>
-                    <td>AUSENCO</td>
-                    <td>$2.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-0.01</td>
-                    <td>-1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAX</td>
-                    <td>ADELAIDE</td>
-                    <td>$3.22</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+0.01</td>
-                    <td>+1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>XXD</td>
-                    <td>ADITYA BIRLA</td>
-                    <td>$1.02</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-1.01</td>
-                    <td>+2.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAC</td>
-                    <td>AUSTRALIAN COMPANY </td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+2.01</td>
-                    <td>-0.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAD</td>
-                    <td>AUSENCO</td>
-                    <td>$2.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-0.01</td>
-                    <td>-1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAX</td>
-                    <td>ADELAIDE</td>
-                    <td>$3.22</td>
-                    <td>+0.01</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>XXD</td>
-                    <td>ADITYA BIRLA</td>
-                    <td>$1.02</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-1.01</td>
-                    <td>+2.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAC</td>
-                    <td>AUSTRALIAN COMPANY </td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+2.01</td>
-                    <td>-0.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAD</td>
-                    <td>AUSENCO</td>
-                    <td>$2.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-0.01</td>
-                    <td>-1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAX</td>
-                    <td>ADELAIDE</td>
-                    <td>$3.22</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+0.01</td>
-                    <td>+1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>XXD</td>
-                    <td>ADITYA BIRLA</td>
-                    <td>$1.02</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-1.01</td>
-                    <td>+2.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAC</td>
-                    <td>AUSTRALIAN COMPANY </td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+2.01</td>
-                    <td>-0.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAD</td>
-                    <td>AUSENCO</td>
-                    <td>$2.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-0.01</td>
-                    <td>-1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAX</td>
-                    <td>ADELAIDE</td>
-                    <td>$3.22</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+0.01</td>
-                    <td>+1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>XXD</td>
-                    <td>ADITYA BIRLA</td>
-                    <td>$1.02</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-1.01</td>
-                    <td>+2.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAC</td>
-                    <td>AUSTRALIAN COMPANY </td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+2.01</td>
-                    <td>-0.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAD</td>
-                    <td>AUSENCO</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>$2.38</td>
-                    <td>-0.01</td>
-                    <td>-1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAX</td>
-                    <td>ADELAIDE</td>
-                    <td>$3.22</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+0.01</td>
-                    <td>+1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>XXD</td>
-                    <td>ADITYA BIRLA</td>
-                    <td>$1.02</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-1.01</td>
-                    <td>+2.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAC</td>
-                    <td>AUSTRALIAN COMPANY </td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+2.01</td>
-                    <td>-0.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAD</td>
-                    <td>AUSENCO</td>
-                    <td>$2.38</td>
-                    <td>-0.01</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAX</td>
-                    <td>ADELAIDE</td>
-                    <td>$3.22</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+0.01</td>
-                    <td>+1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>XXD</td>
-                    <td>ADITYA BIRLA</td>
-                    <td>$1.02</td>
-                    <td>-1.01</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+2.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAC</td>
-                    <td>AUSTRALIAN COMPANY </td>
-                    <td>$1.38</td>
-                    <td>+2.01</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-0.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAD</td>
-                    <td>AUSENCO</td>
-                    <td>$2.38</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>-0.01</td>
-                    <td>-1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>AAX</td>
-                    <td>ADELAIDE</td>
-                    <td>$3.22</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+0.01</td>
-                    <td>+1.36%</td>
-                  </tr>
-                  <tr>
-                    <td>XXD</td>
-                    <td>ADITYA BIRLA</td>
-                    <td>$1.02</td>
-                    <td>-1.01</td>
-                    <td>$1.38</td>
-                    <td>$1.38</td>
-                    <td>+2.36%</td>
-                  </tr>
-                </tbody>
+            {% endfor %}
+              </tbody>
               </table>
             </div>
-            <script>
-              $(window).on("load resize ", function() {
-              var scrollWidth = $('.tbl-content').width() - $('.tbl-content table').width();
-              $('.tbl-header').css({'padding-right':scrollWidth});
-              }).resize();
-            </script>
-            <div class="dowfile">
-              <a href="{{ url_for('download_excel') }}">Dowload</a>
+            <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+            
+            <div class="filter">
+              Line: <input type="text" name="line" id="line">
+              Time: <input type="date" name="time_update" id="time_update">
+              State: <input type="text" name="state" id="state">
+              <input style="margin-left: 1em; transition: all .5s ease-in-out;" type="submit" value="Search" id="filter">
             </div>
+            <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
           </div>
+          <div class="pagination">
+            <!-- Link "Lùi" để di chuyển về nhóm trang trước -->
+            <a href="{{ url_for('dashboard', page=group_start - group_size) }}" class="{% if group_start == 1 %}disabled{% endif %}">&laquo;</a>
+    
+            <!-- Hiển thị các trang trong nhóm -->
+            {% for p in range(group_start, group_end + 1) %}
+                <a href="{{ url_for('dashboard', page=p) }}" class="{% if p == page %}active{% endif %}">{{ p }}</a>
+            {% endfor %}
+    
+            <!-- Link "Tiến" để di chuyển về nhóm trang tiếp theo -->
+            <a href="{{ url_for('dashboard', page=group_end + 1) }}" class="{% if group_end == total_pages %}disabled{% endif %}">&raquo;</a>
+        </div>
           <div class="chartContent">
             <div class="pieChartInfo">
               <div><h4>Name Chart</h4></div>
               <figure class="highcharts-figure">
                 <div id="container"></div>
                 <p class="highcharts-description">
-                    Pie chart showing a hollow semi-circle. This is a compact visualization,
-                    often used in dashboards.
-                </p>
+                    Pie chart showing a hollow semi-circle. The chart has 1 series of data, and the data is presented in a pie slice format.</p>
             </figure>
             <script>
               Highcharts.chart('container', {
@@ -474,6 +220,9 @@
             }
           });
             </script>
+            </div>
+            <div class="chartRight">
+              <div><h1 style="align-items: center;">Content</h1></div>
             </div>
           </div>
           </div>

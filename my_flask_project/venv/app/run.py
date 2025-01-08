@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify, abort, render_template, redirect, flash, send_file, make_response, url_for, send_from_directory
-import oracledb, datetime
+import oracledb
 from flask_cors import CORS
 import jwt
 import os, io
+from datetime import datetime, timezone, timedelta
 from werkzeug.utils import secure_filename
 import pandas as pd
 app = Flask(__name__)
@@ -16,8 +17,6 @@ DB_CONFIG = {
 # Thư mục lưu file tải lên
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# Cho phép các loại file
 ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'jpg', 'jpeg', 'png'}
 CORS(app) 
 # Hàm kết nối Oracle
@@ -32,21 +31,21 @@ def get_db_connection():
     except oracledb.DatabaseError as e:
         print(f"Lỗi kết nối cơ sở dữ liệu: {e}")
         abort(500, description="Không thể kết nối cơ sở dữ liệu.")
-@app.route('/configForm', methods=['GET'])
-def show_form():
-    token = request.cookies.get('token')
-    if not token:
-        return redirect(('login'))
-    try:
-        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-        username = data['username']
-    except jwt.ExpiredSignatureError:
-        flash('Token has expired, please log in again.', 'error')
-        return redirect(('login'))
-    except jwt.InvalidTokenError:
-        flash('Invalid token, please log in again.', 'error')
-        return redirect(('login'))
-    return render_template('index.html', username=username)
+# @app.route('/configForm', methods=['GET'])
+# def show_form():
+#     token = request.cookies.get('token')
+#     if not token:
+#         return redirect(('login'))
+#     try:
+#         data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+#         username = data['username']
+#     except jwt.ExpiredSignatureError:
+#         flash('Token has expired, please log in again.', 'error')
+#         return redirect(('login'))
+#     except jwt.InvalidTokenError:
+#         flash('Invalid token, please log in again.', 'error')
+#         return redirect(('login'))
+#     return render_template('index.html', username=username)
 @app.route('/adminDashboard', methods=['GET'])
 def admin_dashboard():
     token = request.cookies.get('token')
@@ -67,24 +66,107 @@ def admin_dashboard():
 
 @app.route('/index1', methods=['GET'])
 def index1():
-    return render_template('index1.html')
+    token = request.cookies.get('token')
+    if not token:
+        return redirect(('login'))
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        username = data['username']
+    except jwt.ExpiredSignatureError:
+        flash('Token has expired, please log in again.', 'error')
+        return redirect(('login'))
+    except jwt.InvalidTokenError:
+        flash('Invalid token, please log in again.', 'error')
+        return redirect(('login'))
+    return render_template('index1.html', username=username)
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
-    return render_template('dashboard.html')
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 10 
+        offset = (page - 1) * per_page 
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        query = """
+            SELECT 
+                ROWNUM as stt,
+                t.line, 
+                t.name_machine, 
+                t.force_1, 
+                t.force_2, 
+                t.force_3, 
+                t.force_4,
+                t.time_update,
+                t.state
+            FROM (
+                SELECT 
+                    line, 
+                    name_machine, 
+                    force_1, 
+                    force_2, 
+                    force_3, 
+                    force_4,
+                    TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
+                    state
+                FROM SCREW_FORCE_INFO 
+                ORDER BY time_update DESC
+                OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+            ) t
+        """
+        
+        cursor.execute(query, {"offset": offset, "limit": per_page})
+        rows = []
+        for row in cursor:
+            rows.append({
+                'stt': row[0],
+                'line': row[1],
+                'name_machine': row[2],
+                'force_1': row[3],
+                'force_2': row[4], 
+                'force_3': row[5],
+                'force_4': row[6],
+                'time_update': row[7],
+                'state': row[8]
+            })
+
+        # Tính tổng số trang
+        cursor.execute("SELECT COUNT(*) FROM SCREW_FORCE_INFO")
+        total_records = cursor.fetchone()[0]
+        total_pages = (total_records + per_page - 1) // per_page  # Tính số trang
+        # Tính toán nhóm các trang hiển thị (5 trang mỗi lần)
+        group_size = 5
+        group_start = ((page - 1) // group_size) * group_size + 1
+        group_end = min(group_start + group_size - 1, total_pages)
+        # Trả về template với dữ liệu phân trang
+        return render_template('dashboard.html', rows=rows, page=page, total_pages=total_pages, 
+                               group_start=group_start, group_end=group_end, group_size=group_size)
+
+
+    except Exception as e:
+        app.logger.error(f"Error querying data: {str(e)}")
+        return render_template('dashboard.html', error=str(e))
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
 
 @app.route('/logout', methods=['GET'])
 def logout():
     resp = make_response(redirect(('login')))
     resp.delete_cookie('token')
     return resp
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST', 'GET'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username').strip()
         password = request.form.get('password').strip()
-        # Kết nối tới cơ sở dữ liệu
+
         try:
+            # Kết nối tới cơ sở dữ liệu
             connection = get_db_connection()
             cursor = connection.cursor()
             query = """
@@ -94,28 +176,31 @@ def login():
             """
             cursor.execute(query, {"username": username, "password": password})
             rows = cursor.fetchone()
+
             if rows and rows[0] > 0:
-                token = jwt.encode({
+                # Tạo JWT token
+                access_token = jwt.encode({
                     'username': username,
-                    'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1) ,
+                    'exp': datetime.now(timezone.utc) + timedelta(hours=1),  # Token hết hạn sau 1 giờ
                     'type': 'access'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
+
                 refresh_token = jwt.encode({
-                    'username' : username,
-                    'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=7),
+                    'username': username,
+                    'exp': datetime.now(timezone.utc) + timedelta(days=7),  # Refresh token hết hạn sau 7 ngày
                     'type': 'refresh'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
-                if username == 'admin':
-                    resp = make_response(redirect(('adminDashboard')))
-                else:
-                    resp = make_response(redirect(('index1')))
-                resp.set_cookie('token', token, httponly=True, secure=True, max_age=60*60) #1h
-                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60) #7 days  
+                resp = make_response(redirect(('index1')))
+                # Trả về JSON chứa các token
+                resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60) #1h
+                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60) #7 days 
                 return resp
             else:
                 return render_template('login.html', error='Incorrect username or password')
+
         except Exception as e:
-            flash(f"Database error: {e}", "error")
+            return jsonify({'error': f'Database error: {e}'}), 500 
+
         finally:
             if cursor:
                 cursor.close()
@@ -483,6 +568,85 @@ def download_excel():
         flash("Đã xảy ra lỗi khi tạo file Excel. Vui lòng thử lại sau.", "error")
         return redirect(url_for('dashboard'))
 
+@app.route('/filter', methods=['POST'])
+def filter_data():
+    try:
+        data = request.json
+        line = data.get('line') if data.get('line') != "" else None
+        time_update = data.get('time_update') if data.get('time_update') != "" else None
+        state = data.get('state') if data.get('state') != "" else None
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        base_query = """
+            SELECT line, name_machine, force_1, force_2, force_3, force_4, TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update, 
+                   state
+            FROM Screw_force_info
+            WHERE 1=1
+        """
+        params = {}
+        # Xử lý điều kiện cho line
+        if line is not None:
+            base_query += " AND UPPER(line) = UPPER(:line)"
+            params['line'] = line
+        if time_update is not None:
+            base_query += """ 
+                AND time_update >= TO_DATE(:start_date, 'YYYY-MM-DD')
+                AND time_update < TO_DATE(:end_date, 'YYYY-MM-DD') + 1
+            """
+            params['start_date'] = time_update
+            params['end_date'] = time_update
+
+        # Xử lý điều kiện cho state
+        if state is not None:
+            base_query += " AND UPPER(state) = UPPER(:state)"
+            params['state'] = state
+        base_query += """ 
+            ORDER BY time_update DESC
+            FETCH FIRST 1000 ROWS ONLY
+        """
+        cursor.execute(base_query, params)
+
+        # Lấy kết quả
+        results = []
+        stt=1
+        for row in cursor:
+            results.append({
+                "stt": stt,
+                "line": row[0],
+                "name_machine": row[1],
+                "force_1": row[2],
+                "force_2": row[3],
+                "force_3": row[4],
+                "force_4": row[5],
+                "time_update": row[6],
+                "state": row[7]
+            })
+            stt+=1
+        cursor.close()
+        connection.close()
+        applied_filters = {
+            "line": line,
+            "date": time_update,
+            "state": state
+        }
+        
+        return jsonify({
+            "success": True,
+            "data": results,
+            "count": len(results),
+            "applied_filters": applied_filters,
+            "message": f"Đã tìm thấy {len(results)} kết quả"
+        }), 200
+
+    except Exception as e:
+        # Log lỗi
+        app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
+            "message": str(e)
+        }), 500
 if __name__=='__main__':
     app.run(debug=True)
 

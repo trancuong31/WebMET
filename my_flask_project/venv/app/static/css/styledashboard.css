@@ -126,13 +126,13 @@ fieldset {
     padding: .5em 0;
     border: none;
 }
-input {
+/* input {
     padding: .8em 1.2em;
     font-size: var(--paragraph);
     background-color: hsl(var(--grooble));
     border: 2px solid hsl(var(--grooble));
     outline: none;
-}
+} */
 textarea {
     padding: .8em 1.2em;
     font-size: var(--paragraph);
@@ -141,7 +141,7 @@ textarea {
     border: 2px solid hsl(var(--grooble));
     outline: none;
 }
-input, textarea {
+input, textarea, select {
     transition: all .2s ease-in-out;
 }
 input:hover, input:focus, textarea:hover, textarea:focus {
@@ -156,18 +156,6 @@ select {
     font-size: var(--paragraph);
     outline: none;
 }
-
-/* =========
-    Classes
-   ========= */
-
-/* ================
-    Global classes
-   ================ */
-
-/* =========
-    Flexbox
-   ========= */
 
 .flexbox {
     display: flex;
@@ -397,7 +385,7 @@ select {
     height: 30px; 
 }
 header{
-    background-image: url("/static/images/header1.png");
+    background-image: url("/static/images/header4.png");
     height: 1em;
     margin-left: 2%;
     background-repeat: no-repeat;
@@ -572,6 +560,56 @@ header{
   .content{
     position: relative;
   }
+  .filter{
+    position: absolute;
+    top: 20px;
+    left: 0;
+    width: 40%;
+    color: #fff;
+    border-bottom: #fff;
+    /* background-color: rgb(97, 96, 94); */
+    box-sizing: border-box;
+    /* border: 1px solid rgba(255,255,255,0.3); */
+  }
+  .filter input, select{
+    color: #fff;
+    outline: none;
+    background-color: unset;
+    border-radius: unset;
+    width: 7em;
+  }
+  .pagination {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.2em;
+  }
+  
+  .pagination a {
+    color: black;
+    float: left;
+    padding: 8px 16px;
+    background-color: #ebebeb;
+    text-decoration: none;
+    border: 1px solid #ddd;
+  }
+  
+  .pagination a.active {
+    background-color: #3045ff;
+    color: white;
+    border: 1px solid #3045ff;
+  }
+  
+  .pagination a:hover:not(.active) {background-color: #ddd;}
+  
+  .pagination a:first-child {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+  }
+  
+  .pagination a:last-child {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
   .chartContent{
     position: relative;
     margin-top: 1em;
@@ -585,10 +623,20 @@ header{
     position: absolute;
     top: 0;
     left: 0;
+    width: 30%;
     padding: 10px;
     box-sizing: border-box;
     border: 1px solid rgba(255,255,255,0.3);
 
+  }
+  .chartRight{
+    position: absolute;
+    box-sizing: border-box;
+    top: 0;
+    right: 0;
+    
+    width: 70%;
+    border: 1px solid rgba(255,255,255,0.3);
   }
   .dowfile{
     position: absolute;
@@ -624,9 +672,18 @@ header{
     margin-top: 0px;
     border: 1px solid rgba(255,255,255,0.3);
   }
+    .state-pass {
+    background-color: #2e5bf0;
+    font-weight: bold;
+    }
+
+    .state-fail {
+        background-color: #eb4d5a;
+        font-weight: bold;
+    }
   th{
     padding: 20px 15px;
-    text-align: left;
+    text-align: center;
     font-weight: 500;
     font-size: 12px;
     color: #fff;
@@ -634,7 +691,7 @@ header{
   }
   td{
     padding: 15px;
-    text-align: left;
+    text-align: center;
     vertical-align:middle;
     font-weight: 300;
     font-size: 12px;
@@ -696,4 +753,42 @@ header{
 
 .highcharts-description {
     margin: 0.3rem 10px;
+}
+#loading {
+  text-align: center;
+  padding: 10px;
+  justify-content: center;
+}
+
+#loading img {
+  width: 50px;
+  height: 50px;
+  margin-top: 25em;
+}
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  display: none;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 5px solid #3498db;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

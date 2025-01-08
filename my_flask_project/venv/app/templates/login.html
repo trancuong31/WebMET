@@ -12,7 +12,7 @@
         <div class="shape"></div>
         <div class="shape"></div>
     </div>
-    <form id="form" action="{{ url_for('login') }}" method="POST" onsubmit="return validateForm(event)">
+    <form style="height: 550px;" id="form" action="{{ url_for('login') }}" method="POST">
         <h3>Login</h3>
         {% if error %}
         <div id="alert"> {{error}} </div>
@@ -67,22 +67,5 @@
         }
     </script>
 
-    <div class="snowflakes" aria-hidden="true">
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        <div class="snowflake">❅</div>
-        <div class="snowflake">❆</div>
-        </div>
 </body>
 </html>
