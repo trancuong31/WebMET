@@ -1,8 +1,8 @@
 :root {
     --primary: 237, 94%, 81%;
     --background: 266, 16%, 92%;
-    --background-secondary: 218, 10%, 28%;
-    --background-secondary-dark: 218, 10%, 28%;
+    --background-secondary: 187, 30%, 50%;
+    --background-secondary-dark: 187, 30%, 50%;
     --background-secondary-light: 218, 100%, 46%;
     --text-primary: 0, 0%, 100%;
     /* Colors */
@@ -126,13 +126,9 @@ fieldset {
     padding: .5em 0;
     border: none;
 }
-/* input {
-    padding: .8em 1.2em;
-    font-size: var(--paragraph);
-    background-color: hsl(var(--grooble));
-    border: 2px solid hsl(var(--grooble));
-    outline: none;
-} */
+input {
+    background-color: rgba(21, 226, 253, 0.3);;
+}
 textarea {
     padding: .8em 1.2em;
     font-size: var(--paragraph);
@@ -149,6 +145,7 @@ input:hover, input:focus, textarea:hover, textarea:focus {
             0 0 0 2px hsl(var(--black)),
             0 0 0 3px hsl(var(--white));
     border: 2px solid transparent;
+    border-radius: 2px;
 }
 select {
     padding: .8em 1.2em;
@@ -567,39 +564,43 @@ header{
     width: 40%;
     color: #fff;
     border-bottom: #fff;
-    /* background-color: rgb(97, 96, 94); */
     box-sizing: border-box;
-    /* border: 1px solid rgba(255,255,255,0.3); */
+  }
+  #filter:hover{
+    background-color: #6fddff;
+    color: #333;
+    font-weight: bold;
+    transition: all .5s ease-in-out;
   }
   .filter input, select{
     color: #fff;
     outline: none;
-    background-color: unset;
     border-radius: unset;
     width: 7em;
   }
   .pagination {
     display: flex;
     justify-content: flex-end;
+    
     margin-top: 0.2em;
   }
   
   .pagination a {
-    color: black;
+    color: #fff;
     float: left;
     padding: 8px 16px;
-    background-color: #ebebeb;
+    background-color: unset;
     text-decoration: none;
     border: 1px solid #ddd;
   }
   
   .pagination a.active {
-    background-color: #3045ff;
+    background-color: rgb(21,226,253,0.4);
     color: white;
-    border: 1px solid #3045ff;
+    border: 1px solid rgb(21,226,253,0.4);
   }
   
-  .pagination a:hover:not(.active) {background-color: #ddd;}
+  .pagination a:hover:not(.active) {background-color: #696666;}
   
   .pagination a:first-child {
     border-top-left-radius: 5px;
@@ -643,18 +644,18 @@ header{
     top: 0;
     margin-top: 2em;
     right: 0;
-    background-color: rgb(97, 96, 94);
+    background-color: rgba(21, 226, 253, 0.3);
     transform: translate(-50%, -50%);
     text-align: center;
   }
   .dowfile a {
     text-decoration: none;
     color: #fff;
-    padding: 10px 20px;
+    padding: 5px;
     display: block;
   }
   .dowfile a:hover{
-    background-color: #f2f2f2;
+    background-color: #6fddff;
     color: #333;
     transition: all .5s ease-in-out;
     
@@ -664,7 +665,7 @@ header{
     table-layout: fixed;
   }
   .tbl-header{
-    background-color: rgba(255,255,255,0.3);
+    background-color: rgba(21, 226, 253, 0.3);
    }
   .tbl-content{
     height:275px;

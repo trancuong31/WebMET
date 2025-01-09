@@ -4,15 +4,17 @@ $(window).on("load resize ", function() {
     $('.tbl-header').css({'padding-right':scrollWidth});
     }).resize();
 //Load data table
-// Bắt sự kiện click của nút "Search"
+
 document.getElementById('filter').addEventListener('click', function() {
     // Lấy giá trị từ các input
     const line = document.getElementById('line').value.trim();
     const time_update = document.getElementById('time_update').value.trim();
+    const time_end = document.getElementById('time_end').value.trim();
     const state = document.getElementById('state').value.trim();
     const payload = {
         line: line !== '' ? line : null,
         time_update: time_update !== '' ? time_update : null,
+        time_end: time_end !== '' ? time_end : null,
         state: state !== '' ? state : null
     };
     document.getElementById('loading').style.display = 'block'; 
@@ -75,5 +77,88 @@ async function fetchData(page) {
       // Ẩn GIF khi đã tải xong dữ liệu
       document.getElementById("loading").style.display = "none";
     }
-  }
-  
+  } 
+  // load patirion
+  document.addEventListener("DOMContentLoaded", function () {
+    const tableBody = document.getElementById("table-body");
+    const paginationDiv = document.getElementById("pagination");
+
+    // Hàm tải dữ liệu trang
+    function fetchPage(page = 1) {
+        fetch(`/dashboard?page=${page}`, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.data) {
+                    updateTable(data.data);
+                    updatePagination(data.page, data.total_pages, data.group_start, data.group_end);
+                } else {
+                    tableBody.innerHTML = `<tr><td colspan="9">Không tìm thấy dữ liệu.</td></tr>`;
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching page data:", error);
+                tableBody.innerHTML = `<tr><td colspan="9">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
+            });
+    }
+
+    // Hàm cập nhật bảng
+    function updateTable(rows) {
+        tableBody.innerHTML = rows.map(row => `
+            <tr>
+                <td>${row.stt}</td>
+                <td>${row.line}</td>
+                <td>${row.name_machine}</td>
+                <td>${row.force_1}</td>
+                <td>${row.force_2}</td>
+                <td>${row.force_3}</td>
+                <td>${row.force_4}</td>
+                <td>${row.time_update}</td>
+                <td>${row.state}</td>
+            </tr>
+        `).join("");
+    }
+
+    // Hàm cập nhật phân trang
+    function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
+        paginationDiv.innerHTML = "";
+
+        // Nút "Lùi"
+        if (currentPage > 1) {
+            paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
+        }
+
+        // Các số trang
+        for (let i = groupStart; i <= groupEnd; i++) {
+            paginationDiv.innerHTML += `
+                <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
+            `;
+        }
+
+        // Nút "Tiến"
+        if (currentPage < totalPages) {
+            paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
+        }
+
+        bindPaginationEvents();
+    }
+
+    // Gắn sự kiện click cho các liên kết phân trang
+    function bindPaginationEvents() {
+        const links = paginationDiv.querySelectorAll(".page-link");
+        links.forEach(link => {
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+                const page = parseInt(this.getAttribute("data-page"), 10);
+                if (!isNaN(page)) {
+                    fetchPage(page);
+                }
+            });
+        });
+    }
+    fetchPage();
+});
+

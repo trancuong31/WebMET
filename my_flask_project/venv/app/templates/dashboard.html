@@ -18,7 +18,7 @@
       <nav id="navbar">
         <ul class="navbar-items flexbox-col">
           <li class="navbar-logo flexbox-left">
-            <a class="navbar-item-inner flexbox">
+            <a class="navbar-item-inner flexbox" href="{{ url_for('index1') }}">
               <span class="logo"></span>
                 <polygon points="925.79 318.48 830.56 0 183.51 1384.12 510.41 1178.46 925.79 318.48"/>
                 <polygon points="1438.88 1663.28 1126.35 948.08 111.98 1586.26 0 1819.54 1020.91 1250.57 1123.78 1471.02 783.64 1663.28 1438.88 1663.28"/>
@@ -26,11 +26,11 @@
             </a>
           </li>
           <li class="navbar-item flexbox-left">
-            <a class="navbar-item-inner flexbox-left"  href="{{ url_for('dashboard') }}" >
+            <a class="navbar-item-inner flexbox-left" style="color: #fff;"  href="{{ url_for('dashboard_page') }}" >
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="search-outline"></ion-icon>
               </div>
-              <span class="link-text">Dashboard</span>
+              <span class="link-text"><img style="width: 1em; height: 1em;" src="{{ url_for('static', filename='images/check.png') }}" alt=""> Dashboard</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -95,7 +95,7 @@
           <div class="content">
             <h1 style="padding: 10px;">Infomation screw</h1>
             <div class="dowfile">
-              <a href="{{ url_for('download_excel') }}">Dowload</a>
+              <a style="display: flex; flex-direction: column; " href="{{ url_for('download_excel') }}"><span><img style="width: 20px; height: 20px;" src="{{ url_for('static', filename='images/downloads.png') }}" alt=""></span>Export File</a>
             </div>
             <div class="tbl-header">
               
@@ -117,45 +117,26 @@
             </div>
             <div class="tbl-content">
               <table id="result-table" cellpadding="0" cellspacing="0" border="0">
-                <tbody>
-                  {% for row in rows %}
-                  <tr>
-                      <td>{{ row.stt }}</td>
-                      <td>{{ row.line }}</td>
-                      <td>{{ row.name_machine }}</td>
-                      <td>{{ row.force_1 }}</td>
-                      <td>{{ row.force_2 }}</td>
-                      <td>{{ row.force_3 }}</td>
-                      <td>{{ row.force_4 }}</td>
-                      <td>{{ row.time_update }}</td>
-                      <td>{{ row.state }}</td>
-                  </tr>
-            {% endfor %}
-              </tbody>
+                <tbody id="table-body">
+                </tbody>
               </table>
             </div>
             <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
             
             <div class="filter">
-              Line: <input type="text" name="line" id="line">
-              Time: <input type="date" name="time_update" id="time_update">
-              State: <input type="text" name="state" id="state">
-              <input style="margin-left: 1em; transition: all .5s ease-in-out;" type="submit" value="Search" id="filter">
+              Line: <input style="width: 3em;" type="text" name="line" id="line">
+              Time: <input  type="date" name="time_update" id="time_update">
+              To: <input type="date" name="time_end" id="time_end">
+              State: <input style="width: 3em;" type="text" name="state" id="state">
+              <input style="margin-left: 1em; transition: all .5s ease-in-out; padding: 0.5em; border-radius: 0.3em; " type="submit" value="Search" id="filter">
+              <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
             </div>
-            <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+            
           </div>
-          <div class="pagination">
-            <!-- Link "Lùi" để di chuyển về nhóm trang trước -->
-            <a href="{{ url_for('dashboard', page=group_start - group_size) }}" class="{% if group_start == 1 %}disabled{% endif %}">&laquo;</a>
-    
-            <!-- Hiển thị các trang trong nhóm -->
-            {% for p in range(group_start, group_end + 1) %}
-                <a href="{{ url_for('dashboard', page=p) }}" class="{% if p == page %}active{% endif %}">{{ p }}</a>
-            {% endfor %}
-    
-            <!-- Link "Tiến" để di chuyển về nhóm trang tiếp theo -->
-            <a href="{{ url_for('dashboard', page=group_end + 1) }}" class="{% if group_end == total_pages %}disabled{% endif %}">&raquo;</a>
+          <div class="pagination"  id="pagination">
+
         </div>
+        <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
           <div class="chartContent">
             <div class="pieChartInfo">
               <div><h4>Name Chart</h4></div>

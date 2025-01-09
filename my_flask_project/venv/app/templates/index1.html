@@ -4,10 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/stylesmain.css')}}"
-    />
+    <script src="{{ url_for('static', filename='js/toastify-js.js')}}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesmain.css') }}" />
     <title>THC</title>
   </head>
   <body>
@@ -23,7 +21,7 @@
             </a>
           </li>
           <li class="navbar-item flexbox-left">
-            <a class="navbar-item-inner flexbox-left"  href="{{ url_for('dashboard') }}" >
+            <a class="navbar-item-inner flexbox-left"  href="{{ url_for('dashboard_page') }}" >
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="search-outline"></ion-icon>
               </div>
@@ -85,7 +83,26 @@
         <header>MET
         </header>
         <div class="mainContent">
+          <script>
+            // Lấy query string từ URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+    
+            // Hiển thị toast nếu có thông báo
+            if (message === "success") {
+                Toastify({
+                    text: "Đăng nhập thành công!",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "center",
+                    backgroundColor: "green",
+                    close: true,
+            stopOnFocus: true,
+                }).showToast();
+            }
+        </script>
           <div class="content">
+            
             <p id="welcome">Welcome {{ username }} to Website</p>
           </div>
         </div>

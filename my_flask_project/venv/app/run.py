@@ -79,6 +79,21 @@ def index1():
         flash('Invalid token, please log in again.', 'error')
         return redirect(('login'))
     return render_template('index1.html', username=username)
+@app.route('/dashboard_page', methods=['GET'])
+def dashboard_page():
+    token = request.cookies.get('token')
+    if not token:
+        return redirect(('login'))
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        username = data['username']
+    except jwt.ExpiredSignatureError:
+        flash('Token has expired, please log in again.', 'error')
+        return redirect(('login'))
+    except jwt.InvalidTokenError:
+        flash('Invalid token, please log in again.', 'error')
+        return redirect(('login'))
+    return render_template('dashboard.html', username=username)
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -86,7 +101,11 @@ def dashboard():
         page = request.args.get('page', 1, type=int)
         per_page = 10 
         offset = (page - 1) * per_page 
-
+        # # Lấy tham số lọc
+        # data = request.json
+        # line = data.get('line') if data.get('line') != "" else None
+        # time_update = data.get('time_update') if data.get('time_update') != "" else None
+        # state = data.get('state') if data.get('state') != "" else None
         connection = get_db_connection()
         cursor = connection.cursor()
         query = """
@@ -111,7 +130,6 @@ def dashboard():
                     TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
                     state
                 FROM SCREW_FORCE_INFO 
-                ORDER BY time_update DESC
                 OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
             ) t
         """
@@ -134,16 +152,24 @@ def dashboard():
         # Tính tổng số trang
         cursor.execute("SELECT COUNT(*) FROM SCREW_FORCE_INFO")
         total_records = cursor.fetchone()[0]
-        total_pages = (total_records + per_page - 1) // per_page  # Tính số trang
-        # Tính toán nhóm các trang hiển thị (5 trang mỗi lần)
+        total_pages = (total_records + per_page - 1) // per_page 
         group_size = 5
+        if page<0 :
+            page = 1
+        elif page > total_pages:
+            page = total_pages
         group_start = ((page - 1) // group_size) * group_size + 1
         group_end = min(group_start + group_size - 1, total_pages)
-        # Trả về template với dữ liệu phân trang
-        return render_template('dashboard.html', rows=rows, page=page, total_pages=total_pages, 
-                               group_start=group_start, group_end=group_end, group_size=group_size)
 
-
+        return jsonify({
+            "data": rows,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": total_pages,
+            "total_records": total_records,
+            "group_start": group_start,
+            "group_end": group_end
+        })
     except Exception as e:
         app.logger.error(f"Error querying data: {str(e)}")
         return render_template('dashboard.html', error=str(e))
@@ -152,7 +178,6 @@ def dashboard():
             cursor.close()
         if connection:
             connection.close()
-
 
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -334,149 +359,7 @@ def get_options():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-@app.route('/tasks/<string:MACHINE_NO>', methods=['DELETE'])
-def delete_task(MACHINE_NO):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    if MACHINE_NO == "null" or MACHINE_NO.strip() == "":
-        MACHINE_NO = None
-        jsonify({"error": "Machine_no không tồn tại"}), 400
-    cursor.execute(
-        "DELETE FROM CNT_MACHINE_SUMMARY WHERE MACHINE_NO = :machine_no OR (:machine_no IS NULL AND MACHINE_NO IS NULL)", 
-        {"machine_no": MACHINE_NO}  
-    )
-    deleted_rows = cursor.rowcount
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-    # Nếu không xóa được dòng nào, trả về lỗi 404
-    if deleted_rows == 0:
-        abort(404, description="Công việc không tồn tại.")
-    
-    # Trả về kết quả thành công
-    return jsonify({"result": True})
-    
-@app.route('/tasks/submitConfig', methods=['POST'])
-def submitConfig():
-    try:
-        # Lấy dữ liệu từ form
-        machine_no = request.form.get('machineNo')
-        factory = request.form.get('factory')
-        status = request.form.get('status')
-        project_name = request.form.get('projectName')
-        if not all([machine_no, factory, status, project_name]):
-            return jsonify({"error": "Missing required fields"}), 400
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        sql = """
-            INSERT INTO CNT_MACHINE_INFO (MACHINE_NO, FACTORY, STATUS, PROJECT_NAME)
-            VALUES (:machine_no, :factory, :status, :project_name)
-        """
-        cursor.execute(sql, {
-            "machine_no": machine_no,
-            "factory": factory,
-            "status": int(status),
-            "project_name": project_name
-        })
-        connection.commit()
-        cursor.close()
-        return render_template('/result.html')
-    except Exception as e:
-        
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/returnHome', methods=['GET'])
-def returnHome():
-    return render_template('/index.html')
-
-@app.route('/countMachine', methods=['GET'])
-def getCountMachine():
-    connection = get_db_connection()
-    cursor= connection.cursor()
-    sql= """SELECT COUNT(*) FROM CNT_MACHINE_INFO"""
-    cursor.execute(sql)
-    result = cursor.fetchone()
-    countt= result[0]
-    cursor.close()
-    connection.close()
-    return countt
-
-@app.route('/chartData')
-def chart_data():
-    # Tạo dữ liệu mẫu
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    sql = """
-        SELECT ERROR_CODE, COUNT(ERROR_CODE)
-        FROM AUTOMATION_DATA_DETAIL
-        GROUP BY ERROR_CODE
-        ORDER BY COUNT(ERROR_CODE)
-    """
-    cursor.execute(sql)
-    result = cursor.fetchall()
-    labels = [row[0] for row in result]
-    data1 = [row[1] for row in result]
-    data = {
-        "labels": labels,
-        "datasets": [{
-            "label": "Count",
-            "data": data1,
-            "backgroundColor": [
-                "rgb(255, 99, 132)",
-                "rgb(54, 162, 235)",
-                "rgb(255, 205, 86)",
-                "rgb(255, 125, 86)",
-                "rgb(255, 205, 336)",
-                "rgb(55, 43, 86)",
-                "rgb(5, 105, 86)"
-            ] * len(labels),
-            "hoverOffset": 4
-        }]
-    }
-    return jsonify(data)
-@app.route('/chartData2')
-def chart_data2():
-    # Kết nối tới cơ sở dữ liệu
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    # Câu lệnh SQL lấy dữ liệu từ bảng CNT_MACHINE_SUMMARY
-    sql = """
-        SELECT WORK_DATE, RUN_TIME, ERROR_TIME
-        FROM CNT_MACHINE_SUMMARY
-        ORDER BY WORK_DATE DESC
-    """
-    cursor.execute(sql)
-    result = cursor.fetchall()
-    
-    # Tạo danh sách labels và data
-    labels = [str(row[0]) for row in result] 
-    runTime = [row[1] for row in result]
-    errorTime = [row[2] for row in result] 
-
-    # Cấu trúc dữ liệu trả về
-    data = {
-        "labels": labels,
-        "datasets": [
-            {
-                "label": "RUN TIME",
-                "data": runTime,
-                "borderColor": "rgb(54, 162, 235)",
-                "fill": False
-            },
-            {
-                "label": "ERROR TIME",
-                "data": errorTime,
-                "borderColor": "rgb(255, 99, 132)",
-                "fill": False
-            }
-        ]
-    }
-    cursor.close()
-    connection.close()
-    return jsonify(data)
-
+   
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -574,6 +457,7 @@ def filter_data():
         data = request.json
         line = data.get('line') if data.get('line') != "" else None
         time_update = data.get('time_update') if data.get('time_update') != "" else None
+        time_end = data.get('time_end') if data.get('time_end') != "" else None
         state = data.get('state') if data.get('state') != "" else None
         connection = get_db_connection()
         cursor = connection.cursor()
@@ -589,13 +473,16 @@ def filter_data():
         if line is not None:
             base_query += " AND UPPER(line) = UPPER(:line)"
             params['line'] = line
-        if time_update is not None:
-            base_query += """ 
-                AND time_update >= TO_DATE(:start_date, 'YYYY-MM-DD')
-                AND time_update < TO_DATE(:end_date, 'YYYY-MM-DD') + 1
-            """
-            params['start_date'] = time_update
-            params['end_date'] = time_update
+        if time_update and time_end:
+            base_query += " AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD') AND TO_DATE(:time_end, 'YYYY-MM-DD') + 1"
+            params['time_update'] = time_update
+            params['time_end'] = time_end
+        elif time_update and time_end is None:
+            base_query += " AND time_update >= TO_DATE(:time_update, 'YYYY-MM-DD')"
+            params['time_update'] = time_update
+        elif time_end and time_update is None:
+            base_query += " AND time_update <= TO_DATE(:time_end, 'YYYY-MM-DD') + 1"
+            params['time_end'] = time_end
 
         # Xử lý điều kiện cho state
         if state is not None:
@@ -647,6 +534,9 @@ def filter_data():
             "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
             "message": str(e)
         }), 500
+
+
+
 if __name__=='__main__':
     app.run(debug=True)
 
