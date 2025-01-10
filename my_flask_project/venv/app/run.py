@@ -6,6 +6,7 @@ import os, io
 from datetime import datetime, timezone, timedelta
 from werkzeug.utils import secure_filename
 import pandas as pd
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abc'
 # Thông tin kết nối đến Oracle Database
@@ -33,19 +34,19 @@ def get_db_connection():
         abort(500, description="Không thể kết nối cơ sở dữ liệu.")
 # @app.route('/configForm', methods=['GET'])
 # def show_form():
-#     token = request.cookies.get('token')
-#     if not token:
-#         return redirect(('login'))
-#     try:
-#         data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-#         username = data['username']
-#     except jwt.ExpiredSignatureError:
-#         flash('Token has expired, please log in again.', 'error')
-#         return redirect(('login'))
-#     except jwt.InvalidTokenError:
-#         flash('Invalid token, please log in again.', 'error')
-#         return redirect(('login'))
-#     return render_template('index.html', username=username)
+    token = request.cookies.get('token')
+    if not token:
+        return redirect(('login'))
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        username = data['username']
+    except jwt.ExpiredSignatureError:
+        flash('Token has expired, please log in again.', 'error')
+        return redirect(('login'))
+    except jwt.InvalidTokenError:
+        flash('Invalid token, please log in again.', 'error')
+        return redirect(('login'))
+    return render_template('index.html', username=username)
 @app.route('/adminDashboard', methods=['GET'])
 def admin_dashboard():
     token = request.cookies.get('token')
@@ -101,18 +102,16 @@ def dashboard():
         page = request.args.get('page', 1, type=int)
         per_page = 10 
         offset = (page - 1) * per_page 
-        # # Lấy tham số lọc
-        # data = request.json
-        # line = data.get('line') if data.get('line') != "" else None
-        # time_update = data.get('time_update') if data.get('time_update') != "" else None
-        # state = data.get('state') if data.get('state') != "" else None
         connection = get_db_connection()
         cursor = connection.cursor()
         query = """
             SELECT 
                 ROWNUM as stt,
+                t.factory,
                 t.line, 
                 t.name_machine, 
+                t.model_name,
+                t.serial_number,
                 t.force_1, 
                 t.force_2, 
                 t.force_3, 
@@ -121,11 +120,14 @@ def dashboard():
                 t.state
             FROM (
                 SELECT 
+                    factory,
                     line, 
                     name_machine, 
-                    force_1, 
-                    force_2, 
-                    force_3, 
+                    model_name,
+                    serial_number,
+                    force_1,
+                    force_2,
+                    force_3,
                     force_4,
                     TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
                     state
@@ -139,14 +141,17 @@ def dashboard():
         for row in cursor:
             rows.append({
                 'stt': row[0],
-                'line': row[1],
-                'name_machine': row[2],
-                'force_1': row[3],
-                'force_2': row[4], 
-                'force_3': row[5],
-                'force_4': row[6],
-                'time_update': row[7],
-                'state': row[8]
+                'factory': row[1],
+                'line': row[2],
+                'serial_number': row[3],
+                'model_name': row[4], 
+                'name_machine': row[5],
+                'force_1': row[6],
+                'force_2': row[7],
+                'force_3': row[8],
+                'force_4': row[9],
+                'time_update': row[10],
+                'state': row[11]
             })
 
         # Tính tổng số trang
@@ -178,6 +183,204 @@ def dashboard():
             cursor.close()
         if connection:
             connection.close()
+
+# @app.route('/filter', methods=['POST'])
+# def filter_data():
+#     try:
+#         data = request.json
+#         line = data.get('line') if data.get('line') != "" else None
+#         time_update = data.get('time_update') if data.get('time_update') != "" else None
+#         time_end = data.get('time_end') if data.get('time_end') != "" else None
+#         state = data.get('state') if data.get('state') != "" else None
+#         connection = get_db_connection()
+#         cursor = connection.cursor()
+
+#         base_query = """
+#             SELECT line, name_machine, force_1, force_2, force_3, force_4, TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update, 
+#                    state
+#             FROM Screw_force_info
+#             WHERE 1=1
+#         """
+#         params = {}
+        
+#         # Xử lý điều kiện cho line
+#         if line is not None:
+#             base_query += " AND UPPER(line) = UPPER(:line)"
+#             params['line'] = line
+#         if time_update and time_end:
+#             base_query += " AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS') AND TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS') "
+#             params['time_update'] = time_update
+#             params['time_end'] = time_end
+#         elif time_update :
+#             base_query += " AND time_update >= TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')"
+#             params['time_update'] = time_update
+#         elif time_end :
+#             base_query += " AND time_update <= TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')"
+#             params['time_end'] = time_end
+
+#         # Xử lý điều kiện cho state
+#         if state is not None:
+#             base_query += " AND UPPER(state) = UPPER(:state)"
+#             params['state'] = state
+#         base_query += """ 
+#             ORDER BY time_update DESC
+#             FETCH FIRST 1000 ROWS ONLY
+#         """
+#         cursor.execute(base_query, params)
+        
+#         # Lấy kết quả
+#         results = []
+#         stt=1
+#         for row in cursor:
+#             results.append({
+#                 "stt": stt,
+#                 "line": row[0],
+#                 "name_machine": row[1],
+#                 "force_1": row[2],
+#                 "force_2": row[3],
+#                 "force_3": row[4],
+#                 "force_4": row[5],
+#                 "time_update": row[6],
+#                 "state": row[7]
+#             })
+#             stt+=1
+#         cursor.close()
+#         connection.close()
+#         applied_filters = {
+#             "line": line,
+#             "date": time_update,
+#             "state": state
+#         }
+        
+#         return jsonify({
+#             "success": True,
+#             "data": results,
+#             "count": len(results),
+#             "applied_filters": applied_filters,
+#             "message": f"Đã tìm thấy {len(results)} kết quả"
+#         }), 200
+
+#     except Exception as e:
+#         # Log lỗi
+#         app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
+#         return jsonify({
+#             "success": False,
+#             "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
+#             "message": str(e)
+#         }), 500
+
+@app.route('/filter', methods=['POST'])
+def filter_data():
+    try:
+        data = request.json
+        line = data.get('line') if data.get('line') != "" else None
+        time_update = data.get('time_update') if data.get('time_update') != "" else None
+        time_end = data.get('time_end') if data.get('time_end') != "" else None
+        state = data.get('state') if data.get('state') != "" else None
+        page = data.get('page', 1)
+        per_page = data.get('per_page', 10)
+        offset = (page - 1) * per_page
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        base_query = """
+            SELECT factory,
+                    line, 
+                    name_machine, 
+                    model_name,
+                    serial_number,
+                    force_1,
+                    force_2,
+                    force_3,
+                    force_4, 
+                   TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update, 
+                   state
+            FROM Screw_force_info
+            WHERE 1=1
+        """
+        count_query = "SELECT COUNT(*) FROM Screw_force_info WHERE 1=1"
+        params = {}
+
+        # Xử lý điều kiện lọc
+        if line:
+            base_query += " AND UPPER(line) = UPPER(:line)"
+            count_query += " AND UPPER(line) = UPPER(:line)"
+            params['line'] = line
+        if time_update and time_end:
+            base_query += """
+                AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS') 
+                                    AND TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')
+            """
+            count_query += """
+                AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS') 
+                                    AND TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')
+            """
+            params['time_update'] = time_update
+            params['time_end'] = time_end
+        elif time_update:
+            base_query += " AND time_update >= TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')"
+            count_query += " AND time_update >= TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')"
+            params['time_update'] = time_update
+        elif time_end:
+            base_query += " AND time_update <= TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')"
+            count_query += " AND time_update <= TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')"
+            params['time_end'] = time_end
+        if state:
+            base_query += " AND UPPER(state) = UPPER(:state)"
+            count_query += " AND UPPER(state) = UPPER(:state)"
+            params['state'] = state
+
+        base_query += f" ORDER BY time_update DESC OFFSET {offset} ROWS FETCH NEXT {per_page} ROWS ONLY"
+
+        # Thực thi query dữ liệu
+        cursor.execute(base_query, params)
+        results = []
+        stt = offset + 1
+        for row in cursor:
+            results.append({
+                'stt': stt,  
+                'factory': row[0],
+                'line': row[1],
+                'name_machine': row[2],
+                'model_name': row[3],
+                'serial_number': row[4],
+                'force_1': row[5],
+                'force_2': row[6],
+                'force_3': row[7],
+                'force_4': row[8],
+                'time_update': row[9],
+                'state': row[10]
+            })
+            stt += 1
+
+        # Thực thi query đếm tổng số bản ghi
+        cursor.execute(count_query, params)
+        total_records = cursor.fetchone()[0]
+        total_pages = (total_records + per_page - 1) // per_page
+
+        cursor.close()
+        connection.close()
+
+        return jsonify({
+            "success": True,
+            "data": results,
+            "total_records": total_records,
+            "total_pages": total_pages,
+            "current_page": page,
+            "per_page": per_page,
+            "message": f"Đã tìm thấy {len(results)} kết quả"
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
+            "message": str(e)
+        }), 500
+
+
 
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -291,82 +494,47 @@ def register():
         return render_template('register.html')
     except Exception as e:
         flash(f"Database error: {e}", "error")
-
-# API: Lấy danh sách thông tin bảng CNT_MACHINE_SUMMARY
-@app.route('/tasks', methods=['GET'])
-def get_tasks():
-    # Kết nối cơ sở dữ liệu
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    # Lấy tham số phân trang từ request
-    page = int(request.args.get('page', 1))
-    per_page = int(request.args.get('per_page', 5))
-
-    # Tính toán offset
-    offset = (page - 1) * per_page
-    try:
-        # Đếm tổng số bản ghi
-        cursor.execute("SELECT COUNT(*) FROM CNT_MACHINE_SUMMARY")
-        total_records = cursor.fetchone()[0]  # Tổng số bản ghi
-        total_pages = (total_records + per_page - 1) // per_page
-        query = """
-            SELECT MACHINE_NO, WORK_DATE, RUN_TIME, NG_QTY
-            FROM CNT_MACHINE_SUMMARY
-            ORDER BY WORK_DATE DESC
-            OFFSET :offset ROWS FETCH NEXT :per_page ROWS ONLY
-        """
-        cursor.execute(query, {"offset": offset, "per_page": per_page})
-        rows = cursor.fetchall()
-        tasks = [
-            {"MACHINE_NO": row[0], "WORK_DATE": row[1], "RUN_TIME": row[2], "NG_QTY": row[3] or 0}
-            for row in rows
-        ]
-        response = {
-            "data": tasks,
-            "page": page,
-            "per_page": per_page,
-            "total_pages": total_pages,
-            "total_records": total_records
-        }
-        return jsonify(response)
-
-    except Exception as e:
-        # Xử lý lỗi nếu có vấn đề
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        cursor.close()
-        connection.close()
-
-# Route API để lấy danh sách options
-@app.route('/getOptions', methods=['GET'])
-def get_options():
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
-        # Truy vấn dữ liệu từ bảng
-        cursor.execute("SELECT machine_no, factory FROM cnt_machine_info")
-        rows = cursor.fetchall()  # Lấy tất cả dữ liệu từ truy vấn
-
-        # Chuyển đổi dữ liệu thành danh sách dictionary
-        options = [{"machine_no": row[0], "factory": row[1]} for row in rows]
-        connection.close()
-
-        # Trả về dữ liệu dưới dạng JSON
-        return jsonify(options)
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-   
+ 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Trang tải lên file
-@app.route('/')
-def upload_page():
-    return render_template('upload.html')
+#lấy total , output, fpy
+@app.route('/getinfo', methods=['GET'])
+def getinfo():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        query = """
+            SELECT COUNT(*) FROM SCREW_FORCE_INFO
+        """
+        cursor.execute(query)
+        total = cursor.fetchone()[0]
+        query = """
+            SELECT COUNT(*) FROM SCREW_FORCE_INFO WHERE STATE = 'PASS'
+        """
+        cursor.execute(query)
+        output = cursor.fetchone()[0]
+        query = """
+            SELECT COUNT(*) FROM SCREW_FORCE_INFO WHERE STATE = 'FAIL'
+        """
+        cursor.execute(query)
+        fail = cursor.fetchone()[0]
+        fpy = (output/total)*100
+        cursor.close()
+        connection.close()
+        return jsonify({
+            "total": total,
+            "output": output,
+            "fail": fail,
+            "fpy": fpy
+        })
+    except Exception as e:
+        app.logger.error(f"Error querying data: {str(e)}")
+        return jsonify({
+            "error": "Error querying data",
+            "message": str(e)
+        }), 500
+
 # Xử lý file tải lên
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -393,25 +561,63 @@ def upload_file():
     else:
         return "File not allowed"
 
+def fetch_filtered_data(filters):
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        query = """
+            SELECT line, name_machine, force_1, force_2, force_3, force_4, 
+                   TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update, 
+                   state
+            FROM Screw_force_info
+            WHERE 1=1
+        """
+         # Áp dụng các bộ lọc
+        params = {}
+        if filters.get('line'):
+            query += " AND UPPER(line) = UPPER(:line)"
+            params['line'] = filters['line']
+        if filters.get('time_update') and filters.get('time_end'):
+            query += """
+                AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS') 
+                                    AND TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')
+            """
+            params['time_update'] = filters['time_update']
+            params['time_end'] = filters['time_end']
+        elif filters.get('time_update'):
+            query += " AND time_update >= TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')"
+            params['time_update'] = filters['time_update']
+        elif filters.get('time_end'):
+            query += " AND time_update <= TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')"
+            params['time_end'] = filters['time_end']
+        if filters.get('state'):
+            query += " AND UPPER(state) = UPPER(:state)"
+            params['state'] = filters['state']
+
+        query += " ORDER BY time_update DESC"
+
+        # Thực thi query
+        cursor.execute(query, params)
+        result = cursor.fetchall()
+        cursor.close()
+        connection.close()
+
+        return result
+    except Exception as e:
+        app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
+        raise
+
 # Route để hiển thị hình ảnh
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-@app.route('/downloadExcel')
+@app.route('/downloadExcel', methods=['POST'])
 def download_excel():
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        query = """
-            SELECT LINE, NAME_MACHINE, FORCE_1, FORCE_2, FORCE_3, FORCE_4, STATE, TIME_UPDATE
-            FROM SCREW_FORCE_INFO
-            ORDER BY TIME_UPDATE DESC
-        """
-        cursor.execute(query)
-        result = cursor.fetchall()
-        cursor.close()
-        connection.close()
+        filters = request.json
+        result = fetch_filtered_data(filters)
         df = pd.DataFrame(result, columns=[
             'LINE', 'NAME_MACHINE', 'FORCE_1', 'FORCE_2', 
             'FORCE_3', 'FORCE_4', 'STATE', 'TIME_UPDATE'
@@ -451,89 +657,6 @@ def download_excel():
         flash("Đã xảy ra lỗi khi tạo file Excel. Vui lòng thử lại sau.", "error")
         return redirect(url_for('dashboard'))
 
-@app.route('/filter', methods=['POST'])
-def filter_data():
-    try:
-        data = request.json
-        line = data.get('line') if data.get('line') != "" else None
-        time_update = data.get('time_update') if data.get('time_update') != "" else None
-        time_end = data.get('time_end') if data.get('time_end') != "" else None
-        state = data.get('state') if data.get('state') != "" else None
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
-        base_query = """
-            SELECT line, name_machine, force_1, force_2, force_3, force_4, TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update, 
-                   state
-            FROM Screw_force_info
-            WHERE 1=1
-        """
-        params = {}
-        # Xử lý điều kiện cho line
-        if line is not None:
-            base_query += " AND UPPER(line) = UPPER(:line)"
-            params['line'] = line
-        if time_update and time_end:
-            base_query += " AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD') AND TO_DATE(:time_end, 'YYYY-MM-DD') + 1"
-            params['time_update'] = time_update
-            params['time_end'] = time_end
-        elif time_update and time_end is None:
-            base_query += " AND time_update >= TO_DATE(:time_update, 'YYYY-MM-DD')"
-            params['time_update'] = time_update
-        elif time_end and time_update is None:
-            base_query += " AND time_update <= TO_DATE(:time_end, 'YYYY-MM-DD') + 1"
-            params['time_end'] = time_end
-
-        # Xử lý điều kiện cho state
-        if state is not None:
-            base_query += " AND UPPER(state) = UPPER(:state)"
-            params['state'] = state
-        base_query += """ 
-            ORDER BY time_update DESC
-            FETCH FIRST 1000 ROWS ONLY
-        """
-        cursor.execute(base_query, params)
-
-        # Lấy kết quả
-        results = []
-        stt=1
-        for row in cursor:
-            results.append({
-                "stt": stt,
-                "line": row[0],
-                "name_machine": row[1],
-                "force_1": row[2],
-                "force_2": row[3],
-                "force_3": row[4],
-                "force_4": row[5],
-                "time_update": row[6],
-                "state": row[7]
-            })
-            stt+=1
-        cursor.close()
-        connection.close()
-        applied_filters = {
-            "line": line,
-            "date": time_update,
-            "state": state
-        }
-        
-        return jsonify({
-            "success": True,
-            "data": results,
-            "count": len(results),
-            "applied_filters": applied_filters,
-            "message": f"Đã tìm thấy {len(results)} kết quả"
-        }), 200
-
-    except Exception as e:
-        # Log lỗi
-        app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
-            "message": str(e)
-        }), 500
 
 
 

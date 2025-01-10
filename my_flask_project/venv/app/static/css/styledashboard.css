@@ -24,6 +24,7 @@
 html, body {
     margin: 0;
     width: 100%;
+    color: #fff;
     -webkit-font-smoothing: antialiased;
     scroll-behavior: smooth;
     box-sizing: border-box;
@@ -127,26 +128,27 @@ fieldset {
     border: none;
 }
 input {
-    background-color: rgba(21, 226, 253, 0.3);;
+    background-color: rgba(21, 226, 253, 0.3);
+    border-radius: 5px;
 }
-textarea {
+/* textarea {
     padding: .8em 1.2em;
     font-size: var(--paragraph);
     font-family: var(--font-main);
     background-color: hsl(var(--grooble));
     border: 2px solid hsl(var(--grooble));
     outline: none;
-}
+} */
 input, textarea, select {
     transition: all .2s ease-in-out;
 }
-input:hover, input:focus, textarea:hover, textarea:focus {
+/* input:hover, input:focus, textarea:hover, textarea:focus {
     box-shadow:
             0 0 0 2px hsl(var(--black)),
             0 0 0 3px hsl(var(--white));
     border: 2px solid transparent;
     border-radius: 2px;
-}
+} */
 select {
     padding: .8em 1.2em;
     border: 1px solid hsl(var(--black));
@@ -295,6 +297,7 @@ select {
     overflow: hidden;
     opacity: 0;
 }
+
 #navbar:hover .link-text {
     width: calc(100% - calc(5rem - 8px));
     opacity: 1;
@@ -635,15 +638,49 @@ header{
     box-sizing: border-box;
     top: 0;
     right: 0;
-    
     width: 70%;
     border: 1px solid rgba(255,255,255,0.3);
   }
-  .dowfile{
-    position: absolute;
+  .info-force{
+    display: flex;
+    flex-direction: row;
+    color: #fff;
     top: 0;
-    margin-top: 2em;
     right: 0;
+    /* position: absolute; */
+  }
+  .content-top{
+    top: 0;
+    right: 0;
+    width: 35%;
+    display: flex;
+    position: absolute;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .infor{
+    background-color: rgba(21, 226, 253, 0.3);
+    padding: 5px;
+    margin-right: 2em;
+    font-size: 1em;
+    width:auto;
+    text-align: center;
+    border-radius: 5px;
+    margin-bottom: 0.8em;
+
+  }
+  .infor:hover{
+    background-color: #6fddff;
+    color: #333;
+    transition: all .5s ease-in-out;
+  }
+  .dowfile{
+    /* position: absolute; */
+    /* top: 0; */
+    margin-top: 2em;
+    margin-left: 1.5em;
+    border-radius: 10px;
+    /* right: 0; */
     background-color: rgba(21, 226, 253, 0.3);
     transform: translate(-50%, -50%);
     text-align: center;
@@ -658,7 +695,6 @@ header{
     background-color: #6fddff;
     color: #333;
     transition: all .5s ease-in-out;
-    
   }
   table{
     width:100%;
@@ -674,13 +710,14 @@ header{
     border: 1px solid rgba(255,255,255,0.3);
   }
     .state-pass {
-    background-color: #2e5bf0;
+    color: #2e5bf0;
     font-weight: bold;
+
     }
 
     .state-fail {
-        background-color: #eb4d5a;
-        font-weight: bold;
+      color: #eb4d5a;
+      font-weight: bold;
     }
   th{
     padding: 20px 15px;

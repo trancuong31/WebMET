@@ -30,7 +30,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="search-outline"></ion-icon>
               </div>
-              <span class="link-text"><img style="width: 1em; height: 1em;" src="{{ url_for('static', filename='images/check.png') }}" alt=""> Dashboard</span>
+              <span  class="link-text"><img style="width: 1em; height: 1em;" src="{{ url_for('static', filename='images/check.png') }}" alt=""> Dashboard</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -86,7 +86,7 @@
       <div id="loading" class="loading-overlay" style="display:none;">
         <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading..."/>
       </div> 
-      <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+      <!-- <script src="{{ url_for('static', filename='js/scripts.js') }}"></script> -->
       <div class="container">
         
         <header>MET
@@ -94,22 +94,32 @@
         <div class="mainContent">
           <div class="content">
             <h1 style="padding: 10px;">Infomation screw</h1>
-            <div class="dowfile">
-              <a style="display: flex; flex-direction: column; " href="{{ url_for('download_excel') }}"><span><img style="width: 20px; height: 20px;" src="{{ url_for('static', filename='images/downloads.png') }}" alt=""></span>Export File</a>
+            
+            <div class="content-top">
+              <div ><p class="infor">Total: <span style="color: #fff;" id="total-records"></p></div>
+              <div ><p class="infor">Pass: <span style="color: rgb(2, 255, 158);" id="pass-records"></p></div>
+              <div ><p class="infor">Fail: <span style="color: red;" id="fail-records"></p></div>
+              <div ><p class="infor" >FPY: <span style="color: #fff;" id="fpy-percentage"></p></div>
+              <div class="dowfile">
+                <a id="download-excel" style="display: flex; flex-direction: column; "><span><img style="width: 20px; height: 20px;" src="{{ url_for('static', filename='images/downloads.png') }}" alt=""></span>Export File</a>
+                
+              </div>
             </div>
             <div class="tbl-header">
-              
               <table  cellpadding="0" cellspacing="0" border="0">
                 <thead>
                   <tr>
                     <th>STT</th>
+                    <th>FACTORY</th>
                     <th>LINE</th>
                     <th>NAME MACHINE</th>
-                    <th>SCREW FORCE 1</th>
-                    <th>SCREW FORCE 2</th>
-                    <th>SCREW FORCE 3</th>
-                    <th>SCREW FORCE 4</th>
-                    <th>TIME UPDATE</th>
+                    <th>MODEL NAME</th>
+                    <th>SERIAL NUMBER</th>
+                    <th>FORCE 1</th>
+                    <th>FORCE 2</th>
+                    <th>FORCE 3</th>
+                    <th>FORCE 4</th>
+                    <th>TIME</th>
                     <th>STATE</th>
                   </tr>
                 </thead>
@@ -121,20 +131,18 @@
                 </tbody>
               </table>
             </div>
-            <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
-            
+            <!-- filter -->
             <div class="filter">
               Line: <input style="width: 3em;" type="text" name="line" id="line">
-              Time: <input  type="date" name="time_update" id="time_update">
-              To: <input type="date" name="time_end" id="time_end">
+              Time: <input  type="datetime-local" name="time_update" id="time_update">
+              To: <input type="datetime-local" name="time_end" id="time_end">
               State: <input style="width: 3em;" type="text" name="state" id="state">
               <input style="margin-left: 1em; transition: all .5s ease-in-out; padding: 0.5em; border-radius: 0.3em; " type="submit" value="Search" id="filter">
-              <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+              <!-- <script src="{{ url_for('static', filename='js/scripts.js') }}"></script> -->
             </div>
             
           </div>
           <div class="pagination"  id="pagination">
-
         </div>
         <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
           <div class="chartContent">
