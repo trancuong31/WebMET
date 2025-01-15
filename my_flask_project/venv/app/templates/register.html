@@ -16,17 +16,17 @@
         <div id="alert"> {{error}} </div>
         {% endif %}
         <label for="username">Username</label>
-        <input style="color: #fff;" type="text" placeholder="Card ID" id="username" name="username">
+        <input style="color: #fff;" type="text" required placeholder="Card ID" id="username" name="username">
         <label for="username">Email</label>
-        <input style="color: #fff;" type="email" placeholder="Email" id="email" name="email">
+        <input style="color: #fff;" type="email" required placeholder="Email" id="email" name="email">
         <label for="password">Password</label>
         <div style="position: relative;">
-            <input style="color: #fff;" type="password" placeholder="Password" id="password" name="password">
+            <input style="color: #fff;" type="password" required placeholder="Password" id="password" name="password">
             <span class="toggle-password" onclick="togglePassword('password')" style="position: absolute; top: 50%; right: 1px; transform: translateY(-50%); cursor: pointer; color: #414040;">🙈</span>
         </div>
         <label for="cfPassword">Confirm Password</label>
         <div style="position: relative;">
-            <input style="color: #fff;" type="password" placeholder="Confirm Password" id="cfPassword" name="cfPassword">
+            <input style="color: #fff;" type="password" required placeholder="Confirm Password" id="cfPassword" name="cfPassword">
             <span class="toggle-password" onclick="togglePassword('cfPassword')" style="position: absolute; top: 50%; right: 1px; transform: translateY(-50%); cursor: pointer; color: #414040;">🙈</span>
         </div>
         <button type="submit">Sign Up</button>
@@ -43,7 +43,7 @@
                 showAlert("Username and password cannot be empty.");
                 return false;
             }
-            if (password !== cfPassword) {
+            if (password != cfPassword) {
                 event.preventDefault();
                 showAlert("Password and confirm password do not match.");
                 return false;

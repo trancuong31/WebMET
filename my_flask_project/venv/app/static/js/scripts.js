@@ -63,13 +63,14 @@ $(window).on("load resize ", function() {
 //     })
 //     .catch(error => console.error('Lỗi:', error));
 // });
-
+//filter data
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
     const paginationDiv = document.getElementById("pagination");
 
     // Xử lý sự kiện filter
     document.getElementById('filter').addEventListener('click', function () {
+        event.preventDefault();
         this.dataset.filtering = 'true'; 
         fetchFilteredData(1); 
     });
@@ -77,10 +78,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // Hàm gọi API filter
     function fetchFilteredData(page = 1) {
         // Lấy giá trị từ các input
-        const line = document.getElementById('line').value.trim();
+        const line = document.getElementById('line-combobox').value.trim();
         const time_update = document.getElementById('time_update').value.trim();
         const time_end = document.getElementById('time_end').value.trim();
-        const state = document.getElementById('state').value.trim();
+        const state = document.getElementById('state-combobox').value.trim();
 
         const formatDatetime = (datetime) => {
             return datetime ? datetime.replace('T', ' ') + ':00' : null;
@@ -95,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
             per_page: 10 
         };
 
-        document.getElementById('loading').style.display = 'block';
+        // document.getElementById('loading').style.display = 'block';
 
         fetch('/filter', {
             method: 'POST',
@@ -107,13 +108,14 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    document.getElementById('count').textContent = data.message ||""
                     updateTable(data.data);
                     updatePagination(data.current_page, data.total_pages, data.group_start, data.group_end);
                 } else {
                     tableBody.innerHTML = `<tr><td colspan="12">Không tìm thấy dữ liệu.</td></tr>`;
                     paginationDiv.innerHTML = '';
                 }
-                document.getElementById('loading').style.display = 'none';
+                // document.getElementById('loading').style.display = 'none';
             })
             .catch(error => {
                 console.error("Error fetching filtered data:", error);
@@ -147,7 +149,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }).join("");
     }
 
-    // Hàm cập nhật phân trang
     function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
         paginationDiv.innerHTML = "";
 
@@ -167,29 +168,34 @@ document.addEventListener("DOMContentLoaded", function () {
 
         bindPaginationEvents();
     }
-
     // Gắn sự kiện click phân trang
     function bindPaginationEvents() {
         const links = paginationDiv.querySelectorAll(".page-link");
         links.forEach(link => {
             link.addEventListener("click", function (event) {
-                event.preventDefault();
+                event.preventDefault(); // Ngăn trình duyệt refresh
+    
                 const page = parseInt(this.getAttribute("data-page"), 10);
                 if (!isNaN(page)) {
+                    // Kiểm tra trạng thái lọc hay dashboard
                     if (document.getElementById('filter').dataset.filtering === 'true') {
-                        fetchFilteredData(page); // Gọi filter nếu đang lọc
+                        fetchFilteredData(page);
                     } else {
-                        fetchPage(page); // Gọi dashboard nếu không lọc
+                        fetchPage(page);
                     }
                 }
             });
         });
     }
+    
 });
-
+//load table
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
     const paginationDiv = document.getElementById("pagination");
+    const POLLING_INTERVAL = 60000;
+
+    let currentPage = 1; 
 
     // Hàm gọi API dashboard
     function fetchPage(page = 1) {
@@ -212,31 +218,36 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Error fetching page data:", error);
                 tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
                 paginationDiv.innerHTML = '';
+            })
+            .finally(() => {
+                setTimeout(() => fetchPage(currentPage), POLLING_INTERVAL);
             });
     }
 
     // Hàm cập nhật bảng
     function updateTable(rows) {
-        tableBody.innerHTML = rows.map(row => {
-            const stateClass = row.state === 'PASS' ? 'state-pass' : 'state-fail';
+        while (tableBody.firstChild) {
+            tableBody.removeChild(tableBody.firstChild);
+        }
 
-            return `
-                <tr>
-                    <td>${row.stt}</td>
-                    <td>${row.factory}</td>
-                    <td>${row.line}</td>
-                    <td>${row.serial_number}</td>
-                    <td>${row.model_name}</td>
-                    <td>${row.name_machine}</td>
-                    <td>${row.force_1}</td>
-                    <td>${row.force_2}</td>
-                    <td>${row.force_3}</td>
-                    <td>${row.force_4}</td>
-                    <td>${row.time_update}</td>
-                    <td class="${stateClass}">${row.state}</td>
-                </tr>
+        rows.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${row.stt}</td>
+                <td>${row.factory}</td>
+                <td>${row.line}</td>
+                <td>${row.serial_number}</td>
+                <td>${row.model_name}</td>
+                <td>${row.name_machine}</td>
+                <td>${row.force_1}</td>
+                <td>${row.force_2}</td>
+                <td>${row.force_3}</td>
+                <td>${row.force_4}</td>
+                <td>${row.time_update}</td>
+                <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
             `;
-        }).join("");
+            tableBody.appendChild(tr);
+        });
     }
 
     // Hàm cập nhật phân trang
@@ -268,15 +279,114 @@ document.addEventListener("DOMContentLoaded", function () {
                 event.preventDefault();
                 const page = parseInt(this.getAttribute("data-page"), 10);
                 if (!isNaN(page)) {
+                    currentPage = page; 
                     fetchPage(page);
                 }
             });
         });
     }
 
-    fetchPage(); 
+    // Gọi lần đầu tiên
+    fetchPage(currentPage);
 });
 
+
+/*websocket*/
+/*document.addEventListener("DOMContentLoaded", function () {
+    const tableBody = document.getElementById("table-body");
+    const paginationDiv = document.getElementById("pagination");
+
+    // Kết nối tới WebSocket server
+    const socket = io();
+
+    // Gửi yêu cầu dữ liệu ban đầu
+    socket.emit('request_data', { page: 1, per_page: 10 });
+
+    // Nhận dữ liệu và cập nhật giao diện
+    socket.on('update_dashboard', function (data) {
+        if (data.error) {
+            console.error("Error:", data.error);
+            tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
+            return;
+        }
+
+        // Cập nhật bảng
+        updateTable(data.data);
+
+        // Cập nhật phân trang
+        updatePagination(data.page, data.total_pages);
+    });
+
+    // Hàm cập nhật bảng
+    function updateTable(rows) {
+        tableBody.innerHTML = rows.map(row => `
+            <tr>
+                <td>${row.stt}</td>
+                <td>${row.factory}</td>
+                <td>${row.line}</td>
+                <td>${row.serial_number}</td>
+                <td>${row.model_name}</td>
+                <td>${row.name_machine}</td>
+                <td>${row.force_1}</td>
+                <td>${row.force_2}</td>
+                <td>${row.force_3}</td>
+                <td>${row.force_4}</td>
+                <td>${row.time_update}</td>
+                <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
+            </tr>
+        `).join('');
+    }
+
+    // Hàm cập nhật phân trang
+function updatePagination(currentPage, totalPages) {
+    paginationDiv.innerHTML = "";
+
+    const maxVisiblePages = 5; // Số trang hiển thị tối đa
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    // Điều chỉnh lại nếu endPage chạm giới hạn tổng số trang
+    if (endPage - startPage + 1 < maxVisiblePages && startPage > 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Nút Previous
+    if (currentPage > 1) {
+        paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
+    }
+
+    // Hiển thị các trang trong khoảng [startPage, endPage]
+    for (let i = startPage; i <= endPage; i++) {
+        paginationDiv.innerHTML += `
+            <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
+        `;
+    }
+
+    // Nút Next
+    if (currentPage < totalPages) {
+        paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
+    }
+
+    // Gắn sự kiện cho các liên kết
+    bindPaginationEvents();
+}
+
+
+    // Gắn sự kiện phân trang
+    function bindPaginationEvents() {
+        const links = paginationDiv.querySelectorAll(".page-link");
+        links.forEach(link => {
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+                const page = parseInt(this.getAttribute("data-page"), 10);
+                if (!isNaN(page)) {
+                    socket.emit('request_data', { page: page, per_page: 10 });
+                }
+            });
+        });
+    }
+});
+*/
 
 
 
@@ -319,7 +429,7 @@ async function fetchData(page) {
       // Ẩn GIF khi đã tải xong dữ liệu
       document.getElementById("loading").style.display = "none";
     }
-  } 
+  }
 // load table
 //   document.addEventListener("DOMContentLoaded", function () {
 //     const tableBody = document.getElementById("table-body");
@@ -418,44 +528,96 @@ async function fetchData(page) {
 // });
 
 //get total info
+
+/*load info overview*/
+// document.addEventListener("DOMContentLoaded", function () {
+//     // DOM elements
+//     const totalRecords = document.getElementById("total-records");
+//     const outputPass = document.getElementById("pass-records");
+//     const failRecords = document.getElementById("fail-records");
+//     const fpyPercentage = document.getElementById("fpy-percentage");
+//     const POLLING_INTERVAL = 5000;
+//     // Fetch data from the `/getinfo` endpoint
+//     document.getElementById('loading').style.display = 'block'; 
+//     fetch("/getinfo", {
+//         method: "GET",
+//         headers: {
+//             "X-Requested-With": "XMLHttpRequest"
+//         }
+//     })
+//         .then(response => {
+//             if (!response.ok) {
+//                 throw new Error(`HTTP error! status: ${response.status}`);
+//             }
+//             return response.json();
+//         })
+//         .then(data => {
+//             // Update the DOM elements with the fetched data
+//             totalRecords.textContent = data.total;
+//             outputPass.textContent = data.output;
+//             failRecords.textContent = data.fail;
+//             fpyPercentage.textContent = `${data.fpy.toFixed(2)}%`;
+//         })
+//         .catch(error => {
+//             console.error("Error fetching data:", error);
+//             totalRecords.textContent = "Error loading data";
+//             outputPass.textContent = "Error loading data";
+//             failRecords.textContent = "Error loading data";
+//             fpyPercentage.textContent = "Error loading data";
+//         }).finally(() => {
+//             setTimeout(() => fetchPage(currentPage), POLLING_INTERVAL);
+//         });
+//         document.getElementById('loading').style.display = 'none';
+// });
+
 document.addEventListener("DOMContentLoaded", function () {
     // DOM elements
     const totalRecords = document.getElementById("total-records");
     const outputPass = document.getElementById("pass-records");
     const failRecords = document.getElementById("fail-records");
     const fpyPercentage = document.getElementById("fpy-percentage");
+    // const loadingIndicator = document.getElementById('loading');
+    const POLLING_INTERVAL = 300000; 
 
-    // Fetch data from the `/getinfo` endpoint
-    document.getElementById('loading').style.display = 'block'; 
-    fetch("/getinfo", {
-        method: "GET",
-        headers: {
-            "X-Requested-With": "XMLHttpRequest"
-        }
-    })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+    function fetchContentTop() {
+        // loadingIndicator.style.display = 'block';
+
+        fetch("/getinfo", {
+            method: "GET",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
             }
-            return response.json();
         })
-        .then(data => {
-            // Update the DOM elements with the fetched data
-            totalRecords.textContent = data.total;
-            outputPass.textContent = data.output;
-            failRecords.textContent = data.fail;
-            fpyPercentage.textContent = `${data.fpy.toFixed(2)}%`;
-        })
-        
-        .catch(error => {
-            console.error("Error fetching data:", error);
-            totalRecords.textContent = "Error loading data";
-            outputPass.textContent = "Error loading data";
-            failRecords.textContent = "Error loading data";
-            fpyPercentage.textContent = "Error loading data";
-        });
-        document.getElementById('loading').style.display = 'none';
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                totalRecords.textContent = data.total || "N/A";
+                outputPass.textContent = data.output || "N/A";
+                failRecords.textContent = data.fail || "N/A";
+                fpyPercentage.textContent = `${data.fpy?.toFixed(2) || "N/A"}%`;
+            })
+            .catch(error => {
+                console.error("Error fetching data:", error);
+                totalRecords.textContent = "Error";
+                outputPass.textContent = "Error";
+                failRecords.textContent = "Error";
+                fpyPercentage.textContent = "Error";
+            })
+            .finally(() => {
+                // loadingIndicator.style.display = 'none'; 
+                setTimeout(fetchContentTop, POLLING_INTERVAL); 
+            });
+    }
+
+    // Initial load
+    fetchContentTop();
 });
+
+
 //download excel
 document.addEventListener("DOMContentLoaded", function () {
     const downloadButton = document.getElementById('download-excel');
@@ -472,10 +634,10 @@ document.addEventListener("DOMContentLoaded", function () {
             return datetime ? datetime.replace('T', ' ') + ':00' : null;
         };
         const payload = {
-            line: document.getElementById("line").value.trim() || null,
+            line: document.getElementById("line-combobox").value.trim() || null,
             time_update: formatDatetime(document.getElementById("time_update").value),
             time_end: formatDatetime(document.getElementById("time_end").value),
-            state: document.getElementById("state").value || null
+            state: document.getElementById("state-combobox").value || null
         };
 
         try {
@@ -505,6 +667,56 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error downloading Excel:", error);
             alert("Failed to download the Excel file. Please try again.");
         }
+    }
+}); 
+//get lines, states
+document.addEventListener("DOMContentLoaded", function () {
+    const lineCombobox = document.getElementById("line-combobox");
+    const stateCombobox = document.getElementById("state-combobox");
+
+    // Fetch data from /getLines
+    fetch("/getLines")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json(); // Parse JSON response
+        })
+        .then(data => {
+            // Populate line-combobox
+            lineCombobox.innerHTML = '<option value="">--------</option>';
+            data.lines.forEach(line => {
+                const option = document.createElement("option");
+                option.value = line;
+                option.textContent = line;
+                lineCombobox.appendChild(option);
+            });
+
+            // Populate state-combobox
+            stateCombobox.innerHTML = '<option value="">--------</option>';
+            data.states.forEach(state => {
+                const option = document.createElement("option");
+                option.value = state;
+                option.textContent = state;
+                stateCombobox.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error("Error fetching lines and states:", error);
+        });
+});
+
+//full screen
+document.getElementById("toggle_fullscreen").addEventListener("click", function (e) {
+    e.preventDefault();
+    const fullscreenIcon = document.getElementById("fullscreenic");
+    const container = document.documentElement;
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+        fullscreenIcon.src = "/static/images/fullscreen1.png";
+    } else {
+        container.requestFullscreen();
+        fullscreenIcon.src = "/static/images/disfullscreen.png";
     }
 });
 

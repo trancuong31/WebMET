@@ -7,14 +7,19 @@
     <script src="{{ url_for('static', filename='js/accessibility.js') }}"></script>
     <script src="{{ url_for('static', filename='js/exporting.js') }}"></script>
     <script src="{{ url_for('static', filename='js/highcharts.js') }}"></script>
+    <!-- <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script> -->
     <link
-      rel="stylesheet"
+      rel="stylesheet" type="text/css"
       href="{{ url_for('static', filename='css/styledashboard.css')}}"
     />
     <title>THC</title>
   </head>
   <body>
+    <div id="loading" class="loading-overlay" >
+      <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading..."/>
+    </div>
     <div class="wrapper">
+      
       <nav id="navbar">
         <ul class="navbar-items flexbox-col">
           <li class="navbar-logo flexbox-left">
@@ -30,7 +35,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="search-outline"></ion-icon>
               </div>
-              <span  class="link-text"><img style="width: 1em; height: 1em;" src="{{ url_for('static', filename='images/check.png') }}" alt=""> Dashboard</span>
+              <span  class="link-text"> Dashboard Screw Force</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -78,18 +83,17 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="settings-outline"></ion-icon>
               </div>
-              <span class="link-text">Logout</span>
+              <span style="color: #fff;" class="link-text">Logout</span>
             </a>
           </li>
         </ul>
       </nav>
-      <div id="loading" class="loading-overlay" style="display:none;">
-        <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading..."/>
-      </div> 
-      <!-- <script src="{{ url_for('static', filename='js/scripts.js') }}"></script> -->
+      
       <div class="container">
         
-        <header>MET
+        <div  class="overlay-image" alt="overlay"></div>
+        <header>
+          <h2>DASHBOARD</h2>
         </header>
         <div class="mainContent">
           <div class="content">
@@ -101,8 +105,7 @@
               <div ><p class="infor">Fail: <span style="color: red;" id="fail-records"></p></div>
               <div ><p class="infor" >FPY: <span style="color: #fff;" id="fpy-percentage"></p></div>
               <div class="dowfile">
-                <a id="download-excel" style="display: flex; flex-direction: column; "><span><img style="width: 20px; height: 20px;" src="{{ url_for('static', filename='images/downloads.png') }}" alt=""></span>Export File</a>
-                
+                <a id="download-excel"><span><img style="width: 20px; height: 20px;" src="{{ url_for('static', filename='images/downloads.png') }}" alt=""></span><u>Export File</u></a>
               </div>
             </div>
             <div class="tbl-header">
@@ -133,28 +136,43 @@
             </div>
             <!-- filter -->
             <div class="filter">
-              Line: <input style="width: 3em;" type="text" name="line" id="line">
-              Time: <input  type="datetime-local" name="time_update" id="time_update">
-              To: <input type="datetime-local" name="time_end" id="time_end">
-              State: <input style="width: 3em;" type="text" name="state" id="state">
-              <input style="margin-left: 1em; transition: all .5s ease-in-out; padding: 0.5em; border-radius: 0.3em; " type="submit" value="Search" id="filter">
-              <!-- <script src="{{ url_for('static', filename='js/scripts.js') }}"></script> -->
+              <!-- Line: <input style="width: 3em;" type="text" name="line" id="line"> -->
+              Line:<select id="line-combobox">
+                <!-- Các giá trị sẽ được thêm vào đây -->
+            </select>
+              Time: <input style="width: 180px;"  type="datetime-local" name="time_update" id="time_update">
+              To: <input style="width: 180px;"  type="datetime-local" name="time_end" id="time_end">
+              <!-- State: <input style="width: 3em;" type="text" name="state" id="state">           -->
+              State: <select id="state-combobox">
+                <!-- Các giá trị sẽ được thêm vào đây -->
+            </select>
+              <input style=" transition: all .5s ease-in-out; padding: 0.5em; width: 5em; " type="submit" value="Search" id="filter">
             </div>
-            
+            <div id="count"></div>
           </div>
+          <div class="modeFullScreen">
+            <a href="#" id="toggle_fullscreen">
+              <img
+                id="fullscreenic"
+                src="/static/images/fullscreen1.png"
+                alt="Fullscreen Icon"
+              />
+            </a>
+          </div> 
           <div class="pagination"  id="pagination">
         </div>
         <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
           <div class="chartContent">
+            
             <div class="pieChartInfo">
               <div><h4>Name Chart</h4></div>
               <figure class="highcharts-figure">
-                <div id="container"></div>
+                <div id="container-pie"></div>
                 <p class="highcharts-description">
-                    Pie chart showing a hollow semi-circle. The chart has 1 series of data, and the data is presented in a pie slice format.</p>
+                    Pie chart showing a hollow semi-circle.</p>
             </figure>
             <script>
-              Highcharts.chart('container', {
+              Highcharts.chart('container-pie', {
               chart: {
                   plotBackgroundColor: null,
                   plotBorderWidth: 0,
@@ -177,7 +195,8 @@
               accessibility: {
                   point: {
                       valueSuffix: '%'
-                  }
+                  },
+                  enabled: false
               },
               plotOptions: {
                   pie: {
@@ -211,7 +230,136 @@
             </script>
             </div>
             <div class="chartRight">
-              <div><h1 style="align-items: center;">Content</h1></div>
+              <div><h1 style="align-items: center;">Content</h1>
+                <figure class="highcharts-figure">
+                  <div id="container-line"></div>
+                  <p class="highcharts-description">
+                      Basic line chart showing trends in a dataset. 
+                  </p>
+              </figure>
+              <script>
+                Highcharts.chart('container-line', {
+                  chart: {
+                      zoomType: 'x',
+                      backgroundColor: {
+                          linearGradient: [0, 0, 500, 500],
+                          stops: [
+                              [0, 'rgba(32, 32, 32, 0.8)'],
+                              [1, 'rgba(40, 40, 40, 0.8)']
+                          ]
+                      },
+                      plotBorderWidth: 0,
+                      backgroundColor: null
+                  },
+                  accessibility:{
+                    enabled: false
+                  },
+                  credits: {
+                enabled: false 
+                },
+                title: {
+                    text: 'Title',
+                    align: 'left',
+                    style:{
+                      color : '#fff'
+                    }
+                },
+
+                subtitle: {
+                    text: 'abc',
+                    align: 'left', 
+                    fontSize: '14px',
+                    style:{
+                      color : '#fff'
+                    }
+                },
+                yAxis: {
+                    title: {
+                        text: 'OEE'
+                    }
+                },
+                labels: {
+                    style: {
+                        color: '#ffffff' 
+                    }
+                  },
+
+                legend: {
+                    layout: 'vertical',
+                    align: 'right',
+                    verticalAlign: 'middle',
+                    itemStyle: {
+                    color: '#ffffff'
+                },
+                itemHoverStyle: {
+                    color: '#cccccc'
+                }
+                },
+                yAxis: {
+                  title: {
+                      text: 'OEE',
+                      style: {
+                          color: '#ffffff'
+                      }
+                  },
+                  labels: {
+                      style: {
+                          color: '#ffffff'
+                      }
+                  }
+              },
+              xAxis: {
+              categories: ['BV1111111111111111', 'BV2', 'BV3', 'BV4', 'BV5', 'BV6', 'BV7', 'BV8', 'BV9', 'BV10', 'BV11', 'BV12', 'BV13'],
+              labels: {
+                  style: {
+                      color: '#ffffff'
+                  }
+              }
+          },
+                series: [{
+                    name: 'FORCE 1',
+                    data: [
+                        12, 13, 12, 15, 13, 11,
+                        14, 13.5, 13.6, 13.4, 12.6, 14.7, 13.4
+                    ]
+                }, {
+                    name: 'FORCE 2',
+                    data: [
+                        11, 12, 11, 14, 13, 12.3,
+                        12, 15, 13, 13.4, 14.5, 13.6, 11.8
+                    ]
+                }
+                , {
+                    name: 'FORCE 3',
+                    data: [
+                        11.5, 12.3, 11.6, 14.1, 13.4, 12.3,
+                        12.6, 11, 11.6, 12.4, 13.5, 13.6, 11.8
+                    ]
+                }, {
+                    name: 'FORCE 4',
+                    data: [
+                        12.5, 13.6, 14.6, 12.2, 13.7, 12.3,
+                        12.5, 15.6, 13.1, 13.6, 14.3, 13.9, 11.8
+                    ]
+                }],
+
+                responsive: {
+                    rules: [{
+                        condition: {
+                            maxWidth: 500
+                        },
+                        chartOptions: {
+                            legend: {
+                                layout: 'horizontal',
+                                align: 'center',
+                                verticalAlign: 'bottom'
+                            }
+                        }
+                    }]
+                }
+                });
+              </script>
+              </div>
             </div>
           </div>
           </div>

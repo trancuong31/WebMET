@@ -25,7 +25,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="search-outline"></ion-icon>
               </div>
-              <span class="link-text">Dashboard</span>
+              <span style="color: #fff;" class="link-text">Dashboard Screw Force</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -73,15 +73,19 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="settings-outline"></ion-icon>
               </div>
-              <span class="link-text">Logout</span>
+              <span style="color: #fff;" class="link-text">Logout</span>
             </a>
           </li>
         </ul>
       </nav>
       
       <div class="container">
-        <header>MET
-        </header>
+        <!-- <header>MET
+        </header> -->
+        <div class="video-background">
+          <div class="overlay"></div>
+          <video  autoplay muted loop preload="auto" src="{{ url_for('static', filename='images/videobg2.mp4') }}" ></video>
+        </div>
         <div class="mainContent">
           <script>
             // Lấy query string từ URL
@@ -102,9 +106,39 @@
             }
         </script>
           <div class="content">
-            
-            <p id="welcome">Welcome {{ username }} to Website</p>
+            <div class="content-left">
+              <div class="typing-demo">
+                WELCOME TO WEBSITE MET
+              </div>
+              <div class="information">
+                <div class="card">
+                  <div class="card-number">01</div>
+                  <div class="card-icon">🔧</div>
+                  <p>MET department: Short for Mechanical, Electrical, and Technology, this department specializes in the technical aspects of automation.</p>
+                </div>
+                <div class="card">
+                  <div class="card-number">02</div>
+                  <div class="card-icon">⚙️</div>
+                  <p>The use of technology to control production processes with minimal human intervention.</p>
+                </div>
+                <div class="card">
+                  <div class="card-number">03</div>
+                  <div class="card-icon">🤖</div>
+                  <p>Systems controlled by computers that perform tasks, especially those that are difficult, dangerous, or repetitive.</p>
+                </div>
+                <div class="card">
+                  <div class="card-number">04</div>
+                  <div class="card-icon">💻</div>
+                  <p>Software that instructs machines and robots to perform specific tasks.</p>
+                </div>
+              </div>
+            </div>
+            <div class="content-right">
+                <!-- <img src="{{ url_for('static', filename='images/robot.png') }}" alt="">
+                <img src="{{ url_for('static', filename='images/asembly.png') }}" alt=""> -->
+            </div>
           </div>
+          
         </div>
       </div>
     </div>

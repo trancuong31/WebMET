@@ -1,14 +1,18 @@
 from flask import Flask, request, jsonify, abort, render_template, redirect, flash, send_file, make_response, url_for, send_from_directory
 import oracledb
 from flask_cors import CORS
-import jwt
+import jwt, time
+from flask_socketio import SocketIO, emit
+import threading
 import os, io
 from datetime import datetime, timezone, timedelta
 from werkzeug.utils import secure_filename
 import pandas as pd
+import asyncio
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abc'
+socketio =SocketIO(app)
 # Thông tin kết nối đến Oracle Database
 DB_CONFIG = {
     "username": "system",
@@ -132,6 +136,7 @@ def dashboard():
                     TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
                     state
                 FROM SCREW_FORCE_INFO 
+                ORDER BY TIME_UPDATE DESC
                 OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
             ) t
         """
@@ -183,6 +188,111 @@ def dashboard():
             cursor.close()
         if connection:
             connection.close()
+
+###websocket
+# Hàm truy vấn dữ liệu từ cơ sở dữ liệu
+# def fetch_data(page=1, per_page=10):
+#     try:
+#         offset = (page - 1) * per_page
+#         connection = get_db_connection()
+#         cursor = connection.cursor()
+
+#         query = """
+#             SELECT 
+#                 ROWNUM as stt,
+#                 t.factory,
+#                 t.line, 
+#                 t.name_machine, 
+#                 t.model_name,
+#                 t.serial_number,
+#                 t.force_1, 
+#                 t.force_2, 
+#                 t.force_3, 
+#                 t.force_4,
+#                 t.time_update,
+#                 t.state
+#             FROM (
+#                 SELECT 
+#                     factory,
+#                     line, 
+#                     name_machine, 
+#                     model_name,
+#                     serial_number,
+#                     force_1,
+#                     force_2,
+#                     force_3,
+#                     force_4,
+#                     TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
+#                     state
+#                 FROM SCREW_FORCE_INFO 
+#                 OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+#             ) t
+#         """
+#         cursor.execute(query, {"offset": offset, "limit": per_page})
+#         rows = []
+#         for row in cursor:
+#             rows.append({
+#                 'stt': row[0],
+#                 'factory': row[1],
+#                 'line': row[2],
+#                 'serial_number': row[3],
+#                 'model_name': row[4], 
+#                 'name_machine': row[5],
+#                 'force_1': row[6],
+#                 'force_2': row[7],
+#                 'force_3': row[8],
+#                 'force_4': row[9],
+#                 'time_update': row[10],
+#                 'state': row[11]
+#             })
+
+#         # Tính tổng số trang
+#         cursor.execute("SELECT COUNT(*) FROM SCREW_FORCE_INFO")
+#         total_records = cursor.fetchone()[0]
+#         total_pages = (total_records + per_page - 1) // per_page
+
+#         return {
+#             "data": rows,
+#             "page": page,
+#             "per_page": per_page,
+#             "total_pages": total_pages,
+#             "total_records": total_records
+#         }
+#     except Exception as e:
+#         app.logger.error(f"Error querying data: {str(e)}")
+#         return None
+#     finally:
+#         if cursor:
+#             cursor.close()
+#         if connection:
+#             connection.close()
+# # Gửi dữ liệu qua WebSocket
+# @socketio.on('request_data')
+# def handle_request_data(data):
+#     try:
+#         page = data.get('page', 1)
+#         per_page = data.get('per_page', 10)
+#         response = fetch_data(page=page, per_page=per_page)
+#         if response:
+#             emit('update_dashboard', response)
+#         else:
+#             emit('update_dashboard', {'error': 'Unable to fetch data'})
+#     except Exception as e:
+#         app.logger.error(f"Error handling WebSocket request: {str(e)}")
+#         emit('update_dashboard', {'error': str(e)})
+
+# # Gửi dữ liệu liên tục (giả lập realtime)
+# def push_realtime_data():
+#     while True:
+#         time.sleep(5)  # Gửi dữ liệu mỗi 5 giây
+#         response = fetch_data(page=1, per_page=10)
+#         if response:
+#             socketio.emit('update_dashboard', response)
+
+
+# # Chạy luồng phát dữ liệu giả lập
+# threading.Thread(target=push_realtime_data, daemon=True).start()
+##########
 
 # @app.route('/filter', methods=['POST'])
 # def filter_data():
@@ -369,7 +479,7 @@ def filter_data():
             "total_pages": total_pages,
             "current_page": page,
             "per_page": per_page,
-            "message": f"Đã tìm thấy {len(results)} kết quả"
+            "message": f"{total_records} result found"
         }), 200
 
     except Exception as e:
@@ -379,7 +489,6 @@ def filter_data():
             "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
             "message": str(e)
         }), 500
-
 
 
 @app.route('/logout', methods=['GET'])
@@ -409,19 +518,19 @@ def login():
                 # Tạo JWT token
                 access_token = jwt.encode({
                     'username': username,
-                    'exp': datetime.now(timezone.utc) + timedelta(hours=1),  # Token hết hạn sau 1 giờ
+                    'exp': datetime.now(timezone.utc) + timedelta(hours=1),
                     'type': 'access'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
 
                 refresh_token = jwt.encode({
                     'username': username,
-                    'exp': datetime.now(timezone.utc) + timedelta(days=7),  # Refresh token hết hạn sau 7 ngày
+                    'exp': datetime.now(timezone.utc) + timedelta(days=7),
                     'type': 'refresh'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
                 resp = make_response(redirect(('index1')))
                 # Trả về JSON chứa các token
-                resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60) #1h
-                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60) #7 days 
+                resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60)
+                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60)
                 return resp
             else:
                 return render_template('login.html', error='Incorrect username or password')
@@ -498,7 +607,37 @@ def register():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-#lấy total , output, fpy
+@app.route('/getLines', methods=['GET'])
+def get_lines():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        query = """
+            SELECT DISTINCT Line FROM SCREW_FORCE_INFO
+        """
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        query = """
+            SELECT DISTINCT State FROM SCREW_FORCE_INFO
+        """
+        cursor.execute(query)
+        rows2 = cursor.fetchall()
+        lines = [row[0] for row in rows]
+        states = [row[0] for row in rows2]
+         # Định dạng kết quả trả về
+        result = {
+            "lines": lines,
+            "states": states
+        }
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching: {e}")
+        return jsonify({"error": "Unable to fetch"}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
+#get total , output, fpy
 @app.route('/getinfo', methods=['GET'])
 def getinfo():
     try:
@@ -656,8 +795,6 @@ def download_excel():
         app.logger.error(f"Lỗi tải xuống Excel: {str(e)}")
         flash("Đã xảy ra lỗi khi tạo file Excel. Vui lòng thử lại sau.", "error")
         return redirect(url_for('dashboard'))
-
-
 
 
 if __name__=='__main__':
