@@ -35,7 +35,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="search-outline"></ion-icon>
               </div>
-              <span  class="link-text"> Dashboard Screw Force</span>
+              <span  class="link-text">📊 Dashboard Screw Force</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -43,7 +43,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="home-outline"></ion-icon>
               </div>
-              <span class="link-text">Mục B</span>
+              <span class="link-text">🏠 Mục B</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -51,7 +51,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="folder-open-outline"></ion-icon>
               </div>
-              <span class="link-text">Mục C</span>
+              <span class="link-text">ℹ️ Mục C</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -59,7 +59,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="pie-chart-outline"></ion-icon>
               </div>
-              <span class="link-text">Mục D</span>
+              <span class="link-text">✨ Mục D</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -67,7 +67,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="people-outline"></ion-icon>
               </div>
-              <span class="link-text">Mục E</span>
+              <span class="link-text">✨ Mục E</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -75,7 +75,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="chatbubbles-outline"></ion-icon>
               </div>
-              <span class="link-text">Mục F</span>
+              <span class="link-text">✨ Mục F</span>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -83,7 +83,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="settings-outline"></ion-icon>
               </div>
-              <span style="color: #fff;" class="link-text">Logout</span>
+              <span style="color: #fff;" class="link-text">🔒 Logout</span>
             </a>
           </li>
         </ul>
@@ -105,7 +105,7 @@
               <div ><p class="infor">Fail: <span style="color: red;" id="fail-records"></p></div>
               <div ><p class="infor" >FPY: <span style="color: #fff;" id="fpy-percentage"></p></div>
               <div class="dowfile">
-                <a id="download-excel"><span><img style="width: 20px; height: 20px;" src="{{ url_for('static', filename='images/downloads.png') }}" alt=""></span><u>Export File</u></a>
+                <a id="download-excel"><span><img style="width: 20px; height: 20px; " src="{{ url_for('static', filename='images/downloads.png') }}"  alt="Expoprt File"></span></a>
               </div>
             </div>
             <div class="tbl-header">
@@ -162,80 +162,149 @@
           <div class="pagination"  id="pagination">
         </div>
         <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
-          <div class="chartContent">
-            
+        <div class="chartAll">
+          <div class="chartContent">            
             <div class="pieChartInfo">
-              <div><h4>Name Chart</h4></div>
+              <!-- <div><h4>Rate By Day</h4></div> -->
               <figure class="highcharts-figure">
                 <div id="container-pie"></div>
-                <p class="highcharts-description">
-                    Pie chart showing a hollow semi-circle.</p>
-            </figure>
-            <script>
-              Highcharts.chart('container-pie', {
-              chart: {
-                  plotBackgroundColor: null,
-                  plotBorderWidth: 0,
-                  plotShadow: false,
-                  backgroundColor: null
-              },
-              title: {
-                  text: 'Rate Pass/Fail',
-                  align: 'center',
-                  verticalAlign: 'middle',
-                  y: 60,
-                  style: {
-                      fontSize: '1.1em',
-                      color: '#fff'
-                  }
-              },
-              tooltip: {
-                  pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
-              },
-              accessibility: {
-                  point: {
-                      valueSuffix: '%'
-                  },
-                  enabled: false
-              },
-              plotOptions: {
-                  pie: {
-                      dataLabels: {
+              </figure>
+              <button id="backButton" >Back</button>
+              <script>
+                // Hàm tạo biểu đồ ban đầu
+                function createInitialChart() {
+                  Highcharts.chart('container-pie', {
+                    chart: {
+                      plotBackgroundColor: null,
+                      plotBorderWidth: 0,
+                      plotShadow: false,
+                      backgroundColor: null
+                    },
+                    title: {
+                      text: 'Rate Pass/Fail',
+                      align: 'center',
+                      verticalAlign: 'middle',
+                      y: 60,
+                      style: {
+                        fontSize: '1.1em',
+                        color: '#fff'
+                      }
+                    },
+                    tooltip: {
+                      pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                    },
+                    accessibility: {
+                      point: {
+                        valueSuffix: '%'
+                      },
+                      enabled: false
+                    },
+                    plotOptions: {
+                      pie: {
+                        dataLabels: {
                           enabled: true,
                           distance: -50,
                           style: {
-                              fontWeight: 'bold',
-                              color: 'white'
+                            fontWeight: 'bold',
+                            color: 'white'
                           }
+                        },
+                        startAngle: -90,
+                        endAngle: 90,
+                        center: ['50%', '75%'],
+                        size: '110%',
+                        cursor: 'pointer', 
+                        point: {
+                          events: {
+                            click: function () {
+                              createNewChart(this.name);
+                            }
+                          }
+                        }
+                      }
+                    },
+                    series: [{
+                      type: 'pie',
+                      name: 'Rate',
+                      innerSize: '50%',
+                      data: [
+                        { name: 'Pass', y: 65.3, color: '#3464eb' },
+                        { name: 'Fail', y: 34.7, color: '#eb3434' }
+                      ]
+                    }],
+                    credits: {
+                      enabled: false
+                    }
+                  });
+                  document.getElementById('backButton').style.display = 'none';
+                }
+                
+                // Hàm tạo biểu đồ mới
+                function createNewChart(category) {
+                  Highcharts.chart('container-pie', {
+                    chart: {
+                      type: 'column',
+                      backgroundColor: null,
+                      
+                    },
+                    title: {
+                      text: `Details for ${category}`,
+                      style: {
+                        color: '#fff',
+                        fontSize: '1em'
+                      }
+                    },
+                    xAxis: {
+                      categories: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'],
+                      labels: {
+                        style: {
+                          color: '#fff'
+                        }
+                      }
+                    },
+                    yAxis: {
+                      labels: {
+                        style: {
+                          color: '#fff'
+                        }
                       },
-                      startAngle: -90,
-                      endAngle: 90,
-                      center: ['50%', '75%'],
-                      size: '110%'
-                  }
-              },
-              series: [{
-                  type: 'pie',
-                  name: 'Rate',
-                  innerSize: '50%',
-                  data: [
-                  { name: 'Pass', y: 65.3, color: '#3464eb' }, 
-                  { name: 'Fail', y: 34.7, color: '#eb3434' } 
-                  ]
-              }],
-              credits: {
-                enabled: false 
-            }
-          });
-            </script>
+                      title: {
+                        text: 'Count',
+                        style: {
+                          color: '#fff'
+                        }
+                      }
+                    },
+                    legend: {
+                    itemStyle: {
+                    color: '#ffffff'
+                    }
+                  },
+                    series: [{
+                      name: category,
+                      data: category === 'Pass' ? [5, 10, 15, 20, 25] : [3, 8, 12, 18, 22],
+                      color: category === 'Pass' ? '#3464eb' : '#eb3434'
+                    }],
+                    credits: {
+                      enabled: false
+                    }
+                  });
+                  document.getElementById('backButton').style.display = 'inline-block';
+                }
+                document.getElementById('backButton').addEventListener('click', function () {
+                createInitialChart();
+                });
+                createInitialChart();
+              </script>
             </div>
             <div class="chartRight">
-              <div><h1 style="align-items: center;">Content</h1>
+              <div>
+                
                 <figure class="highcharts-figure">
                   <div id="container-line"></div>
-                  <p class="highcharts-description">
+                  <!-- <p class="highcharts-description">
                       Basic line chart showing trends in a dataset. 
-                  </p>
+                  </p> -->
               </figure>
               <script>
                 Highcharts.chart('container-line', {
@@ -285,9 +354,9 @@
                   },
 
                 legend: {
-                    layout: 'vertical',
-                    align: 'right',
-                    verticalAlign: 'middle',
+                    layout: 'horizontal',
+                    align: 'center',
+                    verticalAlign: 'bottom',
                     itemStyle: {
                     color: '#ffffff'
                 },
@@ -309,7 +378,7 @@
                   }
               },
               xAxis: {
-              categories: ['BV1111111111111111', 'BV2', 'BV3', 'BV4', 'BV5', 'BV6', 'BV7', 'BV8', 'BV9', 'BV10', 'BV11', 'BV12', 'BV13'],
+              categories: ['BV1', 'BV2', 'BV3', 'BV4', 'BV5', 'BV6', 'BV7', 'BV8', 'BV9', 'BV10', 'BV11', 'BV12', 'BV13'],
               labels: {
                   style: {
                       color: '#ffffff'
@@ -362,6 +431,219 @@
               </div>
             </div>
           </div>
+          <div class="chartCotent1">
+            <div class="chartColumn">
+                <figure class="highcharts-figure">
+                  <div id="container3"></div>
+                </figure>
+                <script>
+                  Highcharts.chart('container3', {
+                    chart: {
+                      zooming: {
+                        type: 'x'
+                      },
+                      backgroundColor: null,
+                      plotBackgroundColor:null
+                    },
+                    title: {
+                      text: 'Screw Force Trend',
+                      align: 'left',
+                       style: {
+                          color: '#fff', 
+                          fontSize: '16px', 
+                          fontWeight: 'bold'
+                        }
+                    },
+                    credits: {
+                      enabled: null
+                    },
+                  accessibility:{
+                    enabled: false
+                  },
+                    xAxis: [{
+                      categories: [
+                        '7:00-8:00', '8:00-9:00', '9:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
+                        '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00'
+                      ],
+                      crosshair: true,
+                      labels: {
+                        style: {
+                          color: '#fff', 
+                          fontSize: '12px'
+                        }
+                      }
+                      
+                    }],
+                    yAxis: [{ 
+                      labels: {
+                        format: '{value}°%',
+                        style: {
+                          color: '#fff'
+                        }
+                      },
+                      title: {
+                        text: 'FPY',
+                        style: {
+                          color: '#fff'
+                        }
+                      }
+                    }, { 
+                      title: {
+                        text: 'Pass/Fail',
+                        style: {
+                          color: '#fff'
+                        }
+                      },
+                      labels: {
+                        format: '{value} %',
+                        style: {
+                          color: '#fff'
+                        }
+                      },
+                      opposite: true
+                    }],
+                    tooltip: {
+                      shared: true
+                    },
+                    legend: {
+                      align: 'center',
+                      verticalAlign: 'bottom',
+                      itemStyle:{
+                        color: '#fff'
+                      },
+                      itemHoverStyle: {
+                      color: '#cccccc'
+                    }
+                    },
+                    series: [{
+                      name: 'Pass',
+                      type: 'column',
+                      yAxis: 1,
+                      data: [
+                        45.7, 37.0, 28.9, 17.1, 39.2, 18.9, 90.2, 78.5, 74.6,
+                        18.7, 17.1, 16.0
+                      ],
+                      tooltip: {
+                        valueSuffix: ' %'
+                      }
+                    }, {
+                      name: 'Fail',
+                      type: 'column',  
+                      yAxis: 1,
+                      data: [
+                        54.3, 63.0, 71.1, 82.9, 60.8, 81.1, 9.8, 21.5, 25.4,
+                        81.3, 82.9, 84.0
+                      ],
+                      tooltip: {
+                        valueSuffix: ' %'
+                      }
+                    }, {
+                      name: 'FPY',
+                      type: 'spline', 
+                      data: [
+                        45.7, 37.0, 28.9, 17.1, 39.2, 18.9, 90.2, 78.5, 74.6,
+                        18.7, 17.1, 16.0
+                      ],
+                      tooltip: {
+                        valueSuffix: ' %'
+                      }
+                    }]
+                  });
+                </script>
+              
+            </div>
+            <div class="chartColumn2">
+              <figure class="highcharts-figure">
+                <div id="container"></div>
+              </figure>
+              <script>
+                Highcharts.chart('container', {
+                  chart: {
+                    type: 'line',
+                    backgroundColor:null
+                  },
+                  
+                  title: {
+                    text: 'Chart CPK',
+                    style:{
+                      color:'#fff'
+                    }
+                  },
+                  xAxis: {labels: {
+                    style: {
+                        color: '#ffffff' 
+                    },
+                    
+                  },
+                    title: {
+                      text: 'Giá trị đo lường',
+                      style:{
+                        color:'#fff'
+                      },
+                      
+                    }
+                  },
+                  credits:{
+                    enabled:null
+                  },
+                  yAxis: {
+                    title: {
+                      text: 'Tần suất',
+                      style:{
+                        color:'#fff'
+                      }
+                    },
+                    labels: {
+                    style: {
+                        color: '#ffffff' 
+                    }
+                  },
+                  },
+                  series: [
+                    {
+                      type: 'line',
+                      name: 'Histogram',
+                      data: [7.7, 8, 10, 8.5, 9, 9.5, 8.2, 7.7, 10.6],
+                      zIndex: 1
+                    },
+                    {
+                      type: 'line',
+                      name: 'UCL',
+                      data: Array(9).fill(11), // Giá trị cố định UCL
+                      dashStyle: 'Dash',
+                      color: 'red',
+                      zIndex: 2
+                    },
+                    {
+                      type: 'line',
+                      name: 'LCL',
+                      data: Array(9).fill(7), // Giá trị cố định LCL
+                      dashStyle: 'Dash',
+                      color: 'blue',
+                      zIndex: 2
+                    },
+                    {
+                      type: 'line',
+                      name: 'AVG',
+                      data: Array(9).fill(9), // Giá trị trung bình
+                      dashStyle: 'Dot',
+                      color: 'green',
+                      zIndex: 3
+                    }
+                  ]
+                });
+              </script>
+            </div>
+          </div>
+          <div class="chartContent2">
+            <div class="chart3">
+              <h1>ABC</h1>
+            </div>
+            <div class="chart4">
+              <h1>DEF</h1>
+            </div>
+          </div>
+        </div>
           </div>
         </div>
       </div>

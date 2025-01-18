@@ -18,10 +18,10 @@
         <div id="alert"> {{error}} </div>
         {% endif %}
         <label for="username">Username</label>
-        <input  style="color: #fff;" type="text;" placeholder="Card ID" id="username" name="username">
+        <input  style="color: #fff;" type="text;" required placeholder="Card ID" id="username" name="username">
         <label for="password">Password</label>
         <div style="position: relative;">
-            <input style="color: #fff;" type="password" placeholder="Password" id="password" name="password">
+            <input style="color: #fff;" type="password" required placeholder="Password" id="password" name="password">
             <span class="toggle-password" onclick="togglePassword()" style="position: absolute; top: 50%; right: 1px; transform: translateY(-50%); cursor: pointer; color: #414040;">🙈</span>
         </div>
         <a href="#" id="forgotpw">Forgot Password?</a>
@@ -40,7 +40,7 @@
         alertDiv.style.display = "block";
         alertDiv.textContent = message;
         setTimeout(() => {
-            alertDiv.style.display = "none"; // Tự động ẩn sau 3 giây
+            alertDiv.style.display = "none";
         }, 5000);
     }
         function togglePassword() {

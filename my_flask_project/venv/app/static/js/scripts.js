@@ -190,12 +190,217 @@ document.addEventListener("DOMContentLoaded", function () {
     
 });
 //load table
+// document.addEventListener("DOMContentLoaded", function () {
+//     const tableBody = document.getElementById("table-body");
+//     const paginationDiv = document.getElementById("pagination");
+//     const POLLING_INTERVAL = 600000;
+
+//     let currentPage = 1; 
+
+//     // Hàm gọi API dashboard
+//     function fetchPage(page = 1) {
+//         fetch(`/dashboard?page=${page}`, {
+//             headers: {
+//                 "X-Requested-With": "XMLHttpRequest"
+//             }
+//         })
+//             .then(response => response.json())
+//             .then(data => {
+//                 if (data.data) {
+//                     updateTable(data.data);
+//                     updatePagination(data.page, data.total_pages, data.group_start, data.group_end);
+//                 } else {
+//                     tableBody.innerHTML = `<tr><td colspan="12">Không tìm thấy dữ liệu.</td></tr>`;
+//                     paginationDiv.innerHTML = '';
+//                 }
+//             })
+//             .catch(error => {
+//                 console.error("Error fetching page data:", error);
+//                 tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
+//                 paginationDiv.innerHTML = '';
+//             })
+//             .finally(() => {
+//                 setTimeout(() => fetchPage(currentPage), POLLING_INTERVAL);
+//             });
+//     }
+
+//     // Hàm cập nhật bảng
+//     function updateTable(rows) {
+//         while (tableBody.firstChild) {
+//             tableBody.removeChild(tableBody.firstChild);
+//         }
+
+//         rows.forEach(row => {
+//             const tr = document.createElement("tr");
+//             tr.innerHTML = `
+//                 <td>${row.stt}</td>
+//                 <td>${row.factory}</td>
+//                 <td>${row.line}</td>
+//                 <td>${row.serial_number}</td>
+//                 <td>${row.model_name}</td>
+//                 <td>${row.name_machine}</td>
+//                 <td>${row.force_1}</td>
+//                 <td>${row.force_2}</td>
+//                 <td>${row.force_3}</td>
+//                 <td>${row.force_4}</td>
+//                 <td>${row.time_update}</td>
+//                 <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
+//             `;
+//             tableBody.appendChild(tr);
+//         });
+//     }
+
+//     // Hàm cập nhật phân trang
+//     function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
+//         paginationDiv.innerHTML = "";
+
+//         if (currentPage > 1) {
+//             paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
+//         }
+
+//         for (let i = groupStart; i <= groupEnd; i++) {
+//             paginationDiv.innerHTML += `
+//                 <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
+//             `;
+//         }
+
+//         if (currentPage < totalPages) {
+//             paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
+//         }
+
+//         bindPaginationEvents();
+//     }
+
+//     // Gắn sự kiện click phân trang
+//     function bindPaginationEvents() {
+//         const links = paginationDiv.querySelectorAll(".page-link");
+//         links.forEach(link => {
+//             link.addEventListener("click", function (event) {
+//                 event.preventDefault();
+//                 const page = parseInt(this.getAttribute("data-page"), 10);
+//                 if (!isNaN(page)) {
+//                     currentPage = page; 
+//                     fetchPage(page);
+//                 }
+//             });
+//         });
+//     }
+
+//     // Gọi lần đầu tiên
+//     fetchPage(currentPage);
+// });
+
+// document.addEventListener("DOMContentLoaded", function () {
+//     const tableBody = document.getElementById("table-body");
+//     const paginationDiv = document.getElementById("pagination");
+//     const POLLING_INTERVAL = 60000;
+
+//     let currentPage = 1;
+
+//     // Hàm gọi API dashboard
+//     function fetchPage(page = 1) {
+//         fetch(`/dashboard?page=${page}`, {
+//             headers: {
+//                 "X-Requested-With": "XMLHttpRequest"
+//             }
+//         })
+//         .then(response => response.json())
+//         .then(data => {
+//             if (data.data) {
+//                 updateTable(data.data);
+//                 updatePagination(data.page, data.total_pages, data.group_start, data.group_end);
+//             } else {
+//                 tableBody.innerHTML = `<tr><td colspan="12">Không tìm thấy dữ liệu.</td></tr>`;
+//                 paginationDiv.innerHTML = '';
+//             }
+//         })
+//         .catch(error => {
+//             console.error("Error fetching page data:", error);
+//             tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
+//             paginationDiv.innerHTML = '';
+//         })
+//         .finally(() => {
+//             setTimeout(() => fetchPage(currentPage), POLLING_INTERVAL);
+//         })
+//         ;
+//     }
+
+//     // Hàm cập nhật bảng
+//     function updateTable(rows) {
+//         // Xóa tất cả các dòng cũ
+//         tableBody.innerHTML = "";
+
+//         // Tạo HTML mới cho bảng
+//         const tableRows = rows.map(row => {
+//             return `
+//                 <tr>
+//                     <td>${row.stt}</td>
+//                     <td>${row.factory}</td>
+//                     <td>${row.line}</td>
+//                     <td>${row.serial_number}</td>
+//                     <td>${row.model_name}</td>
+//                     <td>${row.name_machine}</td>
+//                     <td>${row.force_1}</td>
+//                     <td>${row.force_2}</td>
+//                     <td>${row.force_3}</td>
+//                     <td>${row.force_4}</td>
+//                     <td>${row.time_update}</td>
+//                     <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
+//                 </tr>
+//             `;
+//         }).join("");  // Chuyển thành chuỗi
+
+//         // Thêm các hàng vào bảng
+//         tableBody.innerHTML = tableRows;
+//     }
+
+//     // Hàm cập nhật phân trang
+//     function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
+//         let paginationHTML = "";
+
+//         if (currentPage > 1) {
+//             paginationHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
+//         }
+
+//         for (let i = groupStart; i <= groupEnd; i++) {
+//             paginationHTML += `
+//                 <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
+//             `;
+//         }
+
+//         if (currentPage < totalPages) {
+//             paginationHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
+//         }
+
+//         paginationDiv.innerHTML = paginationHTML;
+//         bindPaginationEvents();
+//     }
+
+//     // Gắn sự kiện click phân trang
+//     function bindPaginationEvents() {
+//         const links = paginationDiv.querySelectorAll(".page-link");
+//         links.forEach(link => {
+//             link.addEventListener("click", function (event) {
+//                 event.preventDefault();
+//                 const page = parseInt(this.getAttribute("data-page"), 10);
+//                 if (!isNaN(page)) {
+//                     currentPage = page;
+//                     fetchPage(page);
+//                 }
+//             });
+//         });
+//     }
+
+//     // Gọi lần đầu tiên
+//     fetchPage(currentPage);
+// });
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
     const paginationDiv = document.getElementById("pagination");
-    const POLLING_INTERVAL = 60000;
+    const POLLING_INTERVAL = 60000; // 60s
 
-    let currentPage = 1; 
+    let currentPage = 1;
+    let pollingTimer;
 
     // Hàm gọi API dashboard
     function fetchPage(page = 1) {
@@ -204,70 +409,66 @@ document.addEventListener("DOMContentLoaded", function () {
                 "X-Requested-With": "XMLHttpRequest"
             }
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.data) {
-                    updateTable(data.data);
-                    updatePagination(data.page, data.total_pages, data.group_start, data.group_end);
-                } else {
-                    tableBody.innerHTML = `<tr><td colspan="12">Không tìm thấy dữ liệu.</td></tr>`;
-                    paginationDiv.innerHTML = '';
-                }
-            })
-            .catch(error => {
-                console.error("Error fetching page data:", error);
-                tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
+        .then(response => response.json())
+        .then(data => {
+            if (data.data) {
+                updateTable(data.data);
+                updatePagination(data.page, data.total_pages, data.group_start, data.group_end);
+            } else {
+                tableBody.innerHTML = `<tr><td colspan="12">Không tìm thấy dữ liệu.</td></tr>`;
                 paginationDiv.innerHTML = '';
-            })
-            .finally(() => {
-                setTimeout(() => fetchPage(currentPage), POLLING_INTERVAL);
-            });
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching page data:", error);
+            tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
+            paginationDiv.innerHTML = '';
+        });
     }
 
     // Hàm cập nhật bảng
     function updateTable(rows) {
-        while (tableBody.firstChild) {
-            tableBody.removeChild(tableBody.firstChild);
-        }
-
-        rows.forEach(row => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${row.stt}</td>
-                <td>${row.factory}</td>
-                <td>${row.line}</td>
-                <td>${row.serial_number}</td>
-                <td>${row.model_name}</td>
-                <td>${row.name_machine}</td>
-                <td>${row.force_1}</td>
-                <td>${row.force_2}</td>
-                <td>${row.force_3}</td>
-                <td>${row.force_4}</td>
-                <td>${row.time_update}</td>
-                <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
+        tableBody.innerHTML = "";
+        const tableRows = rows.map(row => {
+            return `
+                <tr>
+                    <td>${row.stt}</td>
+                    <td>${row.factory}</td>
+                    <td>${row.line}</td>
+                    <td>${row.serial_number}</td>
+                    <td>${row.model_name}</td>
+                    <td>${row.name_machine}</td>
+                    <td>${row.force_1}</td>
+                    <td>${row.force_2}</td>
+                    <td>${row.force_3}</td>
+                    <td>${row.force_4}</td>
+                    <td>${row.time_update}</td>
+                    <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
+                </tr>
             `;
-            tableBody.appendChild(tr);
-        });
+        }).join("");
+        tableBody.innerHTML = tableRows;
     }
 
     // Hàm cập nhật phân trang
     function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
-        paginationDiv.innerHTML = "";
+        let paginationHTML = "";
 
         if (currentPage > 1) {
-            paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
+            paginationHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
         }
 
         for (let i = groupStart; i <= groupEnd; i++) {
-            paginationDiv.innerHTML += `
+            paginationHTML += `
                 <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
             `;
         }
 
         if (currentPage < totalPages) {
-            paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
+            paginationHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
         }
 
+        paginationDiv.innerHTML = paginationHTML;
         bindPaginationEvents();
     }
 
@@ -279,15 +480,28 @@ document.addEventListener("DOMContentLoaded", function () {
                 event.preventDefault();
                 const page = parseInt(this.getAttribute("data-page"), 10);
                 if (!isNaN(page)) {
-                    currentPage = page; 
+                    currentPage = page;
                     fetchPage(page);
                 }
             });
         });
     }
 
+    // Khởi tạo việc fetch dữ liệu
+    function startPolling() {
+        fetchPage(currentPage); // Lần gọi đầu tiên
+        pollingTimer = setInterval(() => {
+            fetchPage(currentPage); // Gọi API định kỳ
+        }, POLLING_INTERVAL);
+    }
+
+    // Dừng việc polling (nếu cần)
+    function stopPolling() {
+        clearInterval(pollingTimer);
+    }
+
     // Gọi lần đầu tiên
-    fetchPage(currentPage);
+    startPolling();
 });
 
 
@@ -684,7 +898,7 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then(data => {
             // Populate line-combobox
-            lineCombobox.innerHTML = '<option value="">--------</option>';
+            lineCombobox.innerHTML = '<option value="">All</option>';
             data.lines.forEach(line => {
                 const option = document.createElement("option");
                 option.value = line;
@@ -693,7 +907,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
             // Populate state-combobox
-            stateCombobox.innerHTML = '<option value="">--------</option>';
+            stateCombobox.innerHTML = '<option value="">All</option>';
             data.states.forEach(state => {
                 const option = document.createElement("option");
                 option.value = state;

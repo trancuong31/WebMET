@@ -1,12 +1,10 @@
-from flask import Flask, request, jsonify, abort, render_template, redirect, flash, send_file, make_response, url_for, send_from_directory
+from flask import Flask, request, jsonify, abort, render_template, redirect, flash, send_file, make_response, url_for
 import oracledb
 from flask_cors import CORS
 import jwt, time
-from flask_socketio import SocketIO, emit
-import threading
+from flask_socketio import SocketIO
 import os, io
 from datetime import datetime, timezone, timedelta
-from werkzeug.utils import secure_filename
 import pandas as pd
 import asyncio
 
@@ -23,7 +21,7 @@ DB_CONFIG = {
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'jpg', 'jpeg', 'png'}
-CORS(app) 
+CORS(app)
 # Hàm kết nối Oracle
 def get_db_connection():
     try:
@@ -99,6 +97,7 @@ def dashboard_page():
         flash('Invalid token, please log in again.', 'error')
         return redirect(('login'))
     return render_template('dashboard.html', username=username)
+
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -189,7 +188,7 @@ def dashboard():
         if connection:
             connection.close()
 
-###websocket
+###websocket  
 # Hàm truy vấn dữ liệu từ cơ sở dữ liệu
 # def fetch_data(page=1, per_page=10):
 #     try:
@@ -268,30 +267,7 @@ def dashboard():
 #             connection.close()
 # # Gửi dữ liệu qua WebSocket
 # @socketio.on('request_data')
-# def handle_request_data(data):
-#     try:
-#         page = data.get('page', 1)
-#         per_page = data.get('per_page', 10)
-#         response = fetch_data(page=page, per_page=per_page)
-#         if response:
-#             emit('update_dashboard', response)
-#         else:
-#             emit('update_dashboard', {'error': 'Unable to fetch data'})
-#     except Exception as e:
-#         app.logger.error(f"Error handling WebSocket request: {str(e)}")
-#         emit('update_dashboard', {'error': str(e)})
 
-# # Gửi dữ liệu liên tục (giả lập realtime)
-# def push_realtime_data():
-#     while True:
-#         time.sleep(5)  # Gửi dữ liệu mỗi 5 giây
-#         response = fetch_data(page=1, per_page=10)
-#         if response:
-#             socketio.emit('update_dashboard', response)
-
-
-# # Chạy luồng phát dữ liệu giả lập
-# threading.Thread(target=push_realtime_data, daemon=True).start()
 ##########
 
 # @app.route('/filter', methods=['POST'])
@@ -490,7 +466,6 @@ def filter_data():
             "message": str(e)
         }), 500
 
-
 @app.route('/logout', methods=['GET'])
 def logout():
     resp = make_response(redirect(('login')))
@@ -536,7 +511,7 @@ def login():
                 return render_template('login.html', error='Incorrect username or password')
 
         except Exception as e:
-            return jsonify({'error': f'Database error: {e}'}), 500 
+             return render_template('login.html', error=f"An error occurred: {e}")
 
         finally:
             if cursor:
@@ -602,11 +577,10 @@ def register():
 
         return render_template('register.html')
     except Exception as e:
-        flash(f"Database error: {e}", "error")
+        error_message = f"Database error: {e}"
+        print(error_message) 
+        return render_template('register.html', error=f"An error occurred: {e}")
  
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 @app.route('/getLines', methods=['GET'])
 def get_lines():
     try:
@@ -674,32 +648,6 @@ def getinfo():
             "message": str(e)
         }), 500
 
-# Xử lý file tải lên
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'file' not in request.files:
-        return "No file part"
-    
-    file = request.files['file']
-    if file.filename == '':
-        return "No selected file"
-    
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)  # Bảo mật tên file
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)  # Lưu file
-
-        # Phân loại và xử lý theo loại tệp
-        file_extension = filename.rsplit('.', 1)[1].lower()
-        if file_extension in {'jpg', 'jpeg', 'png'}:
-            return render_template('view_image.html', filename=filename)
-        elif file_extension in {'xlsx', 'xls'}:
-            # Đọc nội dung Excel
-            data = pd.read_excel(filepath)
-            return render_template('view_excel.html', tables=[data.to_html(classes='data', header=True)], filename=filename)
-    else:
-        return "File not allowed"
-
 def fetch_filtered_data(filters):
     try:
         connection = get_db_connection()
@@ -746,11 +694,6 @@ def fetch_filtered_data(filters):
     except Exception as e:
         app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
         raise
-
-# Route để hiển thị hình ảnh
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/downloadExcel', methods=['POST'])
 def download_excel():
