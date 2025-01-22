@@ -18,8 +18,9 @@
     <div id="loading" class="loading-overlay" >
       <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading..."/>
     </div>
+    
     <div class="wrapper">
-      
+      <div id="coppyright"><a href="{{ url_for('index1') }}">©2025 Copyright MET-Automation | IOT</a></div>
       <nav id="navbar">
         <ul class="navbar-items flexbox-col">
           <li class="navbar-logo flexbox-left">
@@ -93,17 +94,34 @@
         
         <div  class="overlay-image" alt="overlay"></div>
         <header>
-          <h2>DASHBOARD</h2>
+          <h3>DASHBOARD</h3>
+          <h1 style="padding: 10px; display: inline;">Infomation screw machine</h1>
         </header>
         <div class="mainContent">
+          <h1 style="padding: 10px;"></h1>
           <div class="content">
-            <h1 style="padding: 10px;">Infomation screw</h1>
-            
             <div class="content-top">
-              <div ><p class="infor">Total: <span style="color: #fff;" id="total-records"></p></div>
-              <div ><p class="infor">Pass: <span style="color: rgb(2, 255, 158);" id="pass-records"></p></div>
-              <div ><p class="infor">Fail: <span style="color: red;" id="fail-records"></p></div>
-              <div ><p class="infor" >FPY: <span style="color: #fff;" id="fpy-percentage"></p></div>
+              
+              <div class="info1" >
+                <div class="infor">Total</div>
+                <div class="card" style="color: #fff; " id="total-records">N/A</div>
+                <div class="glow-line"></div>
+              </div>
+              <div class="info1" >
+                <div class="infor">Pass</div>
+                <div class="card" style="color: rgb(2, 255, 158); " id="pass-records">N/A</div>
+                <div class="glow-line"></div>
+              </div>
+              <div class="info1" >
+                <div class="infor">Fail</div>
+                <div class="card" style="color: rgb(247, 68, 68); " id="fail-records">N/A</div>
+                <div class="glow-line"></div>
+                </div>
+              <div class="info1" >
+                <div class="infor" >FPY</div>
+                <div class="card" style="color: #fff;" id="fpy-percentage">N/A</div>
+                <div class="glow-line"></div>
+                </div>
               <div class="dowfile">
                 <a id="download-excel"><span><img style="width: 20px; height: 20px; " src="{{ url_for('static', filename='images/downloads.png') }}"  alt="Expoprt File"></span></a>
               </div>
@@ -137,14 +155,14 @@
             <!-- filter -->
             <div class="filter">
               <!-- Line: <input style="width: 3em;" type="text" name="line" id="line"> -->
-              Line:<select id="line-combobox">
-                <!-- Các giá trị sẽ được thêm vào đây -->
+            Line: <select id="line-combobox">
             </select>
+            Factory: <select id="factory-combobox">
+            </select>
+            Name machine: <select id="nameMachine-combobox" style="width: 80px;"></select>
               Time: <input style="width: 180px;"  type="datetime-local" name="time_update" id="time_update">
               To: <input style="width: 180px;"  type="datetime-local" name="time_end" id="time_end">
-              <!-- State: <input style="width: 3em;" type="text" name="state" id="state">           -->
               State: <select id="state-combobox">
-                <!-- Các giá trị sẽ được thêm vào đây -->
             </select>
               <input style=" transition: all .5s ease-in-out; padding: 0.5em; width: 5em; " type="submit" value="Search" id="filter">
             </div>
@@ -159,17 +177,19 @@
               />
             </a>
           </div> 
-          <div class="pagination"  id="pagination">
-        </div>
+          
         <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
         <div class="chartAll">
-          <div class="chartContent">            
+          
+          <div class="chartContent">    
+            <div class="pagination"  id="pagination">
+            </div>        
             <div class="pieChartInfo">
               <!-- <div><h4>Rate By Day</h4></div> -->
               <figure class="highcharts-figure">
                 <div id="container-pie"></div>
               </figure>
-              <button id="backButton" >Back</button>
+              <button id="backButton" ><img src="{{ url_for('static', filename='images/backButton.png') }}" alt=""></button>
               <script>
                 // Hàm tạo biểu đồ ban đầu
                 function createInitialChart() {
@@ -184,14 +204,14 @@
                       text: 'Rate Pass/Fail',
                       align: 'center',
                       verticalAlign: 'middle',
-                      y: 60,
+                      y: 70,
                       style: {
-                        fontSize: '1.1em',
+                        fontSize: '1em',
                         color: '#fff'
                       }
                     },
                     tooltip: {
-                      pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                      pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
                     },
                     accessibility: {
                       point: {
@@ -228,8 +248,8 @@
                       name: 'Rate',
                       innerSize: '50%',
                       data: [
-                        { name: 'Pass', y: 65.3, color: '#3464eb' },
-                        { name: 'Fail', y: 34.7, color: '#eb3434' }
+                        { name: 'Pass', y: 65.32, color: '#3464eb' },
+                        { name: 'Fail', y: 34.68, color: '#eb3434' }
                       ]
                     }],
                     credits: {
@@ -245,17 +265,22 @@
                     chart: {
                       type: 'column',
                       backgroundColor: null,
-                      
+                      zoomType:'x'
                     },
                     title: {
                       text: `Details for ${category}`,
                       style: {
-                        color: '#fff',
-                        fontSize: '1em'
-                      }
+                        color: '#fff', 
+                        fontSize: '16px', 
+                        fontWeight: 'bold'
+                      },
+                      align:'left'
                     },
                     xAxis: {
-                      categories: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5'],
+                      categories: ['00:00-01:00', '01:00-02:00', '02:00-03:00', '03:00-04:00',
+                       '04:00-05:00', '05:00-06:00', '06:00-07:00'
+                       , '07:00-08:00', '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00'
+                       , '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00', '20:00-21:00', '21:00-22:00', '22:00-23:00', '23:00-00:00'],
                       labels: {
                         style: {
                           color: '#fff'
@@ -282,7 +307,7 @@
                   },
                     series: [{
                       name: category,
-                      data: category === 'Pass' ? [5, 10, 15, 20, 25] : [3, 8, 12, 18, 22],
+                      data: category === 'Pass' ? [5, 10, 15, 20, 22,26, 29, 31, 33, 36, 32, 18, 25, 32, 26, 16, 18, 15, 15,23,21,33,26,25] : [3, 8, 12, 33, 36, 32, 18, 25, 18, 22, 12, 22,3, 8, 12, 13, 22, 32, 28, 25, 18, 32, 22, 22],
                       color: category === 'Pass' ? '#3464eb' : '#eb3434'
                     }],
                     credits: {
@@ -299,12 +324,8 @@
             </div>
             <div class="chartRight">
               <div>
-                
                 <figure class="highcharts-figure">
                   <div id="container-line"></div>
-                  <!-- <p class="highcharts-description">
-                      Basic line chart showing trends in a dataset. 
-                  </p> -->
               </figure>
               <script>
                 Highcharts.chart('container-line', {
@@ -330,7 +351,9 @@
                     text: 'Title',
                     align: 'left',
                     style:{
-                      color : '#fff'
+                      color: '#fff', 
+                      fontSize: '16px', 
+                      fontWeight: 'bold'
                     }
                 },
 
@@ -459,11 +482,13 @@
                     },
                   accessibility:{
                     enabled: false
+
+
                   },
                     xAxis: [{
                       categories: [
-                        '7:00-8:00', '8:00-9:00', '9:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00',
-                        '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00'
+                        '10/1/2025', '11/1/2025', '12/1/2025', '13/1/2025', '14/1/2025', '15/1/2025',
+                        '16/1/2025', '17/1/2025', '18/1/2025', '19/1/2025', '20/1/2025', '21/1/2025'
                       ],
                       crosshair: true,
                       labels: {
@@ -489,13 +514,13 @@
                       }
                     }, { 
                       title: {
-                        text: 'Pass/Fail',
+                        text: 'Count',
                         style: {
                           color: '#fff'
                         }
                       },
                       labels: {
-                        format: '{value} %',
+                        format: '{value}',
                         style: {
                           color: '#fff'
                         }
@@ -524,7 +549,7 @@
                         18.7, 17.1, 16.0
                       ],
                       tooltip: {
-                        valueSuffix: ' %'
+                        valueSuffix: ''
                       }
                     }, {
                       name: 'Fail',
@@ -535,7 +560,7 @@
                         81.3, 82.9, 84.0
                       ],
                       tooltip: {
-                        valueSuffix: ' %'
+                        valueSuffix: ''
                       }
                     }, {
                       name: 'FPY',
@@ -565,30 +590,43 @@
                   
                   title: {
                     text: 'Chart CPK',
+                    align:'left',
                     style:{
-                      color:'#fff'
+                      color: '#fff', 
+                      fontSize: '16px', 
+                      fontWeight: 'bold'
                     }
                   },
-                  xAxis: {labels: {
-                    style: {
+                  xAxis: {
+                    categories: ['Machine 1', 'Machine 2', 'Machine 3', 'Machine 4', 'Machine 5', 'Machine 6', 'Machine 7', 'Machine 8', 'Machine 9'],
+                    labels: {
+                      style: {
                         color: '#ffffff' 
+                      }
                     },
-                    
-                  },
                     title: {
-                      text: 'Giá trị đo lường',
-                      style:{
-                        color:'#fff'
-                      },
-                      
+                      text: 'Machine Name', 
+                      style: {
+                        color: '#fff'
+                      }
                     }
                   },
                   credits:{
                     enabled:null
                   },
+                  legend: {
+                      align: 'center',
+                      verticalAlign: 'bottom',
+                      itemStyle:{
+                        color: '#fff'
+                      },
+                      itemHoverStyle: {
+                      color: '#cccccc'
+                    }
+                  },
                   yAxis: {
                     title: {
-                      text: 'Tần suất',
+                      text: 'Force Screw',
                       style:{
                         color:'#fff'
                       }
@@ -602,30 +640,48 @@
                   series: [
                     {
                       type: 'line',
-                      name: 'Histogram',
+                      name: 'AVG force 1',
                       data: [7.7, 8, 10, 8.5, 9, 9.5, 8.2, 7.7, 10.6],
                       zIndex: 1
                     },
                     {
                       type: 'line',
+                      name: 'AVG force 2',
+                      data: [9.5, 8.5, 9.1, 7.3, 8.2, 9.8, 8.7, 6.9, 7.1],
+                      zIndex: 1
+                    },
+                    {
+                      type: 'line',
+                      name: 'AVG force 3',
+                      data: [11.8, 7.1, 9.2, 9.6, 7.1, 8.3, 8.4, 7.6, 9.3],
+                      zIndex: 1
+                    },
+                    {
+                      type: 'line',
+                      name: 'AVG force 4',
+                      data: [7.6, 8.3, 7.5, 6.4,7.9, 8.4, 8.1, 11.5, 10.2],
+                      zIndex: 1
+                    },
+                    {
+                      type: 'line',
                       name: 'UCL',
-                      data: Array(9).fill(11), // Giá trị cố định UCL
-                      dashStyle: 'Dash',
+                      data: Array(9).fill(11), 
+                      dashStyle: 'Solid',
                       color: 'red',
                       zIndex: 2
                     },
                     {
                       type: 'line',
                       name: 'LCL',
-                      data: Array(9).fill(7), // Giá trị cố định LCL
-                      dashStyle: 'Dash',
+                      data: Array(9).fill(7), 
+                      dashStyle: 'Solid',
                       color: 'blue',
                       zIndex: 2
                     },
                     {
                       type: 'line',
                       name: 'AVG',
-                      data: Array(9).fill(9), // Giá trị trung bình
+                      data: Array(9).fill(9), 
                       dashStyle: 'Dot',
                       color: 'green',
                       zIndex: 3
@@ -636,12 +692,12 @@
             </div>
           </div>
           <div class="chartContent2">
-            <div class="chart3">
+            <!-- <div class="chart3">
               <h1>ABC</h1>
             </div>
             <div class="chart4">
               <h1>DEF</h1>
-            </div>
+            </div> -->
           </div>
         </div>
           </div>

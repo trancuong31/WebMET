@@ -65,6 +65,63 @@
             }
             return true;
         }
+
+        // const snowflakeCount = 10;
+        // let mouseX = window.innerWidth / 2;
+        // let smoothingFactor = 0.05;
+        // let targetMouseX = mouseX;
+        // let fallSpeedMultiplier = 0.3; // Hệ số để điều chỉnh tốc độ rơi
+
+        // window.addEventListener('mousemove', (event) => {
+        // targetMouseX = event.clientX;
+        // });
+
+        // const smoothMouseUpdate = () => {
+        // mouseX += (targetMouseX - mouseX) * smoothingFactor;
+        // requestAnimationFrame(smoothMouseUpdate);
+        // };
+
+        // smoothMouseUpdate();
+
+        // const createSnowflake = () => {
+        // const snowflake = document.createElement('div');
+        // snowflake.className = 'snowflake';
+        // snowflake.innerText = '*';
+
+        // const initialRotation = Math.random() * 360;
+        // snowflake.style.left = Math.random() * 100 + 'vw';
+        // snowflake.style.animationDuration = (5 + Math.random() * 5) / fallSpeedMultiplier + 's'; // Chỉnh tốc độ rơi
+        // snowflake.style.fontSize = 8 + Math.random() * 10 + 'px';
+        // snowflake.style.transform = `rotate(${initialRotation}deg)`;
+
+        // document.body.appendChild(snowflake);
+
+        // const updateSnowflake = () => {
+        //     const rect = snowflake.getBoundingClientRect();
+        //     const snowflakeX = rect.left + rect.width / 2;
+        //     const distance = (mouseX - snowflakeX) * 0.02;
+        //     const rotation = parseFloat(snowflake.style.transform.replace(/rotate\((.*)deg\)/, '$1')) || initialRotation;
+        //     snowflake.style.transform = `translateX(${distance}px) rotate(${rotation + 1}deg)`;
+        //     requestAnimationFrame(updateSnowflake);
+        // };
+
+        // updateSnowflake();
+
+        // snowflake.addEventListener('animationend', () => {
+        //     snowflake.remove();
+        // });
+        // };
+
+        // // Tạo bông tuyết ban đầu
+        // for (let i = 0; i < snowflakeCount; i++) {
+        // createSnowflake();
+        // }
+
+        // // Thêm bông tuyết mới mỗi 600ms
+        // setInterval(() => {
+        // createSnowflake();
+        // }, 600);
+
     </script>
 
 </body>

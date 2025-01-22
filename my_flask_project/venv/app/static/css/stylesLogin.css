@@ -103,9 +103,7 @@ input{
     color: black;
 }
 
-::placeholder{
-    color: #414040;
-}
+
 button{
     margin-top: 50px;
     width: 100%;

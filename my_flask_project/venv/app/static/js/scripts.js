@@ -3,66 +3,6 @@ $(window).on("load resize ", function() {
     var scrollWidth = $('.tbl-content').width() - $('.tbl-content table').width();
     $('.tbl-header').css({'padding-right':scrollWidth});
     }).resize();
-//Load data table
-//filter data
-// document.getElementById('filter').addEventListener('click', function() {
-//     // Lấy giá trị từ các input
-//     const line = document.getElementById('line').value.trim();
-//     const time_update = document.getElementById('time_update').value.trim();
-//     const time_end = document.getElementById('time_end').value.trim();
-//     const state = document.getElementById('state').value.trim();
-
-//     const formatDatetime = (datetime) => {
-//         return datetime ? datetime.replace('T', ' ') + ':00' : null; // Thêm giây để phù hợp định dạng 'YYYY-MM-DD HH:MM:SS'
-//     };
-//     const payload = {
-//         line: line !== '' ? line : null,
-//         time_update: formatDatetime(time_update),
-//         time_end: formatDatetime(time_end),
-//         state: state !== '' ? state : null
-//     };
-//     document.getElementById('loading').style.display = 'block'; 
-//     fetch('/filter', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify(payload)
-//     })
-//     .then(response => response.json())
-//     .then(data => {
-//         if (data.success) {
-//             const tableBody = document.getElementById('result-table').querySelector('.tbl-content tbody');
-//             tableBody.innerHTML = '';
-//             data.data.forEach(record => {
-//                 const stateClass = record.state === 'PASS' ? 'state-pass' : 'state-fail';
-//                 const row = `
-//                     <tr>
-//                         <td>${record.stt}</td>
-//                         <td>${record.factory}</td>
-//                         <td>${record.line}</td>
-//                         <td>${record.serial_number}</td>
-//                         <td>${record.model_name}</td>
-//                         <td>${record.name_machine}</td>
-//                         <td>${record.force_1}</td>
-//                         <td>${record.force_2}</td>
-//                         <td>${record.force_3}</td>
-//                         <td>${record.force_4}</td>
-//                         <td>${record.time_update}</td>
-//                         <td class="${stateClass}">${record.state}</td>
-//                     </tr>
-//                 `;
-//                 tableBody.innerHTML += row;
-//             });
-
-//             console.log("Dữ liệu đã được tải vào bảng");
-//         } else {
-//             alert('Không tìm thấy dữ liệu!');
-//         }
-//     document.getElementById('loading').style.display = 'none';
-//     })
-//     .catch(error => console.error('Lỗi:', error));
-// });
 //filter data
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
@@ -75,28 +15,28 @@ document.addEventListener("DOMContentLoaded", function () {
         fetchFilteredData(1); 
     });
 
-    // Hàm gọi API filter
     function fetchFilteredData(page = 1) {
         // Lấy giá trị từ các input
         const line = document.getElementById('line-combobox').value.trim();
+        const factory = document.getElementById('factory-combobox').value.trim();
         const time_update = document.getElementById('time_update').value.trim();
         const time_end = document.getElementById('time_end').value.trim();
         const state = document.getElementById('state-combobox').value.trim();
-
+        const nameMachine = document.getElementById('nameMachine-combobox').value.trim();
         const formatDatetime = (datetime) => {
             return datetime ? datetime.replace('T', ' ') + ':00' : null;
         };
 
         const payload = {
             line: line || null,
+            factory: factory || null,
+            nameMachine: nameMachine||null,
             time_update: formatDatetime(time_update),
             time_end: formatDatetime(time_end),
             state: state || null,
             page: page,
             per_page: 10 
         };
-
-        // document.getElementById('loading').style.display = 'block';
 
         fetch('/filter', {
             method: 'POST',
@@ -111,11 +51,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     document.getElementById('count').textContent = data.message ||""
                     updateTable(data.data);
                     updatePagination(data.current_page, data.total_pages, data.group_start, data.group_end);
+                    if (data.total_records == 0){
+                        tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
+                        paginationDiv.innerHTML = '';
+                    }
                 } else {
-                    tableBody.innerHTML = `<tr><td colspan="12">Không tìm thấy dữ liệu.</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
                     paginationDiv.innerHTML = '';
                 }
-                // document.getElementById('loading').style.display = 'none';
             })
             .catch(error => {
                 console.error("Error fetching filtered data:", error);
@@ -135,9 +78,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     <td>${row.stt}</td>
                     <td>${row.factory}</td>
                     <td>${row.line}</td>
-                    <td>${row.serial_number}</td>
-                    <td>${row.model_name}</td>
                     <td>${row.name_machine}</td>
+                    <td>${row.model_name}</td>
+                    <td>${row.serial_number}</td>
                     <td>${row.force_1}</td>
                     <td>${row.force_2}</td>
                     <td>${row.force_3}</td>
@@ -189,211 +132,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
 });
-//load table
-// document.addEventListener("DOMContentLoaded", function () {
-//     const tableBody = document.getElementById("table-body");
-//     const paginationDiv = document.getElementById("pagination");
-//     const POLLING_INTERVAL = 600000;
 
-//     let currentPage = 1; 
-
-//     // Hàm gọi API dashboard
-//     function fetchPage(page = 1) {
-//         fetch(`/dashboard?page=${page}`, {
-//             headers: {
-//                 "X-Requested-With": "XMLHttpRequest"
-//             }
-//         })
-//             .then(response => response.json())
-//             .then(data => {
-//                 if (data.data) {
-//                     updateTable(data.data);
-//                     updatePagination(data.page, data.total_pages, data.group_start, data.group_end);
-//                 } else {
-//                     tableBody.innerHTML = `<tr><td colspan="12">Không tìm thấy dữ liệu.</td></tr>`;
-//                     paginationDiv.innerHTML = '';
-//                 }
-//             })
-//             .catch(error => {
-//                 console.error("Error fetching page data:", error);
-//                 tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
-//                 paginationDiv.innerHTML = '';
-//             })
-//             .finally(() => {
-//                 setTimeout(() => fetchPage(currentPage), POLLING_INTERVAL);
-//             });
-//     }
-
-//     // Hàm cập nhật bảng
-//     function updateTable(rows) {
-//         while (tableBody.firstChild) {
-//             tableBody.removeChild(tableBody.firstChild);
-//         }
-
-//         rows.forEach(row => {
-//             const tr = document.createElement("tr");
-//             tr.innerHTML = `
-//                 <td>${row.stt}</td>
-//                 <td>${row.factory}</td>
-//                 <td>${row.line}</td>
-//                 <td>${row.serial_number}</td>
-//                 <td>${row.model_name}</td>
-//                 <td>${row.name_machine}</td>
-//                 <td>${row.force_1}</td>
-//                 <td>${row.force_2}</td>
-//                 <td>${row.force_3}</td>
-//                 <td>${row.force_4}</td>
-//                 <td>${row.time_update}</td>
-//                 <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
-//             `;
-//             tableBody.appendChild(tr);
-//         });
-//     }
-
-//     // Hàm cập nhật phân trang
-//     function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
-//         paginationDiv.innerHTML = "";
-
-//         if (currentPage > 1) {
-//             paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
-//         }
-
-//         for (let i = groupStart; i <= groupEnd; i++) {
-//             paginationDiv.innerHTML += `
-//                 <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
-//             `;
-//         }
-
-//         if (currentPage < totalPages) {
-//             paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
-//         }
-
-//         bindPaginationEvents();
-//     }
-
-//     // Gắn sự kiện click phân trang
-//     function bindPaginationEvents() {
-//         const links = paginationDiv.querySelectorAll(".page-link");
-//         links.forEach(link => {
-//             link.addEventListener("click", function (event) {
-//                 event.preventDefault();
-//                 const page = parseInt(this.getAttribute("data-page"), 10);
-//                 if (!isNaN(page)) {
-//                     currentPage = page; 
-//                     fetchPage(page);
-//                 }
-//             });
-//         });
-//     }
-
-//     // Gọi lần đầu tiên
-//     fetchPage(currentPage);
-// });
-
-// document.addEventListener("DOMContentLoaded", function () {
-//     const tableBody = document.getElementById("table-body");
-//     const paginationDiv = document.getElementById("pagination");
-//     const POLLING_INTERVAL = 60000;
-
-//     let currentPage = 1;
-
-//     // Hàm gọi API dashboard
-//     function fetchPage(page = 1) {
-//         fetch(`/dashboard?page=${page}`, {
-//             headers: {
-//                 "X-Requested-With": "XMLHttpRequest"
-//             }
-//         })
-//         .then(response => response.json())
-//         .then(data => {
-//             if (data.data) {
-//                 updateTable(data.data);
-//                 updatePagination(data.page, data.total_pages, data.group_start, data.group_end);
-//             } else {
-//                 tableBody.innerHTML = `<tr><td colspan="12">Không tìm thấy dữ liệu.</td></tr>`;
-//                 paginationDiv.innerHTML = '';
-//             }
-//         })
-//         .catch(error => {
-//             console.error("Error fetching page data:", error);
-//             tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
-//             paginationDiv.innerHTML = '';
-//         })
-//         .finally(() => {
-//             setTimeout(() => fetchPage(currentPage), POLLING_INTERVAL);
-//         })
-//         ;
-//     }
-
-//     // Hàm cập nhật bảng
-//     function updateTable(rows) {
-//         // Xóa tất cả các dòng cũ
-//         tableBody.innerHTML = "";
-
-//         // Tạo HTML mới cho bảng
-//         const tableRows = rows.map(row => {
-//             return `
-//                 <tr>
-//                     <td>${row.stt}</td>
-//                     <td>${row.factory}</td>
-//                     <td>${row.line}</td>
-//                     <td>${row.serial_number}</td>
-//                     <td>${row.model_name}</td>
-//                     <td>${row.name_machine}</td>
-//                     <td>${row.force_1}</td>
-//                     <td>${row.force_2}</td>
-//                     <td>${row.force_3}</td>
-//                     <td>${row.force_4}</td>
-//                     <td>${row.time_update}</td>
-//                     <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
-//                 </tr>
-//             `;
-//         }).join("");  // Chuyển thành chuỗi
-
-//         // Thêm các hàng vào bảng
-//         tableBody.innerHTML = tableRows;
-//     }
-
-//     // Hàm cập nhật phân trang
-//     function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
-//         let paginationHTML = "";
-
-//         if (currentPage > 1) {
-//             paginationHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
-//         }
-
-//         for (let i = groupStart; i <= groupEnd; i++) {
-//             paginationHTML += `
-//                 <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
-//             `;
-//         }
-
-//         if (currentPage < totalPages) {
-//             paginationHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
-//         }
-
-//         paginationDiv.innerHTML = paginationHTML;
-//         bindPaginationEvents();
-//     }
-
-//     // Gắn sự kiện click phân trang
-//     function bindPaginationEvents() {
-//         const links = paginationDiv.querySelectorAll(".page-link");
-//         links.forEach(link => {
-//             link.addEventListener("click", function (event) {
-//                 event.preventDefault();
-//                 const page = parseInt(this.getAttribute("data-page"), 10);
-//                 if (!isNaN(page)) {
-//                     currentPage = page;
-//                     fetchPage(page);
-//                 }
-//             });
-//         });
-//     }
-
-//     // Gọi lần đầu tiên
-//     fetchPage(currentPage);
-// });
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
     const paginationDiv = document.getElementById("pagination");
@@ -413,6 +152,7 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => {
             if (data.data) {
                 updateTable(data.data);
+                document.getElementById('count').textContent =""
                 updatePagination(data.page, data.total_pages, data.group_start, data.group_end);
             } else {
                 tableBody.innerHTML = `<tr><td colspan="12">Không tìm thấy dữ liệu.</td></tr>`;
@@ -486,21 +226,15 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-
-    // Khởi tạo việc fetch dữ liệu
     function startPolling() {
-        fetchPage(currentPage); // Lần gọi đầu tiên
+        fetchPage(currentPage); 
         pollingTimer = setInterval(() => {
-            fetchPage(currentPage); // Gọi API định kỳ
+            fetchPage(currentPage);
         }, POLLING_INTERVAL);
     }
-
-    // Dừng việc polling (nếu cần)
     function stopPolling() {
         clearInterval(pollingTimer);
     }
-
-    // Gọi lần đầu tiên
     startPolling();
 });
 
@@ -886,18 +620,19 @@ document.addEventListener("DOMContentLoaded", function () {
 //get lines, states
 document.addEventListener("DOMContentLoaded", function () {
     const lineCombobox = document.getElementById("line-combobox");
+    const factoryCombobox = document.getElementById("factory-combobox");
     const stateCombobox = document.getElementById("state-combobox");
-
+    const nameMachineCombobox = document.getElementById("nameMachine-combobox");
+    
     // Fetch data from /getLines
     fetch("/getLines")
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return response.json(); // Parse JSON response
+            return response.json();
         })
         .then(data => {
-            // Populate line-combobox
             lineCombobox.innerHTML = '<option value="">All</option>';
             data.lines.forEach(line => {
                 const option = document.createElement("option");
@@ -905,14 +640,27 @@ document.addEventListener("DOMContentLoaded", function () {
                 option.textContent = line;
                 lineCombobox.appendChild(option);
             });
-
-            // Populate state-combobox
+            factoryCombobox.innerHTML = '<option value="">All</option>';
+            data.factories.forEach(factory => {
+                const option = document.createElement("option");
+                option.value = factory;
+                option.textContent = factory;
+                factoryCombobox.appendChild(option);
+            });
             stateCombobox.innerHTML = '<option value="">All</option>';
             data.states.forEach(state => {
                 const option = document.createElement("option");
                 option.value = state;
                 option.textContent = state;
                 stateCombobox.appendChild(option);
+            });
+
+            nameMachineCombobox.innerHTML = '<option value="">All</option>';
+            data.nameMachines.forEach(nameMachine => {
+                const option = document.createElement("option");
+                option.value = nameMachine;
+                option.textContent = nameMachine;
+                nameMachineCombobox.appendChild(option);
             });
         })
         .catch(error => {

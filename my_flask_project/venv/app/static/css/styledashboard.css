@@ -94,17 +94,17 @@ a:visited {
 
 button {
     padding: .8em 1.2em;
-    border: 1px solid hsl(var(--black));
-    background-color: hsl(var(--background));
+    /* border: 1px solid hsl(var(--black)); */
+    /* background-color: hsl(var(--background)); */
     font-size: var(--paragraph);
+    background-color: unset;
     cursor: pointer;
+    border: unset;
     outline: none;
 }
 button:focus {
-    box-shadow:
-            0 0 0 2px hsl(var(--black)),
-            0 0 0 3px hsl(var(--white));
-    border: 1px solid transparent;
+    transform: translateY(2px);
+    transition: all .2s ease-in-out;
 }
 
 ul, ol {
@@ -135,9 +135,12 @@ select {
     border: 1px solid #666666;
 }
 select option{
-    color: #000;
-    background-color:rgba(21, 226, 253, 0.3);
+    color: #ffffff;
+    background-color:rgb(12, 96, 107);
     
+}select option::after{
+  color: #ffffff;
+  background-color:rgb(12, 96, 107);
 }
 select option:hover{
     background-color: #2e5bf0;
@@ -302,10 +305,10 @@ select option:hover{
 }
 ::-webkit-scrollbar {
     width: 8px;
-    background-color: rgb(21,226,253,0.5);
+    background-color: rgba(17, 143, 160, 0.5);
 }
 ::-webkit-scrollbar-thumb {
-    background-color: rgb(21,226,253,0.5);
+    background-color: rgba(17, 143, 160, 0.5);
 }
 
 @media only screen and (max-width: 1660px) {
@@ -406,26 +409,51 @@ img#fullscreenic{
     position: relative;
     background-color: #000000ee;
     color: #fff;
-    /* background-image:url("/static/images/cover.jpg");
-    background-repeat: no-repeat;
-    background-size:cover;
-    background-position: center;
-    z-index: 0;
-    background-attachment: fixed; */
 }
 
 .overlay-image {
   position: fixed;
   height: 100vh;
   width: 100%;
+  margin-left: 2%;
+  z-index: 0.5;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.5; 
+  pointer-events: none;
+  background-image: 
+    linear-gradient(
+      rgba(0, 0, 0, 0.5),
+      rgba(0, 0, 0, 0.4) 
+    ),
+    url('/static/images/cover.jpg');
+}
+.overlay-image::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.151); 
   z-index: 1;
-  background-image: url('/static/images/pattern.png');
-  background-repeat: repeat;
-  background-size: 50px 50px;
-  opacity: 1; 
   pointer-events: none;
 }
-
+#coppyright{
+  position: fixed;
+  bottom: 0; 
+  right: 20px; 
+  padding: 5px; 
+  width: 210px;
+  text-align: center;
+  background-color: #ffffff3d;
+  z-index: 1;
+}
+#coppyright a{
+  color: #fff;
+  font-size: 0.7em;
+}
   .conTBottom {
     position: fixed;
     bottom: 20px;
@@ -441,6 +469,10 @@ img#fullscreenic{
     font-weight: 300;
     text-align: center;
     margin-bottom: 15px;
+    height: 65px;
+    color: white;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6);
+  
   }
   .mainContent{
     margin-left: 3%;
@@ -451,13 +483,13 @@ img#fullscreenic{
   }
   .filter{
     position: absolute;
-    top: 23px;
+    top: 0;
     left: 0;
     padding: 5px;
-    /* width: 40%; */
     color: #fff;
     border-bottom: #fff;
     box-sizing: border-box;
+    margin-top: -3em;
   }
 
   #filter{
@@ -481,17 +513,19 @@ img#fullscreenic{
   .pagination {
     display: flex;
     justify-content: flex-end;
-    height: 2.5em;
-    margin-top: 0.2em;
+    margin-top: -2.8em;
   }
   
   .pagination a {
     color: #fff;
     float: left;
+    align-items: center;
+    text-align: center;
     padding: 8px 16px;
     background-color: unset;
     text-decoration: none;
-    border: 1px solid #ddd;
+    border: 0.5px solid #ddd;
+    width: 0.8em;
   }
   #count{
     color: #fff;
@@ -523,14 +557,14 @@ img#fullscreenic{
 
   .chartContent{
     position: relative;
-    margin-top: 0.2em;
+    margin-top: 3.2em;
     height: 50%;
     color: #fff;
   }
   .chartCotent1{
     width: 96%;
     position: absolute;
-    bottom: 24%;
+    bottom: 22.5%;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -539,7 +573,7 @@ img#fullscreenic{
   .chartContent2{
     width: 96%;
     position: absolute;
-    bottom: -0.5%;
+    bottom: -2.5%;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -618,15 +652,18 @@ img#fullscreenic{
   }
   #backButton{
     display: none;
-    padding: 5px 10px; 
-    background-color: rgba(21, 226, 253, 0.5);
-    color: #fff; 
-    border: none; 
-    cursor: pointer;
+    padding: 5px 10px;
     position: absolute;
     right: 1em;
     top: 1em;
+    box-sizing: border-box;
+    transition: all 0.4s ease;
   }
+  #backButton:hover{
+    transform: scale(1.2);
+    
+  }
+  
   .pieChartInfo:hover {
     outline-offset: -2px;
   }
@@ -656,40 +693,122 @@ img#fullscreenic{
     top: 0;
     right: 0;
   }
-  .content-top{
-    top: 0;
+  .content-top {
+    top: -3.9em;
     right: 0;
-    width: 40%;
+    width: 31%;
     display: flex;
     position: absolute;
     justify-content: space-between;
     align-items: center;
-    margin-top: 0.5em;
+    margin-top: -4em;
+    box-sizing: border-box;
   }
-  .infor{
-    background-color: rgba(21, 226, 253, 0.3);
-    padding: 5px;
-    margin-right: 2em;
-    font-size: 1em;
-    width:auto;
+  .info1 {
+    position: relative; 
+    width: 111px;
+    height: 111px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     text-align: center;
-    border-radius: 5px;
+    color: #fff;
+    z-index: 1;
+    
   }
-  .infor:hover{
-    background-color: #6fddff;
-    color: #000000;
-    transition: all .5s ease-in-out;
+ .card {
+  position: relative; 
+  font-size: 1.1em; 
+  z-index: 2;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  animation: moveUpDown 3s infinite; 
+}
+
+
+    @keyframes moveUpDown {
+    0% {
+        transform: translateY(0); 
+    }
+    50% {
+        transform: translateY(-10px); 
+    }
+    100% {
+        transform: translateY(0); 
+    }
+    }
+  .info1::before {
+    content: '';
+    position: absolute;
+    top: 85%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background-image: url('/static/images/circle_1.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: -1;
+    border-radius: 50%;
+    animation: rotateBackground 25s linear infinite, lightUp 2s infinite;
+    transform: translate(-50%, -50%) rotateX(80deg);
+  }
+  @keyframes rotateBackground {
+    from {
+      transform: translate(-50%, -50%) rotateX(80deg) rotate(0deg);
+    }
+    to {
+      transform: translate(-50%, -50%) rotateX(80deg) rotate(360deg);
+    }
+  }
+  
+  .info1::after {
+    content: '';
+    position: absolute;
+    bottom: -20%; 
+    left: 50%;
+    width: 80%;
+    height: 40%;
+    transform: translateX(-50%);
+    background: radial-gradient(circle  at center, rgba(0, 225, 255, 0.3), transparent);
+    border-radius: 50%;
+    animation: lightMove 4s infinite ease-in-out;
+  }
+  
+  @keyframes lightMove {
+    0% {
+      bottom: -20%;
+      opacity: 0;
+    }
+    50% {
+      bottom: 30%;
+      opacity: 1;
+    }
+    100% {
+      bottom: 120%;
+      opacity: 0;
+    }
+  }
+  .infor {
+    position: absolute;
+    top: 6.3em;
+    font-size: 1em;
+    font-weight: 900;
+    color: rgba(0, 225, 255, 0.9);
+    text-shadow: 0 0 10px rgba(0, 225, 255, 0.8), 0 0 20px rgba(0, 225, 255, 0.6);
   }
   .dowfile{
-    margin-top: 2em;
+    margin-top: 3em;
     margin-left: 1.5em;
     background-color: rgba(21, 226, 253, 0.3);
-    transform: translate(-50%, -50%);
     text-align: center;
+    width: 100px;
+    border: 1px solid #666666;
+    
   }
   #download-excel:hover{
     transform: translateY(-2px);
-    border-radius: 5px;
+    
   }
   .dowfile a {
     color: #fff;
@@ -715,7 +834,7 @@ img#fullscreenic{
     border: 1px solid rgba(21, 226, 253, 0.5);
   }
     .state-pass {
-    color: #2e5bf0;
+    color: #006eff;
     font-weight: bold;
 
     }
@@ -739,7 +858,7 @@ img#fullscreenic{
     font-weight: 200;
     font-size: 13px;
     color: #fff;
-    border-bottom: solid 1px rgba(255,255,255,0.1);
+    border-bottom: solid 1px rgba(21, 226, 253, 0.4);
   }
 
 /*style chart column top error*/
@@ -848,6 +967,7 @@ img#fullscreenic{
 
 
 /* Style chart pie */
+
 .highcharts-figure,
 .highcharts-data-table table {
     min-width: 320px;
@@ -861,7 +981,7 @@ img#fullscreenic{
 }
 
 #container-pie {
-    height: 400px;
+    height: 409px;
 }
 
 .highcharts-data-table table {

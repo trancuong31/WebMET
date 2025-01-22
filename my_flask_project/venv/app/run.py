@@ -360,13 +360,14 @@ def filter_data():
     try:
         data = request.json
         line = data.get('line') if data.get('line') != "" else None
+        factory = data.get('factory') if data.get('factory') != "" else None
+        nameMachine = data.get('nameMachine') if data.get('nameMachine') != "" else None
         time_update = data.get('time_update') if data.get('time_update') != "" else None
         time_end = data.get('time_end') if data.get('time_end') != "" else None
         state = data.get('state') if data.get('state') != "" else None
         page = data.get('page', 1)
         per_page = data.get('per_page', 10)
         offset = (page - 1) * per_page
-
         connection = get_db_connection()
         cursor = connection.cursor()
 
@@ -393,6 +394,14 @@ def filter_data():
             base_query += " AND UPPER(line) = UPPER(:line)"
             count_query += " AND UPPER(line) = UPPER(:line)"
             params['line'] = line
+        if factory:
+            base_query += " AND UPPER(factory) = UPPER(:factory)"
+            count_query += " AND UPPER(factory) = UPPER(:factory)"
+            params['factory'] = factory
+        if nameMachine:
+            base_query += " AND UPPER(NAME_MACHINE) = UPPER(:NAME_MACHINE)"
+            count_query += " AND UPPER(NAME_MACHINE) = UPPER(:NAME_MACHINE)"
+            params['NAME_MACHINE'] = nameMachine
         if time_update and time_end:
             base_query += """
                 AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS') 
@@ -596,12 +605,26 @@ def get_lines():
         """
         cursor.execute(query)
         rows2 = cursor.fetchall()
+        query = """
+            SELECT DISTINCT NAME_MACHINE FROM SCREW_FORCE_INFO
+        """
+        cursor.execute(query)
+        rows3 = cursor.fetchall()
+        query = """
+            SELECT DISTINCT FACTORY FROM SCREW_FORCE_INFO
+        """
+        cursor.execute(query)
+        rows4 = cursor.fetchall()
         lines = [row[0] for row in rows]
         states = [row[0] for row in rows2]
+        nameMachines = [row[0] for row in rows3]
+        factories = [row[0] for row in rows4]
          # Định dạng kết quả trả về
         result = {
             "lines": lines,
-            "states": states
+            "states": states,
+            "nameMachines":nameMachines,
+            "factories":factories
         }
         return jsonify(result)
     except Exception as e:
