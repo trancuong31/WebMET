@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <title>Register Form</title>
+    <link href="{{ url_for('static', filename='css/all.min.css')}}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/css2.css')}}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesLogin.css')}}"/>
 </head>
@@ -18,31 +19,36 @@
         <div id="alert" style="color: red; display: none;"></div>
         {% endif %}
         <label for="username">Username</label>
-        <input style="color: #fff;" type="text"  placeholder="Card ID" id="username" name="username">
-        <label for="username">Email</label>
-        <input style="color: #fff;" type="email"  placeholder="Email" id="email" name="email">
+        <input style="color: #fff;" type="text" placeholder="Card ID" id="username" name="username">
+        <label for="email">Email</label>
+        <input style="color: #fff;" type="email" placeholder="Email" id="email" name="email">
         <label for="password">Password</label>
         <div style="position: relative;">
-            <input style="color: #fff;" type="password"  placeholder="Password" id="password" name="password">
-            <span class="toggle-password" onclick="togglePassword('password')" style="position: absolute; top: 50%; right: 1px; transform: translateY(-50%); cursor: pointer; color: #414040;">🙈</span>
+            <input style="color: #fff;" type="password" placeholder="Password" id="password" name="password">
+            <span class="toggle-password" onclick="togglePassword('password')" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer; color: #414040;">
+                <i class="fas fa-eye"></i>
+            </span>
         </div>
         <label for="cfPassword">Confirm Password</label>
         <div style="position: relative;">
-            <input style="color: #fff;" type="password"  placeholder="Confirm Password" id="cfPassword" name="cfPassword">
-            <span class="toggle-password" onclick="togglePassword('cfPassword')" style="position: absolute; top: 50%; right: 1px; transform: translateY(-50%); cursor: pointer; color: #414040;">🙈</span>
+            <input style="color: #fff;" type="password" placeholder="Confirm Password" id="cfPassword" name="cfPassword">
+            <span class="toggle-password" onclick="togglePassword('cfPassword')" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer; color: #414040;">
+                <i class="fas fa-eye"></i>
+            </span>
         </div>
-        <button type="submit">Sign Up</button>
+        <button type="submit">Register</button>
         <p style="text-align: center;">Already have an account? <a id="login" href="{{ url_for('login') }}">Log In</a></p>
     </form>
     <script>
         function validateForm(event) {
             const username = document.getElementById("username").value.trim();
+            const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value.trim();
             const cfPassword = document.getElementById("cfPassword").value.trim();
-            // Kiểm tra điều kiện
-            if (!username || !password) {
-                event.preventDefault(); // Ngăn form gửi đi
-                showAlert("Username and password cannot be empty.");
+
+            if (!username || !email || !password || !cfPassword) {
+                event.preventDefault();
+                showAlert("All fields are required.");
                 return false;
             }
             if (password !== cfPassword) {
@@ -64,14 +70,16 @@
 
         function togglePassword(fieldId) {
             var passwordField = document.getElementById(fieldId);
-            var togglePasswordIcon = passwordField.parentElement.querySelector('.toggle-password');
+            var togglePasswordIcon = passwordField.parentElement.querySelector('.toggle-password i');
 
             if (passwordField.type === "password") {
                 passwordField.type = "text";
-                togglePasswordIcon.textContent = "👁️"; 
+                togglePasswordIcon.classList.remove("fa-eye");
+                togglePasswordIcon.classList.add("fa-eye-slash");
             } else {
                 passwordField.type = "password";
-                togglePasswordIcon.textContent = "🙈"; 
+                togglePasswordIcon.classList.remove("fa-eye-slash");
+                togglePasswordIcon.classList.add("fa-eye");
             }
         }
     </script>

@@ -7,18 +7,17 @@
     <script src="{{ url_for('static', filename='js/accessibility.js') }}"></script>
     <script src="{{ url_for('static', filename='js/exporting.js') }}"></script>
     <script src="{{ url_for('static', filename='js/highcharts.js') }}"></script>
-    <!-- <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script> -->
     <link
       rel="stylesheet" type="text/css"
       href="{{ url_for('static', filename='css/styledashboard.css')}}"
     />
-    <title>THC</title>
+    <title>MET</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/automation1.png') }}" type="image/png">
   </head>
   <body>
     <div id="loading" class="loading-overlay" >
       <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading..."/>
     </div>
-    
     <div class="wrapper">
       <div id="coppyright"><a href="{{ url_for('index1') }}">©2025 Copyright MET-Automation | IOT</a></div>
       <nav id="navbar">
@@ -36,7 +35,10 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="search-outline"></ion-icon>
               </div>
-              <span  class="link-text">📊 Dashboard Screw Force</span>
+              <div  class="link-text">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard Screw Force</span>
+              </div>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -44,7 +46,10 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="home-outline"></ion-icon>
               </div>
-              <span class="link-text">🏠 Mục B</span>
+              <div class="link-text">
+                <span class="nav-icon">🏠</span> 
+                <span  class="nav-text">Mục B</span>
+              </div>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -52,7 +57,10 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="folder-open-outline"></ion-icon>
               </div>
-              <span class="link-text">ℹ️ Mục C</span>
+              <div class="link-text">
+                <span class="nav-icon">ℹ️</span> 
+                <span  class="nav-text">Mục B</span>
+              </div>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -60,7 +68,10 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="pie-chart-outline"></ion-icon>
               </div>
-              <span class="link-text">✨ Mục D</span>
+              <div class="link-text">
+                <span class="nav-icon">ℹ️</span> 
+                <span  class="nav-text">Mục C</span>
+              </div>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -68,7 +79,10 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="people-outline"></ion-icon>
               </div>
-              <span class="link-text">✨ Mục E</span>
+              <div class="link-text">
+                <span class="nav-icon">ℹ️</span> 
+                <span  class="nav-text">Mục D</span>
+              </div>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -76,7 +90,10 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="chatbubbles-outline"></ion-icon>
               </div>
-              <span class="link-text">✨ Mục F</span>
+              <div class="link-text">
+                <span class="nav-icon">ℹ️</span> 
+                <span  class="nav-text">Mục B</span>
+              </div>
             </a>
           </li>
           <li class="navbar-item flexbox-left">
@@ -84,7 +101,10 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <ion-icon name="settings-outline"></ion-icon>
               </div>
-              <span style="color: #fff;" class="link-text">🔒 Logout</span>
+              <div style="color: #fff;" class="link-text">
+                <span class="nav-icon">🔒</span> 
+                <span  class="nav-text">Logout</span>
+              </div>
             </a>
           </li>
         </ul>
@@ -123,7 +143,7 @@
                 <div class="glow-line"></div>
                 </div>
               <div class="dowfile">
-                <a id="download-excel"><span><img style="width: 20px; height: 20px; " src="{{ url_for('static', filename='images/downloads.png') }}"  alt="Expoprt File"></span></a>
+                <a id="download-excel"><span><img style="width: 32px; height: 32px; " src="{{ url_for('static', filename='images/download.png') }}"  alt="Expoprt File"></span></a>
               </div>
             </div>
             <div class="tbl-header">
@@ -154,7 +174,6 @@
             </div>
             <!-- filter -->
             <div class="filter">
-              <!-- Line: <input style="width: 3em;" type="text" name="line" id="line"> -->
             Line: <select id="line-combobox">
             </select>
             Factory: <select id="factory-combobox">
@@ -177,37 +196,33 @@
               />
             </a>
           </div> 
-          
+        
         <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
         <div class="chartAll">
-          
           <div class="chartContent">    
             <div class="pagination"  id="pagination">
             </div>        
             <div class="pieChartInfo">
-              <!-- <div><h4>Rate By Day</h4></div> -->
               <figure class="highcharts-figure">
                 <div id="container-pie"></div>
               </figure>
-              <button id="backButton" ><img src="{{ url_for('static', filename='images/backButton.png') }}" alt=""></button>
+              <button id="backButton"><img src="{{ url_for('static', filename='images/backButton.png') }}" alt=""></button>
               <script>
-                // Hàm tạo biểu đồ ban đầu
                 function createInitialChart() {
                   Highcharts.chart('container-pie', {
                     chart: {
-                      plotBackgroundColor: null,
-                      plotBorderWidth: 0,
-                      plotShadow: false,
+                      type: 'pie',
                       backgroundColor: null
                     },
                     title: {
                       text: 'Rate Pass/Fail',
-                      align: 'center',
-                      verticalAlign: 'middle',
-                      y: 70,
+                      align: 'left',
+                      verticalAlign: 'top',
+                      y:15,
                       style: {
-                        fontSize: '1em',
-                        color: '#fff'
+                        color: '#fff',
+                        fontSize: '16px',
+                        fontWeight: 'bold'
                       }
                     },
                     tooltip: {
@@ -221,36 +236,42 @@
                     },
                     plotOptions: {
                       pie: {
+                        allowPointSelect: true,
+                        cursor: 'pointer',
                         dataLabels: {
                           enabled: true,
-                          distance: -50,
+                          format: '{point.name}: {point.percentage:.2f}%',
                           style: {
                             fontWeight: 'bold',
-                            color: 'white'
-                          }
+                            color: 'white',
+                            
+                          },
+                          filter: {
+                    operator: '>',
+                    property: 'percentage',
+                    value: 10
+                }
                         },
-                        startAngle: -90,
-                        endAngle: 90,
-                        center: ['50%', '75%'],
-                        size: '110%',
-                        cursor: 'pointer', 
                         point: {
                           events: {
                             click: function () {
-                              createNewChart(this.name);
+                              createChildChart(this.name); 
                             }
                           }
                         }
                       }
                     },
                     series: [{
-                      type: 'pie',
                       name: 'Rate',
-                      innerSize: '50%',
+                      colorByPoint: true,
                       data: [
-                        { name: 'Pass', y: 65.32, color: '#3464eb' },
+                        { name: 'Pass', y: 65.32, color: '#3464eb', sliced: true,
+                        selected: true, },
                         { name: 'Fail', y: 34.68, color: '#eb3434' }
-                      ]
+                      ],
+                      style:{
+                        fontSize: '16px'
+                      }
                     }],
                     credits: {
                       enabled: false
@@ -258,29 +279,31 @@
                   });
                   document.getElementById('backButton').style.display = 'none';
                 }
-                
-                // Hàm tạo biểu đồ mới
-                function createNewChart(category) {
+                function createChildChart(category) {
                   Highcharts.chart('container-pie', {
                     chart: {
                       type: 'column',
                       backgroundColor: null,
-                      zoomType:'x'
+                      zoomType: 'x'
                     },
                     title: {
                       text: `Details for ${category}`,
                       style: {
-                        color: '#fff', 
-                        fontSize: '16px', 
+                        color: '#fff',
+                        fontSize: '16px',
                         fontWeight: 'bold'
                       },
-                      align:'left'
+                      align: 'left'
                     },
                     xAxis: {
-                      categories: ['00:00-01:00', '01:00-02:00', '02:00-03:00', '03:00-04:00',
-                       '04:00-05:00', '05:00-06:00', '06:00-07:00'
-                       , '07:00-08:00', '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00'
-                       , '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00', '20:00-21:00', '21:00-22:00', '22:00-23:00', '23:00-00:00'],
+                      categories: [
+                        '00:00-01:00', '01:00-02:00', '02:00-03:00', '03:00-04:00',
+                        '04:00-05:00', '05:00-06:00', '06:00-07:00', '07:00-08:00',
+                        '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00',
+                        '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00',
+                        '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00',
+                        '20:00-21:00', '21:00-22:00', '22:00-23:00', '23:00-00:00'
+                      ],
                       labels: {
                         style: {
                           color: '#fff'
@@ -301,27 +324,33 @@
                       }
                     },
                     legend: {
-                    itemStyle: {
-                    color: '#ffffff'
-                    }
-                  },
+                      itemStyle: {
+                        color: '#ffffff'
+                      }
+                    },
                     series: [{
                       name: category,
-                      data: category === 'Pass' ? [5, 10, 15, 20, 22,26, 29, 31, 33, 36, 32, 18, 25, 32, 26, 16, 18, 15, 15,23,21,33,26,25] : [3, 8, 12, 33, 36, 32, 18, 25, 18, 22, 12, 22,3, 8, 12, 13, 22, 32, 28, 25, 18, 32, 22, 22],
+                      data: category === 'Pass' ? 
+                        [5, 10, 15, 20, 22, 26, 29, 31, 33, 36, 32, 18, 25, 32, 26, 16, 18, 15, 15, 23, 21, 33, 26, 25] : 
+                        [3, 8, 12, 33, 36, 32, 18, 25, 18, 22, 12, 22, 3, 8, 12, 13, 22, 32, 28, 25, 18, 32, 22, 22],
                       color: category === 'Pass' ? '#3464eb' : '#eb3434'
                     }],
                     credits: {
                       enabled: false
                     }
                   });
+            
                   document.getElementById('backButton').style.display = 'inline-block';
                 }
+          
                 document.getElementById('backButton').addEventListener('click', function () {
-                createInitialChart();
+                  createInitialChart();
                 });
+            
                 createInitialChart();
               </script>
             </div>
+            
             <div class="chartRight">
               <div>
                 <figure class="highcharts-figure">
@@ -482,8 +511,6 @@
                     },
                   accessibility:{
                     enabled: false
-
-
                   },
                     xAxis: [{
                       categories: [
@@ -623,6 +650,10 @@
                       itemHoverStyle: {
                       color: '#cccccc'
                     }
+                  },
+                  
+                  accessibility:{
+                    enabled: false
                   },
                   yAxis: {
                     title: {

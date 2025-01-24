@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Design by foolishdeveloper.com -->
     <title>Login Form</title>
+    <link href="{{ url_for('static', filename='css/all.min.css')}}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/css2.css')}}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesLogin.css')}}"/>
     <script type="module" src="{{ url_for('static', filename='js/auth.js')}}"></script>
@@ -22,105 +22,43 @@
         <label for="password">Password</label>
         <div style="position: relative;">
             <input style="color: #fff;" type="password" required placeholder="Password" id="password" name="password">
-            <span class="toggle-password" onclick="togglePassword()" style="position: absolute; top: 50%; right: 1px; transform: translateY(-50%); cursor: pointer; color: #414040;">🙈</span>
+            <span class="toggle-password" onclick="togglePassword()" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer; color: #414040;">
+                <i class="fas fa-eye"></i>
+            </span>
         </div>
         <a href="#" id="forgotpw">Forgot Password?</a>
         <button style="position: relative;" type="submit">Log In</button>
        
         <div class="social">
-          <div class="go">Google</div>
-          <div class="fb">Facebook</div>
+          <div class="go">Smart office</div>
+          <div class="fb">ICViet</div>
         </div>
         <p style="text-align: center;">Don't have an account? <a id="signup" href="{{ url_for('register') }}">Sign Up</a></p>
     </form>
     
     <script>
         function showAlert(message) {
-        const alertDiv = document.getElementById("alert");
-        alertDiv.style.display = "block";
-        alertDiv.textContent = message;
-        setTimeout(() => {
-            alertDiv.style.display = "none";
-        }, 5000);
-    }
+            const alertDiv = document.getElementById("alert");
+            alertDiv.style.display = "block";
+            alertDiv.textContent = message;
+            setTimeout(() => {
+                alertDiv.style.display = "none";
+            }, 5000);
+        }
+
         function togglePassword() {
             var passwordField = document.getElementById("password");
-            var togglePassword = document.querySelector(".toggle-password");
+            var togglePasswordIcon = document.querySelector(".toggle-password i");
             if (passwordField.type === "password") {
                 passwordField.type = "text";
-                togglePassword.textContent = "🙈";
+                togglePasswordIcon.classList.remove("fa-eye");
+                togglePasswordIcon.classList.add("fa-eye-slash");
             } else {
                 passwordField.type = "password";
-                togglePassword.textContent = "👁️‍🗨️";
+                togglePasswordIcon.classList.remove("fa-eye-slash");
+                togglePasswordIcon.classList.add("fa-eye");
             }
         }
-        function validateForm(event) {
-            const username = document.getElementById("username").value.trim();
-            const password = document.getElementById("password").value.trim();
-            // Kiểm tra điều kiện
-            if (!username || !password) {
-                event.preventDefault(); // Ngăn form gửi đi
-                showAlert("Username and password cannot be empty.");
-                return false;
-            }
-            return true;
-        }
-
-        // const snowflakeCount = 10;
-        // let mouseX = window.innerWidth / 2;
-        // let smoothingFactor = 0.05;
-        // let targetMouseX = mouseX;
-        // let fallSpeedMultiplier = 0.3; // Hệ số để điều chỉnh tốc độ rơi
-
-        // window.addEventListener('mousemove', (event) => {
-        // targetMouseX = event.clientX;
-        // });
-
-        // const smoothMouseUpdate = () => {
-        // mouseX += (targetMouseX - mouseX) * smoothingFactor;
-        // requestAnimationFrame(smoothMouseUpdate);
-        // };
-
-        // smoothMouseUpdate();
-
-        // const createSnowflake = () => {
-        // const snowflake = document.createElement('div');
-        // snowflake.className = 'snowflake';
-        // snowflake.innerText = '*';
-
-        // const initialRotation = Math.random() * 360;
-        // snowflake.style.left = Math.random() * 100 + 'vw';
-        // snowflake.style.animationDuration = (5 + Math.random() * 5) / fallSpeedMultiplier + 's'; // Chỉnh tốc độ rơi
-        // snowflake.style.fontSize = 8 + Math.random() * 10 + 'px';
-        // snowflake.style.transform = `rotate(${initialRotation}deg)`;
-
-        // document.body.appendChild(snowflake);
-
-        // const updateSnowflake = () => {
-        //     const rect = snowflake.getBoundingClientRect();
-        //     const snowflakeX = rect.left + rect.width / 2;
-        //     const distance = (mouseX - snowflakeX) * 0.02;
-        //     const rotation = parseFloat(snowflake.style.transform.replace(/rotate\((.*)deg\)/, '$1')) || initialRotation;
-        //     snowflake.style.transform = `translateX(${distance}px) rotate(${rotation + 1}deg)`;
-        //     requestAnimationFrame(updateSnowflake);
-        // };
-
-        // updateSnowflake();
-
-        // snowflake.addEventListener('animationend', () => {
-        //     snowflake.remove();
-        // });
-        // };
-
-        // // Tạo bông tuyết ban đầu
-        // for (let i = 0; i < snowflakeCount; i++) {
-        // createSnowflake();
-        // }
-
-        // // Thêm bông tuyết mới mỗi 600ms
-        // setInterval(() => {
-        // createSnowflake();
-        // }, 600);
 
     </script>
 

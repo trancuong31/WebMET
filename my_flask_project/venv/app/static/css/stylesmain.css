@@ -451,7 +451,6 @@ video {
   left: -100px;
   width: 200px;
   height: 200px;
-  /* background: radial-gradient(circle, #4f46e5, transparent); */
   filter: blur(50px);
   z-index: 0;
 }
@@ -463,7 +462,6 @@ video {
   right: -100px;
   width: 200px;
   height: 200px;
-  /* background: radial-gradient(circle, #14b8a6, transparent); */
   filter: blur(50px);
   z-index: 0;
 }
@@ -502,9 +500,9 @@ video {
 }
 
 .card:hover {
-  transform: translateY(-15px);
+  transform: translateY(-10px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.233);
 }
 
 .card-icon {
