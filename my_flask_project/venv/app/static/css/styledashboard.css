@@ -478,6 +478,7 @@ img#fullscreenic{
     position: absolute;
     top: 0;
     left: 0;
+    flex-wrap: wrap;
     padding: 5px;
     color: #fff;
     border-bottom: #fff;
@@ -716,7 +717,7 @@ img#fullscreenic{
   font-size: 1.1em; 
   z-index: 2;
   font-weight: bold;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); */
   animation: moveUpDown 3s infinite; 
 }
 
@@ -786,7 +787,7 @@ img#fullscreenic{
   }
   .infor {
     position: absolute;
-    top: 6.3em;
+    top: 6.6em;
     font-size: 1em;
     font-weight: 900;
     color: rgba(0, 225, 255, 0.9);

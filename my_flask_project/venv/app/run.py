@@ -14,7 +14,7 @@ socketio =SocketIO(app)
 DB_CONFIG = {
     "username": "system",
     "password": "123456",
-    "dsn": "localhost:1521/orcl3"
+    "dsn": "localhost:1521/orcl1"
 }
 # Thư mục lưu file tải lên
 UPLOAD_FOLDER = 'uploads'
@@ -27,7 +27,7 @@ def get_db_connection():
         connection = oracledb.connect(
             user="system",
             password="123456",
-            dsn="localhost:1521/orcl3"
+            dsn="localhost:1521/orcl1"
         )
         return connection
     except oracledb.DatabaseError as e:
@@ -54,7 +54,7 @@ def admin_dashboard():
     if not token:
         return redirect(url_for('login'))
     try:
-        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        data = jwt.encode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
         username = data['username']
         if username != 'admin':
             return redirect(url_for('login'))
