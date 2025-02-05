@@ -1,16 +1,14 @@
 from flask import Flask, request, jsonify, abort, render_template, redirect, flash, send_file, make_response, url_for
 import oracledb
 from flask_cors import CORS
-import jwt, time
+import jwt
 from flask_socketio import SocketIO
-import os, io
+import io
 from datetime import datetime, timezone, timedelta
 import pandas as pd
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abc'
 socketio =SocketIO(app)
-# Thông tin kết nối đến Oracle Database
 DB_CONFIG = {
     "username": "system",
     "password": "123456",
@@ -21,7 +19,7 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'jpg', 'jpeg', 'png'}
 CORS(app)
-# Hàm kết nối Oracle
+#kết nối Oracle
 def get_db_connection():
     try:
         connection = oracledb.connect(
@@ -33,21 +31,6 @@ def get_db_connection():
     except oracledb.DatabaseError as e:
         print(f"Lỗi kết nối cơ sở dữ liệu: {e}")
         abort(500, description="Không thể kết nối cơ sở dữ liệu.")
-# @app.route('/configForm', methods=['GET'])
-# def show_form():
-    # token = request.cookies.get('token')
-    # if not token:
-    #     return redirect(('login'))
-    # try:
-    #     data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-    #     username = data['username']
-    # except jwt.ExpiredSignatureError:
-    #     flash('Token has expired, please log in again.', 'error')
-    #     return redirect(('login'))
-    # except jwt.InvalidTokenError:
-    #     flash('Invalid token, please log in again.', 'error')
-    #     return redirect(('login'))
-    # return render_template('index.html', username=username)
 @app.route('/adminDashboard', methods=['GET'])
 def admin_dashboard():
     token = request.cookies.get('token')
@@ -217,8 +200,7 @@ def filter_data():
             WHERE 1=1
         """
         count_query = "SELECT COUNT(*) FROM Screw_force_info WHERE 1=1"
-        params = {}
-
+        params = {}        
         # Xử lý điều kiện lọc
         if line:
             base_query += " AND UPPER(line) = UPPER(:line)"
@@ -309,53 +291,98 @@ def logout():
     resp = make_response(redirect(('login')))
     resp.delete_cookie('token')
     return resp
+# @app.route('/login', methods=['POST', 'GET'])
+# def login():
+#     if request.method == 'POST':
+#         username = request.form.get('username').strip()
+#         password = request.form.get('password').strip()
+
+#         try:
+#             # Kết nối tới cơ sở dữ liệu
+#             connection = get_db_connection()
+#             cursor = connection.cursor()
+#             query = """
+#                 SELECT 1
+#                 FROM USERS
+#                 WHERE USERNAME = :username AND PASSWORD = :password
+#             """
+#             cursor.execute(query, {"username": username, "password": password})
+#             rows = cursor.fetchone()
+#             if rows and rows[0] > 0:
+#                 # Tạo JWT token
+#                 access_token = jwt.encode({
+#                     'username': username,
+#                     'exp': datetime.now(timezone.utc) + timedelta(hours=2),
+#                     'type': 'access'
+#                 }, app.config['SECRET_KEY'], algorithm='HS256')
+#                 refresh_token = jwt.encode({
+#                     'username': username,
+#                     'exp': datetime.now(timezone.utc) + timedelta(days=7),
+#                     'type': 'refresh'
+#                 }, app.config['SECRET_KEY'], algorithm='HS256')
+#                 resp = make_response(redirect(('index1')))
+#                 # Trả về JSON chứa các token
+#                 resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60)
+#                 resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60)
+#                 return resp
+#             else:
+#                 return render_template('login.html', error='Incorrect username or password')
+
+#         except Exception as e:
+#              return render_template('login.html', error=f"An error occurred: {e}")
+
+#         finally:
+#             if cursor:
+#                 cursor.close()
+#             if connection:
+#                 connection.close()
+
+#     return render_template('login.html')
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username').strip()
-        password = request.form.get('password').strip()
 
+        password = request.form.get('password').strip()
         try:
-            # Kết nối tới cơ sở dữ liệu
+            # Kết nối CSDL
             connection = get_db_connection()
             cursor = connection.cursor()
             query = """
-                SELECT 1
-                FROM USERS
-                WHERE USERNAME = :username AND PASSWORD = :password
+                SELECT PASSWORD, ROLE 
+                FROM USERS 
+                WHERE USERNAME = :username
             """
-            cursor.execute(query, {"username": username, "password": password})
-            rows = cursor.fetchone()
-
-            if rows and rows[0] > 0:
-                # Tạo JWT token
+            cursor.execute(query, {"username": username})
+            row = cursor.fetchone()
+            if row and password== row[0]:
+                role = row[1]
                 access_token = jwt.encode({
                     'username': username,
+                    'role': role,
                     'exp': datetime.now(timezone.utc) + timedelta(hours=2),
                     'type': 'access'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
                 refresh_token = jwt.encode({
                     'username': username,
+                    'role': role,
                     'exp': datetime.now(timezone.utc) + timedelta(days=7),
                     'type': 'refresh'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
-                resp = make_response(redirect(('index1')))
-                # Trả về JSON chứa các token
-                resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60)
-                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60)
+                resp = make_response(redirect('/adminDashboard' if role == 'admin' else '/index1'))
+                # Thiết lập cookie an toàn
+                resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60, samesite='Strict')
+                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60, samesite='Strict')
                 return resp
             else:
                 return render_template('login.html', error='Incorrect username or password')
-
         except Exception as e:
-             return render_template('login.html', error=f"An error occurred: {e}")
-
+            return render_template('login.html', error="An unexpected error occurred. Please try again.")
         finally:
             if cursor:
                 cursor.close()
             if connection:
                 connection.close()
-
     return render_template('login.html')
 
 @app.route('/refresh', methods=['POST'])
@@ -447,7 +474,6 @@ def get_lines():
     except Exception as e:
         print(f"Error fetching: {e}")
         return jsonify({"error": "Unable to fetch"}), 500
-
 #get total , output, fpy
 @app.route('/getinfo', methods=['GET'])
 def getinfo():
@@ -486,7 +512,8 @@ def fetch_filtered_data(filters):
         cursor = connection.cursor()
 
         query = """
-            SELECT line, name_machine, force_1, force_2, force_3, force_4, 
+            SELECT line, factory, name_machine,
+                   force_1, force_2, force_3, force_4, 
                    TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update, 
                    state
             FROM Screw_force_info
@@ -538,19 +565,18 @@ def download_excel():
         filters = request.json
         result = fetch_filtered_data(filters)
         df = pd.DataFrame(result, columns=[
-            'LINE', 'NAME_MACHINE', 'FORCE_1', 'FORCE_2', 
+            'LINE','FACTORY', 'NAME_MACHINE', 'FORCE_1', 'FORCE_2', 
             'FORCE_3', 'FORCE_4', 'STATE', 'TIME_UPDATE'
         ])
+        df = df.fillna("N/A")
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'dataScrewForce_{timestamp}.xlsx'
         # Tạo file Excel trong bộ nhớ
-
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Dữ liệu lực vít')
             workbook = writer.book
-            worksheet = writer.sheets['Dữ liệu lực vít']
-        
+            worksheet = writer.sheets['Dữ liệu lực vít']        
             header_format = workbook.add_format({
                 'bold': True,
                 'font_size': 12,
@@ -563,7 +589,6 @@ def download_excel():
                 col_idx = df.columns.get_loc(column)
                 worksheet.set_column(col_idx, col_idx, column_length + 2)
         output.seek(0)
-
         return send_file(
             output,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -578,4 +603,7 @@ def download_excel():
 
 if __name__=='__main__':
     app.run(debug=True)
+
+
+
 

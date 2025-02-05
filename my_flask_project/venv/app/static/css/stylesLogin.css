@@ -119,10 +119,14 @@ button{
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.5s ease, color 0.5s ease;
+    transition: all .3s ease-in-out; 
 }
 button:hover{
     background-color: #3543ff;
     color: #ffffff;
+}
+button:active{
+  transform: scale(0.95);
 }
 .social{
   margin-top: 30px;

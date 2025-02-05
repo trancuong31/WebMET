@@ -7,6 +7,7 @@
     <script src="{{ url_for('static', filename='js/accessibility.js') }}"></script>
     <script src="{{ url_for('static', filename='js/exporting.js') }}"></script>
     <script src="{{ url_for('static', filename='js/highcharts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/drilldown.js') }}"></script>
     <link
       rel="stylesheet" type="text/css"
       href="{{ url_for('static', filename='css/styledashboard.css')}}"
@@ -15,7 +16,7 @@
     <link rel="icon" href="{{ url_for('static', filename='images/automation1.png') }}" type="image/png">
   </head>
   <body>
-    <div id="loading" class="loading-overlay" >
+    <div id="loading" class="loading-overlay hidden" >
       <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading..."/>
     </div>
     <div class="wrapper">
@@ -36,7 +37,7 @@
                 <ion-icon name="search-outline"></ion-icon>
               </div>
               <div  class="link-text">
-                <span class="nav-icon">📊</span>
+                <!-- <span class="nav-icon">📊</span> -->
                 <span class="nav-text">Dashboard Screw Force</span>
               </div>
             </a>
@@ -47,7 +48,7 @@
                 <ion-icon name="home-outline"></ion-icon>
               </div>
               <div class="link-text">
-                <span class="nav-icon">🏠</span> 
+                <!-- <span class="nav-icon">🏠</span>  -->
                 <span  class="nav-text">Mục B</span>
               </div>
             </a>
@@ -58,7 +59,7 @@
                 <ion-icon name="folder-open-outline"></ion-icon>
               </div>
               <div class="link-text">
-                <span class="nav-icon">ℹ️</span> 
+                <!-- <span class="nav-icon">ℹ️</span>  -->
                 <span  class="nav-text">Mục B</span>
               </div>
             </a>
@@ -69,7 +70,7 @@
                 <ion-icon name="pie-chart-outline"></ion-icon>
               </div>
               <div class="link-text">
-                <span class="nav-icon">ℹ️</span> 
+                <!-- <span class="nav-icon">ℹ️</span>  -->
                 <span  class="nav-text">Mục C</span>
               </div>
             </a>
@@ -80,7 +81,7 @@
                 <ion-icon name="people-outline"></ion-icon>
               </div>
               <div class="link-text">
-                <span class="nav-icon">ℹ️</span> 
+                <!-- <span class="nav-icon">ℹ️</span>  -->
                 <span  class="nav-text">Mục D</span>
               </div>
             </a>
@@ -91,7 +92,7 @@
                 <ion-icon name="chatbubbles-outline"></ion-icon>
               </div>
               <div class="link-text">
-                <span class="nav-icon">ℹ️</span> 
+                <!-- <span class="nav-icon">ℹ️</span>  -->
                 <span  class="nav-text">Mục B</span>
               </div>
             </a>
@@ -102,16 +103,14 @@
                 <ion-icon name="settings-outline"></ion-icon>
               </div>
               <div style="color: #fff;" class="link-text">
-                <span class="nav-icon">🔒</span> 
+                <!-- <span class="nav-icon">🔒</span>  -->
                 <span  class="nav-text">Logout</span>
               </div>
             </a>
           </li>
         </ul>
       </nav>
-      
       <div class="container">
-        
         <div  class="overlay-image" alt="overlay"></div>
         <header>
           <h3>DASHBOARD</h3>
@@ -174,14 +173,14 @@
             </div>
             <!-- filter -->
             <div class="filter">
-            Line: <select id="line-combobox">
-            </select>
             Factory: <select id="factory-combobox">
             </select>
+            Line: <select id="line-combobox">
+            </select>
             Name machine: <select id="nameMachine-combobox" style="width: 80px;"></select>
-              Time: <input style="width: 180px;"  type="datetime-local" name="time_update" id="time_update">
-              To: <input style="width: 180px;"  type="datetime-local" name="time_end" id="time_end">
-              State: <select id="state-combobox">
+            Time: <input style="width: 180px; border-radius: 2px;"  type="datetime-local" name="time_update" id="time_update">
+            To: <input style="width: 180px; border-radius: 2px;"  type="datetime-local" name="time_end" id="time_end">
+            State: <select id="state-combobox">
             </select>
               <input style=" transition: all .5s ease-in-out; padding: 0.5em; width: 5em; " type="submit" value="Search" id="filter">
             </div>
@@ -195,293 +194,310 @@
                 alt="Fullscreen Icon"
               />
             </a>
-          </div> 
-        
+          </div>     
         <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
         <div class="chartAll">
-          <div class="chartContent">    
+          <div class="chartContent">
             <div class="pagination"  id="pagination">
-            </div>        
+            </div>
             <div class="pieChartInfo">
               <figure class="highcharts-figure">
                 <div id="container-pie"></div>
               </figure>
-              <button id="backButton"><img src="{{ url_for('static', filename='images/backButton.png') }}" alt=""></button>
               <script>
-                function createInitialChart() {
-                  Highcharts.chart('container-pie', {
+                Highcharts.chart('container-pie', {
                     chart: {
-                      type: 'pie',
-                      backgroundColor: null
-                    },
+                        type: 'pie',
+                        backgroundColor: null,
+                        plotBackgroundColor:null
+                    },                    
                     title: {
-                      text: 'Rate Pass/Fail',
-                      align: 'left',
-                      verticalAlign: 'top',
-                      y:15,
-                      style: {
-                        color: '#fff',
-                        fontSize: '16px',
-                        fontWeight: 'bold'
-                      }
-                    },
-                    tooltip: {
-                      pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
+                        text: 'Rate Pass/Fail By Day',
+                        align:'left',
+                        style:{
+                          color: '#fff',
+                          fontSize: '16px',
+                        }
                     },
                     accessibility: {
-                      point: {
-                        valueSuffix: '%'
-                      },
-                      enabled: false
-                    },
-                    plotOptions: {
-                      pie: {
-                        allowPointSelect: true,
-                        cursor: 'pointer',
-                        dataLabels: {
-                          enabled: true,
-                          format: '{point.name}: {point.percentage:.2f}%',
-                          style: {
-                            fontWeight: 'bold',
-                            color: 'white',
-                            
-                          },
-                          filter: {
-                    operator: '>',
-                    property: 'percentage',
-                    value: 10
-                }
+                        announceNewData: {
+                            enabled: true
                         },
                         point: {
-                          events: {
-                            click: function () {
-                              createChildChart(this.name); 
-                            }
-                          }
+                            valueSuffix: '%'
                         }
-                      }
                     },
-                    series: [{
-                      name: 'Rate',
-                      colorByPoint: true,
-                      data: [
-                        { name: 'Pass', y: 65.32, color: '#3464eb', sliced: true,
-                        selected: true, },
-                        { name: 'Fail', y: 34.68, color: '#eb3434' }
-                      ],
-                      style:{
-                        fontSize: '16px'
-                      }
-                    }],
-                    credits: {
-                      enabled: false
+                    credits:false,
+                    plotOptions: {
+                        series: {
+                            borderRadius: 5,
+                            dataLabels: [{
+                                enabled: true,
+                                distance: 15,
+                                format: '{point.name}'
+                            },
+                             {
+                                enabled: true,
+                                distance: '-30%',
+                                filter: {
+                                    property: 'percentage',
+                                    operator: '>',
+                                    value: 5                                    
+                                },
+                                format: '{point.y:.1f}%',
+                                style: {
+                                  fontSize: '1em',
+                                  color: '#fff',
+                                  textOutline: 'none'
+                                }
+                            }]
+                        }
+                    },
+                    tooltip: {
+                        headerFormat: '<span style="font-size:12px">{series.name}</span><br>',
+                        pointFormat: '<span style="color:{point.color}">{point.name}</span>: ' +
+                            '<b>{point.y:.2f}%</b> of total<br/>'
+                    },
+                    series: [
+                        {
+                            name: 'Rate',
+                            colorByPoint: true,
+                            data: [
+                                {
+                                    name: 'Pass',
+                                    y: 61,
+                                    drilldown: 'Pass',
+                                    color: '#337cf2',
+                                    dataLabels: {
+                                    style: {
+                                      color: '#fff', 
+                                      fontSize: '16px',
+                                      textOutline: 'none',
+                                      fontWeight:'none'
+                                    }
+                                  }                                  
+                                },
+                                {
+                                    name: 'Fail',
+                                    y: 39,
+                                    drilldown: 'Fail',
+                                    color: '#dc3545',
+                                    dataLabels: {
+                                    style: {
+                                      color: '#fff', 
+                                      fontSize: '16px',
+                                      textOutline:'none',
+                                      fontWeight:'none'
+                                    }
+                                  }
+                                }
+                            ]
+                        }
+                    ],
+                    drilldown: {
+                        series: [
+                            {
+                                name: 'Pass',
+                                id: 'Pass',
+                                data: [
+                                    [
+                                        'XB7',
+                                        35
+                                    ],
+                                    [
+                                        'XB8',
+                                        15
+                                    ],
+                                    [
+                                        'XB8M',
+                                        5
+                                    ],
+                                    [
+                                        'XB7M',
+                                        6
+                                    ]
+                                ]
+                            },
+                            {
+                                name: 'Fail',
+                                id: 'Fail',
+                                data: [
+                                    [
+                                        'XB8',
+                                       15
+                                    ],
+                                    [
+                                        'XB8M',
+                                        11
+                                    ],
+                                    [
+                                        'XB7',
+                                        12
+                                    ],
+                                    [
+                                        'XB7M',
+                                        1
+                                    ]
+                                ]
+                            },                          
+                        ]
                     }
-                  });
-                  document.getElementById('backButton').style.display = 'none';
-                }
-                function createChildChart(category) {
-                  Highcharts.chart('container-pie', {
-                    chart: {
-                      type: 'column',
-                      backgroundColor: null,
-                      zoomType: 'x'
-                    },
-                    title: {
-                      text: `Details for ${category}`,
-                      style: {
-                        color: '#fff',
-                        fontSize: '16px',
-                        fontWeight: 'bold'
-                      },
-                      align: 'left'
-                    },
-                    xAxis: {
-                      categories: [
-                        '00:00-01:00', '01:00-02:00', '02:00-03:00', '03:00-04:00',
-                        '04:00-05:00', '05:00-06:00', '06:00-07:00', '07:00-08:00',
-                        '08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00',
-                        '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00',
-                        '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00',
-                        '20:00-21:00', '21:00-22:00', '22:00-23:00', '23:00-00:00'
-                      ],
-                      labels: {
-                        style: {
-                          color: '#fff'
-                        }
-                      }
-                    },
-                    yAxis: {
-                      labels: {
-                        style: {
-                          color: '#fff'
-                        }
-                      },
-                      title: {
-                        text: 'Count',
-                        style: {
-                          color: '#fff'
-                        }
-                      }
-                    },
-                    legend: {
-                      itemStyle: {
-                        color: '#ffffff'
-                      }
-                    },
-                    series: [{
-                      name: category,
-                      data: category === 'Pass' ? 
-                        [5, 10, 15, 20, 22, 26, 29, 31, 33, 36, 32, 18, 25, 32, 26, 16, 18, 15, 15, 23, 21, 33, 26, 25] : 
-                        [3, 8, 12, 33, 36, 32, 18, 25, 18, 22, 12, 22, 3, 8, 12, 13, 22, 32, 28, 25, 18, 32, 22, 22],
-                      color: category === 'Pass' ? '#3464eb' : '#eb3434'
-                    }],
-                    credits: {
-                      enabled: false
-                    }
-                  });
-            
-                  document.getElementById('backButton').style.display = 'inline-block';
-                }
-          
-                document.getElementById('backButton').addEventListener('click', function () {
-                  createInitialChart();
                 });
-            
-                createInitialChart();
               </script>
             </div>
-            
             <div class="chartRight">
               <div>
-                <figure class="highcharts-figure">
-                  <div id="container-line"></div>
-              </figure>
-              <script>
-                Highcharts.chart('container-line', {
-                  chart: {
-                      zoomType: 'x',
-                      backgroundColor: {
-                          linearGradient: [0, 0, 500, 500],
-                          stops: [
-                              [0, 'rgba(32, 32, 32, 0.8)'],
-                              [1, 'rgba(40, 40, 40, 0.8)']
-                          ]
-                      },
-                      plotBorderWidth: 0,
-                      backgroundColor: null
-                  },
-                  accessibility:{
-                    enabled: false
-                  },
-                  credits: {
-                enabled: false 
-                },
-                title: {
-                    text: 'Title',
-                    align: 'left',
-                    style:{
-                      color: '#fff', 
-                      fontSize: '16px', 
-                      fontWeight: 'bold'
-                    }
-                },
-
-                subtitle: {
-                    text: 'abc',
-                    align: 'left', 
-                    fontSize: '14px',
-                    style:{
-                      color : '#fff'
-                    }
-                },
-                yAxis: {
-                    title: {
-                        text: 'OEE'
-                    }
-                },
-                labels: {
-                    style: {
-                        color: '#ffffff' 
-                    }
-                  },
-
-                legend: {
-                    layout: 'horizontal',
-                    align: 'center',
-                    verticalAlign: 'bottom',
-                    itemStyle: {
-                    color: '#ffffff'
-                },
-                itemHoverStyle: {
-                    color: '#cccccc'
-                }
-                },
-                yAxis: {
-                  title: {
-                      text: 'OEE',
-                      style: {
-                          color: '#ffffff'
-                      }
-                  },
-                  labels: {
-                      style: {
-                          color: '#ffffff'
-                      }
-                  }
-              },
-              xAxis: {
-              categories: ['BV1', 'BV2', 'BV3', 'BV4', 'BV5', 'BV6', 'BV7', 'BV8', 'BV9', 'BV10', 'BV11', 'BV12', 'BV13'],
-              labels: {
-                  style: {
-                      color: '#ffffff'
-                  }
-              }
-          },
-                series: [{
-                    name: 'FORCE 1',
-                    data: [
-                        12, 13, 12, 15, 13, 11,
-                        14, 13.5, 13.6, 13.4, 12.6, 14.7, 13.4
-                    ]
-                }, {
-                    name: 'FORCE 2',
-                    data: [
-                        11, 12, 11, 14, 13, 12.3,
-                        12, 15, 13, 13.4, 14.5, 13.6, 11.8
-                    ]
-                }
-                , {
-                    name: 'FORCE 3',
-                    data: [
-                        11.5, 12.3, 11.6, 14.1, 13.4, 12.3,
-                        12.6, 11, 11.6, 12.4, 13.5, 13.6, 11.8
-                    ]
-                }, {
-                    name: 'FORCE 4',
-                    data: [
-                        12.5, 13.6, 14.6, 12.2, 13.7, 12.3,
-                        12.5, 15.6, 13.1, 13.6, 14.3, 13.9, 11.8
-                    ]
-                }],
-
-                responsive: {
-                    rules: [{
-                        condition: {
-                            maxWidth: 500
+                  <figure class="highcharts-figure">
+                      <div id="container-toperr"></div>
+                  </figure>
+                  <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const dailyData = {
+                            dates: ['01/02', '02/02', '03/02', '04/02', '05/02'],
+                            machineA: [150, 142, 138, 145, 133],
+                            machineB: [120, 125, 118, 130, 122],
+                            machineC: [90, 95, 88, 92, 85]
+                        };
+                        const hourlyData = {
+                        '01/02': {
+                            hours: [...Array(24).keys()].map(i => `${i}h`),
+                            machineA: [25, 28, 22, 26, 24, 25, 30, 28, 29, 27, 31, 26, 25, 24, 29, 27, 26, 25, 30, 29, 28, 27, 26, 25],
+                            machineB: [20, 22, 18, 21, 19, 20, 22, 21, 23, 22, 24, 21, 20, 19, 23, 22, 21, 20, 22, 21, 23, 22, 21, 20],
+                            machineC: [15, 16, 14, 15, 15, 15, 18, 16, 17, 15, 19, 16, 15, 14, 18, 17, 16, 15, 18, 17, 16, 15, 14, 15]
                         },
-                        chartOptions: {
-                            legend: {
-                                layout: 'horizontal',
-                                align: 'center',
-                                verticalAlign: 'bottom'
-                            }
+                        '02/02': {
+                            hours: [...Array(24).keys()].map(i => `${i}h`),
+                            machineA: [24, 23, 25, 24, 23, 23, 26, 25, 27, 24, 28, 23, 24, 22, 27, 26, 25, 24, 26, 25, 27, 26, 25, 24],
+                            machineB: [21, 20, 22, 21, 20, 21, 23, 22, 24, 21, 25, 20, 21, 19, 24, 23, 22, 21, 23, 22, 24, 23, 22, 21],
+                            machineC: [16, 15, 17, 16, 15, 16, 19, 17, 18, 16, 20, 17, 16, 14, 19, 18, 17, 16, 19, 18, 17, 16, 15, 16]
+                        },
+                        '03/02': {
+                            hours: [...Array(24).keys()].map(i => `${i}h`),
+                            machineA: [23, 22, 24, 23, 23, 23, 25, 24, 26, 23, 27, 22, 23, 21, 26, 25, 24, 23, 25, 24, 26, 25, 24, 23],
+                            machineB: [20, 19, 21, 20, 19, 19, 22, 21, 23, 20, 24, 19, 20, 18, 23, 22, 21, 20, 22, 21, 23, 22, 21, 20],
+                            machineC: [15, 14, 16, 15, 14, 14, 17, 15, 16, 14, 18, 15, 14, 13, 17, 16, 15, 14, 17, 16, 15, 14, 13, 14]
+                        },
+                        '04/02': {
+                            hours: [...Array(24).keys()].map(i => `${i}h`),
+                            machineA: [24, 25, 23, 24, 25, 24, 27, 26, 28, 25, 29, 24, 25, 23, 28, 27, 26, 25, 27, 26, 28, 27, 26, 25],
+                            machineB: [22, 21, 22, 22, 21, 22, 24, 23, 25, 22, 26, 21, 22, 20, 25, 24, 23, 22, 24, 23, 25, 24, 23, 22],
+                            machineC: [15, 16, 15, 15, 16, 15, 18, 16, 17, 15, 19, 16, 15, 14, 18, 17, 16, 15, 18, 17, 16, 15, 14, 15]
+                        },
+                        '05/02': {
+                            hours: [...Array(24).keys()].map(i => `${i}h`),
+                            machineA: [22, 21, 23, 22, 23, 22, 25, 24, 26, 22, 27, 21, 22, 20, 26, 25, 24, 22, 25, 24, 26, 25, 24, 22],
+                            machineB: [20, 21, 20, 21, 20, 20, 23, 22, 24, 21, 25, 20, 21, 19, 24, 23, 22, 20, 23, 22, 24, 23, 22, 20],
+                            machineC: [14, 15, 14, 14, 14, 14, 17, 15, 16, 14, 18, 15, 14, 13, 17, 16, 15, 14, 17, 16, 15, 14, 13, 14]
                         }
-                    }]
-                }
-                });
-              </script>
+                    };
+
+                        Highcharts.chart('container-toperr', {
+                            chart: {
+                                type: 'column',
+                                backgroundColor: null,
+                                plotBackgroundColor: null,
+                                events: {
+                                    drilldown: function (e) {
+                                        if (!e.seriesOptions) {
+                                            const date = e.point.category;
+                                            const machine = e.point.series.name;
+        
+                                            if (!hourlyData[date]) return;
+        
+                                            const machineKey = machine === 'Máy A' ? 'machineA' : machine === 'Máy B' ? 'machineB' : 'machineC';
+        
+                                            this.xAxis[0].setCategories(hourlyData[date].hours);
+                                            this.setTitle({ text: `Detail Fail ${machine} day ${date}` });
+        
+                                            this.addSeriesAsDrilldown(e.point, {
+                                                name: machine,
+                                                data: hourlyData[date].hours.map((hour, i) => [hour, hourlyData[date][machineKey][i]]),
+                                                color: e.point.color
+                                            });
+        
+                                            this.applyDrilldown();
+                                        }
+                                    },
+                                    drillup: function () {
+                                        this.xAxis[0].setCategories(dailyData.dates); 
+                                        this.setTitle({ text: 'Top 3 Machine Fail' });
+                                    }
+                                }
+                            },
+                            title: {
+                                text: 'Top 3 Machine Fail',
+                                align: 'left',
+                                style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+                            },
+                            xAxis: {
+                                categories: dailyData.dates,
+                                title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } },
+                                labels: { style: { color: '#fff', fontSize: '12px' } },
+                                
+                            },
+                            yAxis: {
+                                min: 0,
+                                title: { text: 'Count Fail', style: { color: '#fff', fontSize: '12px' } },
+                                labels: { style: { color: '#fff', fontSize: '12px' } }
+                            },
+                            tooltip: {
+                                shared: true,
+                                useHTML: true
+                            },
+                            plotOptions: {
+                                column: {
+                                    groupPadding: 0.1,
+                                    states: { hover: { brightness: 0.2 } }
+                                },
+                                series: { cursor: 'pointer' }
+                            },
+                            series: [
+                                {
+                                    name: 'Máy A',
+                                    data: dailyData.machineA.map((value, i) => ({ name: dailyData.dates[i], y: value, drilldown: true })),
+                                    color: '#FF6B6B'
+                                },
+                                {
+                                    name: 'Máy B',
+                                    data: dailyData.machineB.map((value, i) => ({ name: dailyData.dates[i], y: value, drilldown: true })),
+                                    color: '#4ECDC4'
+                                },
+                                {
+                                    name: 'Máy C',
+                                    data: dailyData.machineC.map((value, i) => ({ name: dailyData.dates[i], y: value, drilldown: true })),
+                                    color: '#45B7D1'
+                                }
+                            ],
+                            drilldown: {
+                              series: [],
+                              breadcrumbs: {
+                                  position: {
+                                      align: 'left'
+                                  },
+                                  style: {
+                                      color: '#fff',
+                                      fontSize: '16px',
+                                      fontWeight: 'bold',
+                                      textDecoration: 'underline' 
+                                  },
+                              }
+                          },
+                            credits: { enabled: false },
+                            legend: {
+                            align: 'center',
+                            verticalAlign: 'bottom',
+                            itemStyle:{
+                              color: '#fff'
+                            },
+                            itemHoverStyle: {
+                            color: '#cccccc'
+                          }
+                          }
+                        });
+                    });
+                </script>
               </div>
-            </div>
+          </div>          
           </div>
           <div class="chartCotent1">
             <div class="chartColumn">
@@ -514,8 +530,7 @@
                   },
                     xAxis: [{
                       categories: [
-                        '10/1/2025', '11/1/2025', '12/1/2025', '13/1/2025', '14/1/2025', '15/1/2025',
-                        '16/1/2025', '17/1/2025', '18/1/2025', '19/1/2025', '20/1/2025', '21/1/2025'
+                        '10/1/2025', '11/1/2025', '12/1/2025', '13/1/2025', '14/1/2025', '15/1/2025'
                       ],
                       crosshair: true,
                       labels: {
@@ -572,8 +587,7 @@
                       type: 'column',
                       yAxis: 1,
                       data: [
-                        45.7, 37.0, 28.9, 17.1, 39.2, 18.9, 90.2, 78.5, 74.6,
-                        18.7, 17.1, 16.0
+                        45.7, 37.0, 28.9, 17.1, 39.2, 18.9
                       ],
                       tooltip: {
                         valueSuffix: ''
@@ -583,8 +597,7 @@
                       type: 'column',  
                       yAxis: 1,
                       data: [
-                        54.3, 63.0, 71.1, 82.9, 60.8, 81.1, 9.8, 21.5, 25.4,
-                        81.3, 82.9, 84.0
+                        54.3, 63.0, 71.1, 82.9, 60.8, 81.1
                       ],
                       tooltip: {
                         valueSuffix: ''
@@ -593,16 +606,14 @@
                       name: 'FPY',
                       type: 'spline', 
                       data: [
-                        45.7, 37.0, 28.9, 17.1, 39.2, 18.9, 90.2, 78.5, 74.6,
-                        18.7, 17.1, 16.0
+                        45.7, 37.0, 28.9, 17.1, 39.2, 18.9
                       ],
                       tooltip: {
                         valueSuffix: ' %'
                       }
                     }]
                   });
-                </script>
-              
+                </script>              
             </div>
             <div class="chartColumn2">
               <figure class="highcharts-figure">
@@ -650,8 +661,7 @@
                       itemHoverStyle: {
                       color: '#cccccc'
                     }
-                  },
-                  
+                  },                  
                   accessibility:{
                     enabled: false
                   },
