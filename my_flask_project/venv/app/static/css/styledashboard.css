@@ -113,14 +113,14 @@ fieldset {
     border: none;
 }
 input {
-    background-color: rgba(21, 226, 253, 0.3);
+    background-color: rgba(21, 226, 253, 0.4);
 }
 input, textarea, select {
     transition: all .2s ease-in-out;
     border: 1px solid #666666;
 }
 select {
-    background-color:rgba(21, 226, 253, 0.3);
+    background-color:rgba(21, 226, 253, 0.4);
     outline: none;
     width: 4.5em;
     border: 1px solid #666666;

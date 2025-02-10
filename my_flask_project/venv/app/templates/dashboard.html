@@ -113,8 +113,8 @@
       <div class="container">
         <div  class="overlay-image" alt="overlay"></div>
         <header>
-          <h3>DASHBOARD</h3>
-          <h1 style="padding: 10px; display: inline;">Infomation screw machine</h1>
+          <h4>DASHBOARD</h4>
+          <h1 style="display: inline;">Infomation screw machine</h1>
         </header>
         <div class="mainContent">
           <h1 style="padding: 10px;"></h1>
@@ -204,146 +204,7 @@
               <figure class="highcharts-figure">
                 <div id="container-pie"></div>
               </figure>
-              <script>
-                Highcharts.chart('container-pie', {
-                    chart: {
-                        type: 'pie',
-                        backgroundColor: null,
-                        plotBackgroundColor:null
-                    },                    
-                    title: {
-                        text: 'Rate Pass/Fail By Day',
-                        align:'left',
-                        style:{
-                          color: '#fff',
-                          fontSize: '16px',
-                        }
-                    },
-                    accessibility: {
-                        announceNewData: {
-                            enabled: true
-                        },
-                        point: {
-                            valueSuffix: '%'
-                        }
-                    },
-                    credits:false,
-                    plotOptions: {
-                        series: {
-                            borderRadius: 5,
-                            dataLabels: [{
-                                enabled: true,
-                                distance: 15,
-                                format: '{point.name}'
-                            },
-                             {
-                                enabled: true,
-                                distance: '-30%',
-                                filter: {
-                                    property: 'percentage',
-                                    operator: '>',
-                                    value: 5                                    
-                                },
-                                format: '{point.y:.1f}%',
-                                style: {
-                                  fontSize: '1em',
-                                  color: '#fff',
-                                  textOutline: 'none'
-                                }
-                            }]
-                        }
-                    },
-                    tooltip: {
-                        headerFormat: '<span style="font-size:12px">{series.name}</span><br>',
-                        pointFormat: '<span style="color:{point.color}">{point.name}</span>: ' +
-                            '<b>{point.y:.2f}%</b> of total<br/>'
-                    },
-                    series: [
-                        {
-                            name: 'Rate',
-                            colorByPoint: true,
-                            data: [
-                                {
-                                    name: 'Pass',
-                                    y: 61,
-                                    drilldown: 'Pass',
-                                    color: '#337cf2',
-                                    dataLabels: {
-                                    style: {
-                                      color: '#fff', 
-                                      fontSize: '16px',
-                                      textOutline: 'none',
-                                      fontWeight:'none'
-                                    }
-                                  }                                  
-                                },
-                                {
-                                    name: 'Fail',
-                                    y: 39,
-                                    drilldown: 'Fail',
-                                    color: '#dc3545',
-                                    dataLabels: {
-                                    style: {
-                                      color: '#fff', 
-                                      fontSize: '16px',
-                                      textOutline:'none',
-                                      fontWeight:'none'
-                                    }
-                                  }
-                                }
-                            ]
-                        }
-                    ],
-                    drilldown: {
-                        series: [
-                            {
-                                name: 'Pass',
-                                id: 'Pass',
-                                data: [
-                                    [
-                                        'XB7',
-                                        35
-                                    ],
-                                    [
-                                        'XB8',
-                                        15
-                                    ],
-                                    [
-                                        'XB8M',
-                                        5
-                                    ],
-                                    [
-                                        'XB7M',
-                                        6
-                                    ]
-                                ]
-                            },
-                            {
-                                name: 'Fail',
-                                id: 'Fail',
-                                data: [
-                                    [
-                                        'XB8',
-                                       15
-                                    ],
-                                    [
-                                        'XB8M',
-                                        11
-                                    ],
-                                    [
-                                        'XB7',
-                                        12
-                                    ],
-                                    [
-                                        'XB7M',
-                                        1
-                                    ]
-                                ]
-                            },                          
-                        ]
-                    }
-                });
-              </script>
+              
             </div>
             <div class="chartRight">
               <div>
@@ -497,7 +358,7 @@
                     });
                 </script>
               </div>
-          </div>          
+          </div>
           </div>
           <div class="chartCotent1">
             <div class="chartColumn">
@@ -731,14 +592,6 @@
                 });
               </script>
             </div>
-          </div>
-          <div class="chartContent2">
-            <!-- <div class="chart3">
-              <h1>ABC</h1>
-            </div>
-            <div class="chart4">
-              <h1>DEF</h1>
-            </div> -->
           </div>
         </div>
           </div>

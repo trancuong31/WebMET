@@ -79,94 +79,407 @@ def dashboard_page():
         return redirect(('login'))
     return render_template('dashboard.html', username=username)
 
+# @app.route('/dashboard', methods=['GET'])
+# def dashboard():
+#     try:
+#         page = request.args.get('page', 1, type=int)
+#         per_page = 10 
+#         offset = (page - 1) * per_page 
+#         connection = get_db_connection()
+#         cursor = connection.cursor()
+#         query = """
+#             SELECT 
+#                 ROWNUM as stt,
+#                 t.factory,
+#                 t.line, 
+#                 t.name_machine, 
+#                 t.model_name,
+#                 t.serial_number,
+#                 t.force_1, 
+#                 t.force_2, 
+#                 t.force_3, 
+#                 t.force_4,
+#                 t.time_update,
+#                 t.state
+                
+#             FROM (
+#                 SELECT 
+#                     factory,
+#                     line, 
+#                     name_machine, 
+#                     model_name,
+#                     serial_number,
+#                     force_1,
+#                     force_2,
+#                     force_3,
+#                     force_4,
+#                     TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
+#                     state
+#                 FROM SCREW_FORCE_INFO 
+#                 ORDER BY TIME_UPDATE DESC
+#                 OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+#             ) t
+#         """
+        
+#         cursor.execute(query, {"offset": offset, "limit": per_page})
+#         rows = []
+#         for row in cursor:
+#             rows.append({
+#                 'stt': row[0],
+#                 'factory': row[1],
+#                 'line': row[2],
+#                 'serial_number': row[3],
+#                 'model_name': row[4], 
+#                 'name_machine': row[5],
+#                 'force_1': row[6],
+#                 'force_2': row[7],
+#                 'force_3': row[8],
+#                 'force_4': row[9],
+#                 'time_update': row[10],
+#                 'state': row[11]
+#             })
+
+#         # Tính tổng số trang
+#         cursor.execute("SELECT COUNT(*) FROM SCREW_FORCE_INFO")
+#         total_records = cursor.fetchone()[0]
+#         total_pages = (total_records + per_page - 1) // per_page 
+#         group_size = 5
+#         if page<0 :
+#             page = 1
+#         elif page > total_pages:
+#             page = total_pages
+#         group_start = ((page - 1) // group_size) * group_size + 1
+#         group_end = min(group_start + group_size - 1, total_pages)
+#         datapie = """
+#             SELECT
+#                 COUNT(*) AS total,
+#                 SUM(CASE WHEN STATE = 'PASS' THEN 1 ELSE 0 END) AS output,
+#                 SUM(CASE WHEN STATE = 'FAIL' THEN 1 ELSE 0 END) AS fail
+#             FROM SCREW_FORCE_INFO
+#         """
+#         cursor.execute(datapie)
+#         result = cursor.fetchone()
+#         total, output, fail = result
+#         fpyPass = (output / total) * 100 if total > 0 else 0
+#         fpyFail = (fail / total) * 100 if total > 0 else 0
+#         rowPieChart = {
+#             'fpyPass': fpyPass,
+#             'fpyFail': fpyFail
+#         }
+#         return jsonify({
+#             "data": rows,
+#             "page": page,
+#             "per_page": per_page,
+#             "total_pages": total_pages,
+#             "total_records": total_records,
+#             "group_start": group_start,
+#             "group_end": group_end,
+#             "pie_chart_data":rowPieChart
+#         })
+#     except Exception as e:
+#         app.logger.error(f"Error querying data: {str(e)}")
+#         return render_template('dashboard.html', error=str(e))
+#     finally:
+#         if cursor:
+#             cursor.close()
+#         if connection:
+#             connection.close()
+
+# Hàm lấy dữ liệu với phân trang
+def get_paginated_data(page, per_page):
+    offset = (page - 1) * per_page
+    offset = (page - 1) * per_page 
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = """
+        SELECT 
+            ROWNUM as stt,
+            t.factory,
+            t.line, 
+            t.name_machine, 
+            t.model_name,
+            t.serial_number,
+            t.force_1, 
+            t.force_2, 
+            t.force_3, 
+            t.force_4,
+            t.time_update,
+            t.state            
+        FROM (
+            SELECT 
+                factory,
+                line, 
+                name_machine, 
+                model_name,
+                serial_number,
+                force_1,
+                force_2,
+                force_3,
+                force_4,
+                TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
+                state
+            FROM SCREW_FORCE_INFO 
+            ORDER BY TIME_UPDATE DESC
+            OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+        ) t
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute(query, {"offset": offset, "limit": per_page})
+    rows = [
+        {
+            'stt': row[0],
+            'factory': row[1],
+            'line': row[2],
+            'name_machine': row[3], 
+            'model_name': row[4], 
+            'serial_number': row[5],
+            'force_1': row[6],
+            'force_2': row[7],
+            'force_3': row[8],
+            'force_4': row[9],
+            'time_update': row[10],
+            'state': row[11]
+        }
+        for row in cursor
+    ]    
+    cursor.close()
+    connection.close()
+    return rows
+
+# Hàm lấy tổng số bản ghi trong bảng
+def get_total_records():
+    query = "SELECT COUNT(*) FROM SCREW_FORCE_INFO"
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute(query)
+    total_records = cursor.fetchone()[0]
+    cursor.close()
+    connection.close()
+    return total_records
+
+# Hàm xử lý phân trang
+def calculate_pagination(page, per_page, total_records):
+    total_pages = (total_records + per_page - 1) // per_page
+    if page < 1:
+        page = 1
+    elif page > total_pages:
+        page = total_pages
+
+    group_size = 5
+    group_start = ((page - 1) // group_size) * group_size + 1
+    group_end = min(group_start + group_size - 1, total_pages)
+    
+    return {
+        "page": page,
+        "total_pages": total_pages,
+        "group_start": group_start,
+        "group_end": group_end
+    }
+
+# def get_pie_chart_data(time_update = None, time_end= None):
+#     query = """
+#         WITH TotalStats AS (
+#             SELECT 
+#                 COUNT(*) AS total,
+#                 SUM(CASE WHEN STATE = 'PASS' THEN 1 ELSE 0 END) AS output,
+#                 SUM(CASE WHEN STATE = 'FAIL' THEN 1 ELSE 0 END) AS fail
+#             FROM SCREW_FORCE_INFO
+#         ),
+#         PassStats AS (
+#             SELECT
+#                 MODEL_NAME,
+#                 COUNT(*) AS count,
+#                 COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () AS percentage
+#             FROM SCREW_FORCE_INFO
+#             WHERE STATE = 'PASS'
+#             GROUP BY MODEL_NAME
+#         ),
+#         FailStats AS (
+#             SELECT
+#                 MODEL_NAME,
+#                 COUNT(*) AS count,
+#                 COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () AS percentage
+#             FROM SCREW_FORCE_INFO
+#             WHERE STATE = 'FAIL'
+#             GROUP BY MODEL_NAME
+#         )
+#         SELECT
+#             ts.total,
+#             ts.output,
+#             ts.fail,
+#             'PASS' AS STATE,
+#             ps.MODEL_NAME,
+#             ps.count,
+#             ps.percentage
+#         FROM TotalStats ts
+#         LEFT JOIN PassStats ps ON 1=1
+#         UNION ALL
+#         SELECT
+#             ts.total,
+#             ts.output,
+#             ts.fail,
+#             'FAIL' AS STATE,
+#             fs.MODEL_NAME,
+#             fs.count,
+#             fs.percentage
+#         FROM TotalStats ts
+#         LEFT JOIN FailStats fs ON 1=1
+#     """
+
+#     connection = get_db_connection()
+#     cursor = connection.cursor()
+#     cursor.execute(query)
+    
+#     result = cursor.fetchall()
+
+#     # Khởi tạo dữ liệu Pie Chart
+#     pie_chart_data = {
+#         "total": 0,
+#         "output": 0,
+#         "fail": 0,
+#         "fpyPass": 0,
+#         "fpyFail": 0,
+#         "details": []
+#     }
+
+#     for row in result:
+#         pie_chart_data["total"] = row[0]
+#         pie_chart_data["output"] = row[1]
+#         pie_chart_data["fail"] = row[2]
+#         pie_chart_data["fpyPass"] = (pie_chart_data["output"] / pie_chart_data["total"]) * 100 if pie_chart_data["total"] > 0 else 0
+#         pie_chart_data["fpyFail"] = (pie_chart_data["fail"] / pie_chart_data["total"]) * 100 if pie_chart_data["total"] > 0 else 0
+
+#         pie_chart_data["details"].append({
+#             "state": row[3], 
+#             "model_name": row[4] if row[4] else "Unknown", 
+#             "count": row[5] if row[5] is not None else 0,
+#             "percentage": row[6] if row[6] is not None else 0
+#         })
+
+#     cursor.close()
+#     connection.close()
+
+#     return pie_chart_data
+def get_pie_chart_data(start_date=None, end_date=None):
+    query = """
+        WITH FilteredData AS (
+            SELECT * FROM SCREW_FORCE_INFO WHERE 1=1
+    """
+    params = {}
+    if start_date:
+        query += " AND TIME_UPDATE >= TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')"
+        params["start_date"] = start_date.strftime("%Y-%m-%d %H:%M:%S")
+    if end_date:
+        query += " AND TIME_UPDATE <= TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')"
+        params["end_date"] = end_date.strftime("%Y-%m-%d %H:%M:%S")
+
+    query += """
+        ),
+        TotalStats AS (
+            SELECT 
+                COUNT(*) AS total,
+                SUM(CASE WHEN STATE = 'PASS' THEN 1 ELSE 0 END) AS output,
+                SUM(CASE WHEN STATE = 'FAIL' THEN 1 ELSE 0 END) AS fail
+            FROM FilteredData
+        ),
+        PassStats AS (
+            SELECT
+                MODEL_NAME,
+                COUNT(*) AS count,
+                COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () AS percentage
+            FROM FilteredData
+            WHERE STATE = 'PASS'
+            GROUP BY MODEL_NAME
+        ),
+        FailStats AS (
+            SELECT
+                MODEL_NAME,
+                COUNT(*) AS count,
+                COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () AS percentage
+            FROM FilteredData
+            WHERE STATE = 'FAIL'
+            GROUP BY MODEL_NAME
+        )
+        SELECT
+            ts.total,
+            ts.output,
+            ts.fail,
+            'PASS' AS STATE,
+            ps.MODEL_NAME,
+            ps.count,
+            ps.percentage
+        FROM TotalStats ts
+        LEFT JOIN PassStats ps ON 1=1
+        UNION ALL
+        SELECT
+            ts.total,
+            ts.output,
+            ts.fail,
+            'FAIL' AS STATE,
+            fs.MODEL_NAME,
+            fs.count,
+            fs.percentage
+        FROM TotalStats ts
+        LEFT JOIN FailStats fs ON 1=1
+    """
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute(query, params)
+
+    result = cursor.fetchall()
+    pie_chart_data = {
+        "total": 0,
+        "output": 0,
+        "fail": 0,
+        "fpyPass": 0,
+        "fpyFail": 0,
+        "details": []
+    }
+
+    for row in result:
+        pie_chart_data["total"] = row[0]
+        pie_chart_data["output"] = row[1]
+        pie_chart_data["fail"] = row[2]
+        pie_chart_data["fpyPass"] = (pie_chart_data["output"] / pie_chart_data["total"]) * 100 if pie_chart_data["total"] > 0 else 0
+        pie_chart_data["fpyFail"] = (pie_chart_data["fail"] / pie_chart_data["total"]) * 100 if pie_chart_data["total"] > 0 else 0
+
+        pie_chart_data["details"].append({
+            "state": row[3], 
+            "model_name": row[4] if row[4] else "Unknown", 
+            "count": row[5] if row[5] is not None else 0,
+            "percentage": row[6] if row[6] is not None else 0
+        })
+
+    cursor.close()
+    connection.close()
+    return pie_chart_data
+
+# Hàm chính - API Dashboard
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
     try:
         page = request.args.get('page', 1, type=int)
-        per_page = 10 
-        offset = (page - 1) * per_page 
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        query = """
-            SELECT 
-                ROWNUM as stt,
-                t.factory,
-                t.line, 
-                t.name_machine, 
-                t.model_name,
-                t.serial_number,
-                t.force_1, 
-                t.force_2, 
-                t.force_3, 
-                t.force_4,
-                t.time_update,
-                t.state
-            FROM (
-                SELECT 
-                    factory,
-                    line, 
-                    name_machine, 
-                    model_name,
-                    serial_number,
-                    force_1,
-                    force_2,
-                    force_3,
-                    force_4,
-                    TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
-                    state
-                FROM SCREW_FORCE_INFO 
-                ORDER BY TIME_UPDATE DESC
-                OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
-            ) t
-        """
-        
-        cursor.execute(query, {"offset": offset, "limit": per_page})
-        rows = []
-        for row in cursor:
-            rows.append({
-                'stt': row[0],
-                'factory': row[1],
-                'line': row[2],
-                'serial_number': row[3],
-                'model_name': row[4], 
-                'name_machine': row[5],
-                'force_1': row[6],
-                'force_2': row[7],
-                'force_3': row[8],
-                'force_4': row[9],
-                'time_update': row[10],
-                'state': row[11]
-            })
-
-        # Tính tổng số trang
-        cursor.execute("SELECT COUNT(*) FROM SCREW_FORCE_INFO")
-        total_records = cursor.fetchone()[0]
-        total_pages = (total_records + per_page - 1) // per_page 
-        group_size = 5
-        if page<0 :
-            page = 1
-        elif page > total_pages:
-            page = total_pages
-        group_start = ((page - 1) // group_size) * group_size + 1
-        group_end = min(group_start + group_size - 1, total_pages)
+        per_page = 10
+        rows = get_paginated_data(page, per_page)
+        # Lấy tổng số bản ghi
+        total_records = get_total_records()
+        # Tính toán số trang
+        pagination_data = calculate_pagination(page, per_page, total_records)
+        # Lấy dữ liệu cho Pie Chart
+        pie_chart_data = get_pie_chart_data()
 
         return jsonify({
             "data": rows,
-            "page": page,
             "per_page": per_page,
-            "total_pages": total_pages,
             "total_records": total_records,
-            "group_start": group_start,
-            "group_end": group_end
+            **pagination_data, 
+            "pie_chart_data": pie_chart_data
         })
     except Exception as e:
         app.logger.error(f"Error querying data: {str(e)}")
         return render_template('dashboard.html', error=str(e))
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
 
 @app.route('/filter', methods=['POST'])
 def filter_data():
@@ -285,7 +598,23 @@ def filter_data():
             "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
             "message": str(e)
         }), 500
-
+# Filter pie chart
+@app .route('/filterPieChart', methods=['POST'])
+def filter_pie_chart():
+    try:
+        data = request.json
+        time_update = data.get("time_update")
+        time_end = data.get("time_end")
+        if time_update and time_end:
+            start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
+            end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
+        else:
+            end_date = datetime.datetime.now()
+            start_date = end_date - datetime.timedelta(days=7)
+        pie_chart_date = get_pie_chart_data(start_date, end_date)
+        return jsonify({"success": True, "pie_chart_date":pie_chart_date})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 @app.route('/logout', methods=['GET'])
 def logout():
     resp = make_response(redirect(('login')))
