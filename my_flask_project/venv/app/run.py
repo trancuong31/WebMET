@@ -189,8 +189,6 @@ def dashboard_page():
 def get_paginated_data(page, per_page):
     offset = (page - 1) * per_page
     offset = (page - 1) * per_page 
-    connection = get_db_connection()
-    cursor = connection.cursor()
     query = """
         SELECT 
             ROWNUM as stt,
@@ -456,6 +454,88 @@ def get_pie_chart_data(start_date=None, end_date=None):
     connection.close()
     return pie_chart_data
 
+def get_column_chart_data(start_date=None, end_date=None):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    if not start_date or not end_date:
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=4)
+    query = """
+        WITH FilteredData AS (
+            SELECT
+                TO_CHAR(TIME_UPDATE, 'YYYY-MM-DD') AS report_date,
+                NAME_MACHINE,
+                TO_CHAR(TIME_UPDATE, 'HH24') AS report_hour,
+                COUNT(*) AS fail_count
+            FROM SCREW_FORCE_INFO
+            WHERE STATE = 'FAIL'
+                AND TIME_UPDATE BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
+                AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
+            GROUP BY TO_CHAR(TIME_UPDATE, 'YYYY-MM-DD'), NAME_MACHINE, TO_CHAR(TIME_UPDATE, 'HH24')
+        ),
+        RankedMachines AS (
+            SELECT
+                report_date,
+                NAME_MACHINE,
+                SUM(fail_count) AS total_fail,
+                ROW_NUMBER() OVER (PARTITION BY report_date ORDER BY SUM(fail_count) DESC) AS rn
+            FROM FilteredData
+            GROUP BY report_date, NAME_MACHINE
+        )
+        SELECT 
+            fd.report_date,
+            rm.NAME_MACHINE,
+            rm.total_fail,
+            fd.report_hour,
+            fd.fail_count
+        FROM RankedMachines rm
+        JOIN FilteredData fd
+            ON rm.report_date = fd.report_date 
+            AND rm.NAME_MACHINE = fd.NAME_MACHINE
+        WHERE rm.rn <= 3
+        ORDER BY fd.report_date DESC, rm.total_fail DESC, fd.report_hour ASC
+    """
+    
+    params = {
+        "start_date": start_date.strftime("%Y-%m-%d 00:00:00"),
+        "end_date": end_date.strftime("%Y-%m-%d 23:59:59")
+    }
+    cursor.execute(query, params)
+    
+    raw_data = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    
+    # Xử lý kết quả
+    column_chart_data = []
+    date_dict = {}
+    
+    for row in raw_data:
+        date, machine, total_fail, hour, fail_count = row
+        
+        if date not in date_dict:
+            date_dict[date] = {}
+        if machine not in date_dict[date]:
+            date_dict[date][machine] = {
+                "name": machine,
+                "fail_count": total_fail,
+                "hourly_data": []
+            }
+        
+        date_dict[date][machine]["hourly_data"].append({
+            "hour": hour,
+            "fail_count": fail_count
+        })
+    
+    for date, machines in date_dict.items():
+        column_chart_data.append({
+            "date": date,
+            "machines": list(machines.values())
+        })
+    
+    return column_chart_data
+    
+
 # Hàm chính - API Dashboard
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -463,11 +543,8 @@ def dashboard():
         page = request.args.get('page', 1, type=int)
         per_page = 10
         rows = get_paginated_data(page, per_page)
-        # Lấy tổng số bản ghi
         total_records = get_total_records()
-        # Tính toán số trang
         pagination_data = calculate_pagination(page, per_page, total_records)
-        # Lấy dữ liệu cho Pie Chart
         pie_chart_data = get_pie_chart_data()
 
         return jsonify({
@@ -480,6 +557,38 @@ def dashboard():
     except Exception as e:
         app.logger.error(f"Error querying data: {str(e)}")
         return render_template('dashboard.html', error=str(e))
+
+@app.route('/api/dashboard/table', methods=['GET'])
+def get_table():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        rows = get_paginated_data(page, per_page)
+        total_records = get_total_records()
+        pagination_data = calculate_pagination(page, per_page, total_records)
+
+        return jsonify({
+            "data": rows,
+            "per_page": per_page,
+            "total_records": total_records,
+            **pagination_data
+        })
+    except Exception as e:
+        app.logger.error(f"Error querying table data: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/dashboard/charts', methods=['GET'])
+def get_charts():
+    try:
+        pie_chart_data = get_pie_chart_data()
+        column_chart_data = get_column_chart_data()
+        return jsonify({
+            "pie_chart_data": pie_chart_data,
+            "column_chart_data": column_chart_data
+        })
+    except Exception as e:
+        app.logger.error(f"Error querying chart data: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/filter', methods=['POST'])
 def filter_data():
@@ -625,7 +734,6 @@ def logout():
 #     if request.method == 'POST':
 #         username = request.form.get('username').strip()
 #         password = request.form.get('password').strip()
-
 #         try:
 #             # Kết nối tới cơ sở dữ liệu
 #             connection = get_db_connection()
@@ -656,16 +764,13 @@ def logout():
 #                 return resp
 #             else:
 #                 return render_template('login.html', error='Incorrect username or password')
-
 #         except Exception as e:
 #              return render_template('login.html', error=f"An error occurred: {e}")
-
 #         finally:
 #             if cursor:
 #                 cursor.close()
 #             if connection:
 #                 connection.close()
-
 #     return render_template('login.html')
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -924,7 +1029,6 @@ def download_excel():
             as_attachment=True,
             download_name=filename
         )
-
     except Exception as e:
         app.logger.error(f"Lỗi tải xuống Excel: {str(e)}")
         flash("Đã xảy ra lỗi khi tạo file Excel. Vui lòng thử lại sau.", "error")
