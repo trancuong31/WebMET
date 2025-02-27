@@ -45,4 +45,4 @@ async function refreshToken() {
 }
 
 // Gọi hàm getData khi trang được tải
-document.addEventListener('DOMContentLoaded', getData);
+// document.addEventListener('DOMContentLoaded', getData);

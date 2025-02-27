@@ -411,8 +411,8 @@ img#fullscreenic{
   pointer-events: none;
   background-image: 
     linear-gradient(
-      rgba(0, 0, 0, 0.6),
-      rgba(0, 0, 0, 0.6) 
+      rgba(0, 0, 0, 0.65),
+      rgba(0, 0, 0, 0.65) 
     ),
     url('/static/images/cover.jpg');
 }
@@ -444,6 +444,7 @@ img#fullscreenic{
   line-height: 25px;
   
 }
+
 #coppyright a:hover{
   color: #006eff;
   text-shadow: 0 0 10px rgba(0, 38, 255, 0.5), 0 0 20px rgba(0, 47, 255, 0.39);
@@ -482,13 +483,18 @@ img#fullscreenic{
     padding: 5px;
     color: #fff;
     border-bottom: #fff;
+
     box-sizing: border-box;
     margin-top: -3em;
   }
-
+div#container-toperr {
+      color: blue; /* Or any color you want */
+    }
+    figure.highcharts-figure {
+      color: blue; /* Or any color you want */
+    }
   #filter{
     cursor: pointer;
-    transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(66, 153, 225, 0.2);
   }
 
@@ -501,6 +507,8 @@ img#fullscreenic{
   }
   #filter:active{
     transform: scale(0.9);
+    transform: translateY(-1px);
+  	box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
   }
   .filter input, select{
     color: #fff;
@@ -814,7 +822,7 @@ img#fullscreenic{
     background-color: rgba(21, 226, 253, 0.3);
    }
   .tbl-content{
-    height:275px;
+    height:283px;
     overflow-x:auto;
     margin-top: 0px;
     border: 1px solid rgba(21, 226, 253, 0.5);
@@ -839,10 +847,10 @@ img#fullscreenic{
     padding: 20px;
     text-align: center;
     vertical-align:middle;
-    font-weight: 200;
+    font-weight: 300;
     font-size: 13px;
     color: #fff;
-    border-bottom: solid 1px rgba(21, 226, 253, 0.4);
+    border-bottom: solid 1px rgba(21, 226, 253, 0.5);
   }
 
 /*style chart column top error*/

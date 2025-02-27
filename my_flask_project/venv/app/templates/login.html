@@ -6,8 +6,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/css2.css')}}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesLogin.css')}}"/>
     <script type="module" src="{{ url_for('static', filename='js/auth.js')}}"></script>
-    <link rel="icon" href="{{ url_for('static', filename='images/automation1.png') }}" type="image/png">
-
+    <link rel="icon" href="{{ url_for('static', filename='images/automation.png') }}" type="image/png">
 </head>
 <body>
     <div class="background">
@@ -36,8 +35,7 @@
           <div class="fb">ICViet</div>
         </div>
         <p style="text-align: center;">Don't have an account? <a id="signup" href="{{ url_for('register') }}">Sign Up</a></p>
-    </form>
-    
+    </form>    
     <script>
         function showAlert(message) {
             const alertDiv = document.getElementById("alert");

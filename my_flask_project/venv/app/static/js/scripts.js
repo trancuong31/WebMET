@@ -4,7 +4,6 @@ $(window).on("load resize ", function() {
     $('.tbl-header').css({'padding-right':scrollWidth});
     }).resize();
 
-
 //filter data
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
@@ -546,7 +545,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    function fetchPieChart() {
+    function fetchChart() {
         fetch(`/api/dashboard/charts`, {
             headers: { "X-Requested-With": "XMLHttpRequest" }
         })
@@ -554,8 +553,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(data => {
             if (data.pie_chart_data || data.column_chart_data) {
                 updatePieChart(data.pie_chart_data);
-                console.log("Dữ liệu từ backend:", data.column_chart_data);
-                // updateColumnChart(data.column_chart_data);
+                console.log("Dữ liệu từ backend: ", data.column_chart_data);
+                drawColumnChart(data.column_chart_data);
             } else {
                 console.error("No pie chart data available.");
             }
@@ -731,77 +730,186 @@ document.addEventListener("DOMContentLoaded", function () {
                     chart = Highcharts.chart("container-pie", chartOptions);
                 }
     }
-    function getRandomColor() {
-        return `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
+    function processBackendData(columnData) {
+        if (!columnData || columnData.length === 0) {
+            console.error("No data available.");
+            return { dates: [], seriesData: [], drilldownSeries: [] };
+        }
+    
+        const validDays = columnData.filter(day =>
+            day.machines.some(machine => machine.fail_count > 0)
+        );
+        const dates = validDays.map(item => item.date);
+    
+        let machineMap = {};
+        let drilldownSeries = [];
+    
+        validDays.forEach(day => {
+            const sortedMachines = day.machines
+                .filter(machine => machine.fail_count > 0)
+                .sort((a, b) => b.fail_count - a.fail_count);
+    
+            sortedMachines.forEach(machine => {
+                if (!machineMap[machine.name]) {
+                    machineMap[machine.name] = Array(dates.length).fill(null);
+                }
+            });
+    
+            sortedMachines.forEach(machine => {
+                const dayIndex = dates.indexOf(day.date);
+                machineMap[machine.name][dayIndex] = machine.fail_count;
+    
+                let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
+                if (machine.hourly_data && Array.isArray(machine.hourly_data)) {
+                    machine.hourly_data.forEach(hourItem => {
+                        fullHourlyData[parseInt(hourItem.hour)][1] = hourItem.fail_count;
+                    });
+                }
+                
+                drilldownSeries.push({
+                    id: `${machine.name}-${day.date}`,
+                    name: `Detail for ${machine.name} day ${day.date}`,
+                    data: fullHourlyData,
+                    xAxis: 1
+                });
+            });
+        });
+    
+        let seriesData = Object.keys(machineMap).map(machineName => ({
+            name: machineName,
+            data: machineMap[machineName],
+            drilldown: machineName
+        })).sort((a, b) => {
+            const totalA = a.data.reduce((sum, val) => sum + (val || 0), 0);
+            const totalB = b.data.reduce((sum, val) => sum + (val || 0), 0);
+            return totalB - totalA;
+        });
+    
+        return { dates, seriesData, drilldownSeries };
     }
     
-    // function updateColumnChart(columnData) {
-    //     if (!columnData || columnData.length === 0) {
-    //         console.error("No column chart data available.");
-    //         return;
-    //     }
+    function drawColumnChart(columnData) {
+        const { dates, seriesData, drilldownSeries } = processBackendData(columnData);
     
-    //     const allMachines = columnData.map(item => ({
-    //         date: item.date,
-    //         machines: item.machines
-    //       }));
-
-    //     const dates = allMachines.map(item => item.date);
-    //     console.log("Data for chart:", allMachines);
+        let chart = Highcharts.chart('container-toperr', {
+            chart: { type: 'column', backgroundColor: null },
+            title: {
+                text: 'Top 3 Machine Fail Per Day',
+                align: 'left',
+                style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+            },
+            xAxis: [
+                { 
+                    categories: dates,
+                    title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } },
+                    labels: { style: { color: '#fff', fontSize: '12px' } }
+                },
+                {
+                    title: { text: 'Hour', style: { color: '#fff', fontSize: '12px' } },
+                    labels: { style: { color: '#fff', fontSize: '12px' } },
+                    categories: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+                    visible: false
+                }
+            ],
+            yAxis: {
+                min: 0,
+                title: { text: 'Fail Count', style: { color: '#fff', fontSize: '12px' } },
+                labels: { style: { color: '#fff', fontSize: '12px' } }
+            },
+            tooltip: { shared: true, useHTML: true },
+            plotOptions: {
+                column: {
+                    groupPadding: 0.1,
+                    states: { hover: { brightness: 0.2 } },
+                    stacking: 'normal'
+                },
+                series: { 
+                    cursor: 'pointer',
+                    dataLabels: { enabled: true },
+                    point: {
+                        events: {
+                            click: function () {
+                                const drilldownId = `${this.series.name}-${this.category}`;
+                                const drilldownExists = chart.options.drilldown.series.some(d => d.id === drilldownId);    
     
-    //     // Vẽ biểu đồ Highcharts
-    //     Highcharts.chart('container-toperr', {
-    //         chart: {
-    //             type: 'column',
-    //             backgroundColor: null,
-    //             plotBackgroundColor: null,
-    //         },
-    //         title: {
-    //             text: 'Top 3 Machine Fail',
-    //             align: 'left',
-    //             style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
-    //         },
-    //         xAxis: {
-    //             categories: dates,
-    //             title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } },
-    //             labels: { style: { color: '#fff', fontSize: '12px' } },
-    //         },
-    //         yAxis: {
-    //             min: 0,
-    //             title: { text: 'Count Fail', style: { color: '#fff', fontSize: '12px' } },
-    //             labels: { style: { color: '#fff', fontSize: '12px' } }
-    //         },
-    //         tooltip: {
-    //             shared: true,
-    //             useHTML: true
-    //         },
-    //         plotOptions: {
-    //             column: {
-    //                 groupPadding: 0.1,
-    //                 states: { hover: { brightness: 0.2 } }
-    //             },
-    //             series: { cursor: 'pointer' }
-    //         },
-    //         series: '',
-    //         credits: { enabled: false },
-    //         legend: {
-    //             align: 'center',
-    //             verticalAlign: 'bottom',
-    //             itemStyle: { color: '#fff' },
-    //             itemHoverStyle: { color: '#cccccc' }
-    //         }
-    //     });
-    // }
+                                if (drilldownExists) {
+                                    chart.xAxis[0].update({ visible: false });
+                                    chart.xAxis[1].update({ visible: true });
+    
+                                    chart.addSeriesAsDrilldown(this, {
+                                        id: drilldownId,
+                                        name: `Fail count for ${this.category}`,
+                                        data: chart.options.drilldown.series.find(d => d.id === drilldownId).data,
+                                        xAxis: 1
+                                    });
+    
+                                    chart.applyDrilldown();
+                                } else {                                    
+                                    alert('No drilldown data found for', this.series.name);
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            accessibility: { enabled: false },
+            series: seriesData,
+            drilldown: {
+                series: drilldownSeries,
+                events: {
+                    drillup: function () {
+                        chart.xAxis[0].update({ visible: true });
+                        chart.xAxis[0].setCategories(dates, false); // 🔥 FIX lỗi mất trục X
+                        chart.xAxis[1].update({ visible: false });
+            
+                        while (chart.series.length > seriesData.length) {
+                            chart.series[chart.series.length - 1].remove(false);
+                        }
+            
+                        chart.redraw();
+                    }
+                }
+            }
+            ,
+            credits: { enabled: false },
+            legend: {
+                align: 'center',
+                verticalAlign: 'bottom',
+                itemStyle: { color: '#fff' },
+                itemHoverStyle: { color: '#cccccc' }
+            },
+            exporting: {
+                enabled: true,
+                buttons: {
+                    contextButton: {
+                        menuItems: [
+                            'viewFullscreen',
+                            'separator',
+                            'downloadPNG',
+                            'downloadJPEG',
+                            'downloadPDF',
+                            'downloadSVG',
+                            'separator',
+                            'downloadCSV',
+                            'downloadXLS',
+                            'viewData'
+                        ]
+                    }
+                }
+            }
+        });
+    }
+    
     
     
     
     function startPolling() {
         fetchPage(currentPage);
-        fetchPieChart();
+        fetchChart();
 
         pollingTimer = setInterval(() => {
             fetchPage(currentPage);
-            fetchPieChart();
+            fetchChart();
         }, POLLING_INTERVAL);
     }
     startPolling();
@@ -809,7 +917,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 //Loading data 
 async function fetchData(page) {
-    // Hiển thị GIF khi bắt đầu tải dữ liệu
     document.getElementById("loading").style.display = "block";
   
     try {
@@ -831,7 +938,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const failRecords = document.getElementById("fail-records");
     const fpyPercentage = document.getElementById("fpy-percentage");
     const POLLING_INTERVAL = 300000; 
-
+    const lineCombobox = document.getElementById("line-combobox");
+    const factoryCombobox = document.getElementById("factory-combobox");
+    const stateCombobox = document.getElementById("state-combobox");
+    const nameMachineCombobox = document.getElementById("nameMachine-combobox");
+    const downloadButton = document.getElementById('download-excel');
     function fetchContentTop() {
 
         fetch("/getinfo", {
@@ -866,7 +977,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     fetchContentTop();
 
-    const downloadButton = document.getElementById('download-excel');
+    
     downloadButton.removeEventListener('click', handleDownload);
     downloadButton.addEventListener('click', handleDownload);
     async function handleDownload(event) {
@@ -909,11 +1020,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    const lineCombobox = document.getElementById("line-combobox");
-    const factoryCombobox = document.getElementById("factory-combobox");
-    const stateCombobox = document.getElementById("state-combobox");
-    const nameMachineCombobox = document.getElementById("nameMachine-combobox");
-    
     // Fetch data from route /getLines 
     fetch("/getLines")
         .then(response => {
@@ -956,102 +1062,6 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error fetching lines and states:", error);
         });
 });
-//download excel
-// document.addEventListener("DOMContentLoaded", function () {
-//     const downloadButton = document.getElementById('download-excel');
-//     downloadButton.removeEventListener('click', handleDownload);
-//     downloadButton.addEventListener('click', handleDownload);
-//     async function handleDownload(event) {
-//         event.preventDefault();
-//         const formatDatetime = (datetime) => {
-//             return datetime ? datetime.replace('T', ' ') + ':00' : null;
-//         };
-//         const payload = {
-//             line: document.getElementById("line-combobox").value.trim() || null,
-//             factory: document.getElementById("factory-combobox").value.trim() || null,
-//             nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
-//             time_update: formatDatetime(document.getElementById("time_update").value),
-//             time_end: formatDatetime(document.getElementById("time_end").value),
-//             state: document.getElementById("state-combobox").value || null
-//         };
-//         try {
-//             const response = await fetch('/downloadExcel', {
-//                 method: 'POST',
-//                 headers: {
-//                     'Content-Type': 'application/json',
-//                     'X-Requested-With': 'XMLHttpRequest'
-//                 },
-//                 body: JSON.stringify(payload)
-//             });
-//             if (!response.ok) {
-//                 throw new Error(`HTTP error! status: ${response.status}`);
-//             }
-//             const blob = await response.blob();
-//             const url = window.URL.createObjectURL(blob);
-//             const a = document.createElement('a');
-//             a.style.display = 'none';
-//             a.href = url;
-//             a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
-//             document.body.appendChild(a);
-//             a.click();
-//             window.URL.revokeObjectURL(url);
-//         } catch (error) {
-//             console.error("Error downloading Excel:", error);
-//             alert("Failed to download the Excel file. Please try again.");
-//         }
-//     }
-// }); 
-//get lines, states, factories, namemachines
-// document.addEventListener("DOMContentLoaded", function () {
-//     const lineCombobox = document.getElementById("line-combobox");
-//     const factoryCombobox = document.getElementById("factory-combobox");
-//     const stateCombobox = document.getElementById("state-combobox");
-//     const nameMachineCombobox = document.getElementById("nameMachine-combobox");
-    
-//     // Fetch data from route /getLines 
-//     fetch("/getLines")
-//         .then(response => {
-//             if (!response.ok) {
-//                 throw new Error(`HTTP error! status: ${response.status}`);
-//             }
-//             return response.json();
-//         })
-//         .then(data => {
-//             lineCombobox.innerHTML = '<option value="">All</option>';
-//             data.lines.forEach(line => {
-//                 const option = document.createElement("option");
-//                 option.value = line;
-//                 option.textContent = line;
-//                 lineCombobox.appendChild(option);
-//             });
-//             factoryCombobox.innerHTML = '<option value="">All</option>';
-//             data.factories.forEach(factory => {
-//                 const option = document.createElement("option");
-//                 option.value = factory;
-//                 option.textContent = factory;
-//                 factoryCombobox.appendChild(option);
-//             });
-//             stateCombobox.innerHTML = '<option value="">All</option>';
-//             data.states.forEach(state => {
-//                 const option = document.createElement("option");
-//                 option.value = state;
-//                 option.textContent = state;
-//                 stateCombobox.appendChild(option);
-//             });
-//             nameMachineCombobox.innerHTML = '<option value="">All</option>';
-//             data.nameMachines.forEach(nameMachine => {
-//                 const option = document.createElement("option");
-//                 option.value = nameMachine;
-//                 option.textContent = nameMachine;
-//                 nameMachineCombobox.appendChild(option);
-//             });
-//         })
-//         .catch(error => {
-//             console.error("Error fetching lines and states:", error);
-//         });
-// });
-//full screen
-
 document.getElementById("toggle_fullscreen").addEventListener("click", function (e) {
     e.preventDefault();
     const fullscreenIcon = document.getElementById("fullscreenic");

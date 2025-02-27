@@ -275,89 +275,6 @@ def calculate_pagination(page, per_page, total_records):
         "group_end": group_end
     }
 
-# def get_pie_chart_data(time_update = None, time_end= None):
-#     query = """
-#         WITH TotalStats AS (
-#             SELECT 
-#                 COUNT(*) AS total,
-#                 SUM(CASE WHEN STATE = 'PASS' THEN 1 ELSE 0 END) AS output,
-#                 SUM(CASE WHEN STATE = 'FAIL' THEN 1 ELSE 0 END) AS fail
-#             FROM SCREW_FORCE_INFO
-#         ),
-#         PassStats AS (
-#             SELECT
-#                 MODEL_NAME,
-#                 COUNT(*) AS count,
-#                 COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () AS percentage
-#             FROM SCREW_FORCE_INFO
-#             WHERE STATE = 'PASS'
-#             GROUP BY MODEL_NAME
-#         ),
-#         FailStats AS (
-#             SELECT
-#                 MODEL_NAME,
-#                 COUNT(*) AS count,
-#                 COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () AS percentage
-#             FROM SCREW_FORCE_INFO
-#             WHERE STATE = 'FAIL'
-#             GROUP BY MODEL_NAME
-#         )
-#         SELECT
-#             ts.total,
-#             ts.output,
-#             ts.fail,
-#             'PASS' AS STATE,
-#             ps.MODEL_NAME,
-#             ps.count,
-#             ps.percentage
-#         FROM TotalStats ts
-#         LEFT JOIN PassStats ps ON 1=1
-#         UNION ALL
-#         SELECT
-#             ts.total,
-#             ts.output,
-#             ts.fail,
-#             'FAIL' AS STATE,
-#             fs.MODEL_NAME,
-#             fs.count,
-#             fs.percentage
-#         FROM TotalStats ts
-#         LEFT JOIN FailStats fs ON 1=1
-#     """
-
-#     connection = get_db_connection()
-#     cursor = connection.cursor()
-#     cursor.execute(query)
-    
-#     result = cursor.fetchall()
-
-#     # Khởi tạo dữ liệu Pie Chart
-#     pie_chart_data = {
-#         "total": 0,
-#         "output": 0,
-#         "fail": 0,
-#         "fpyPass": 0,
-#         "fpyFail": 0,
-#         "details": []
-#     }
-
-#     for row in result:
-#         pie_chart_data["total"] = row[0]
-#         pie_chart_data["output"] = row[1]
-#         pie_chart_data["fail"] = row[2]
-#         pie_chart_data["fpyPass"] = (pie_chart_data["output"] / pie_chart_data["total"]) * 100 if pie_chart_data["total"] > 0 else 0
-#         pie_chart_data["fpyFail"] = (pie_chart_data["fail"] / pie_chart_data["total"]) * 100 if pie_chart_data["total"] > 0 else 0
-
-#         pie_chart_data["details"].append({
-#             "state": row[3], 
-#             "model_name": row[4] if row[4] else "Unknown", 
-#             "count": row[5] if row[5] is not None else 0,
-#             "percentage": row[6] if row[6] is not None else 0
-#         })
-
-#     cursor.close()
-#     connection.close()
-
 #     return pie_chart_data
 def get_pie_chart_data(start_date=None, end_date=None):
     query = """
@@ -506,7 +423,6 @@ def get_column_chart_data(start_date=None, end_date=None):
     cursor.close()
     connection.close()
     
-    # Xử lý kết quả
     column_chart_data = []
     date_dict = {}
     
@@ -535,7 +451,6 @@ def get_column_chart_data(start_date=None, end_date=None):
     
     return column_chart_data
     
-
 # Hàm chính - API Dashboard
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -605,10 +520,9 @@ def filter_data():
         offset = (page - 1) * per_page
         connection = get_db_connection()
         cursor = connection.cursor()
-
         base_query = """
             SELECT factory,
-                    line, 
+                    line,
                     name_machine, 
                     model_name,
                     serial_number,
@@ -729,49 +643,7 @@ def logout():
     resp = make_response(redirect(('login')))
     resp.delete_cookie('token')
     return resp
-# @app.route('/login', methods=['POST', 'GET'])
-# def login():
-#     if request.method == 'POST':
-#         username = request.form.get('username').strip()
-#         password = request.form.get('password').strip()
-#         try:
-#             # Kết nối tới cơ sở dữ liệu
-#             connection = get_db_connection()
-#             cursor = connection.cursor()
-#             query = """
-#                 SELECT 1
-#                 FROM USERS
-#                 WHERE USERNAME = :username AND PASSWORD = :password
-#             """
-#             cursor.execute(query, {"username": username, "password": password})
-#             rows = cursor.fetchone()
-#             if rows and rows[0] > 0:
-#                 # Tạo JWT token
-#                 access_token = jwt.encode({
-#                     'username': username,
-#                     'exp': datetime.now(timezone.utc) + timedelta(hours=2),
-#                     'type': 'access'
-#                 }, app.config['SECRET_KEY'], algorithm='HS256')
-#                 refresh_token = jwt.encode({
-#                     'username': username,
-#                     'exp': datetime.now(timezone.utc) + timedelta(days=7),
-#                     'type': 'refresh'
-#                 }, app.config['SECRET_KEY'], algorithm='HS256')
-#                 resp = make_response(redirect(('index1')))
-#                 # Trả về JSON chứa các token
-#                 resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60)
-#                 resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60)
-#                 return resp
-#             else:
-#                 return render_template('login.html', error='Incorrect username or password')
-#         except Exception as e:
-#              return render_template('login.html', error=f"An error occurred: {e}")
-#         finally:
-#             if cursor:
-#                 cursor.close()
-#             if connection:
-#                 connection.close()
-#     return render_template('login.html')
+
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     if request.method == 'POST':
@@ -811,7 +683,8 @@ def login():
             else:
                 return render_template('login.html', error='Incorrect username or password')
         except Exception as e:
-            return render_template('login.html', error="An unexpected error occurred. Please try again.")
+            error_message = str(e)
+            return render_template('login.html', error=f"{error_message} Please check backend.")
         finally:
             if cursor:
                 cursor.close()
@@ -1036,7 +909,4 @@ def download_excel():
 
 if __name__=='__main__':
     app.run(debug=True)
-
-
-
 
