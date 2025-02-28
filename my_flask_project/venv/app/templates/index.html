@@ -4,389 +4,144 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/apexcharts.js') }}"></script>
-    
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/styles.css')}}"
-    />
-    <title>THC</title>
+    <script src="{{ url_for('static', filename='js/toastify-js.js')}}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesmain.css') }}" />
+    <title>Information MET</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/automation.png') }}" type="image/png">
   </head>
   <body>
-    <header class="textAnimation">
-      <h1 id="welcome">❆Welcome {{ username }} to Website❆</h1>
-      <div class="logout">
-          <a href="{{ url_for('logout') }}"><span><img title="Logout" style="width: 25px; height: 25px; margin-top: 5px; margin-right: 5px;" src="{{ url_for('static', filename='images/logout.png') }}" alt="Logout"></span></a>
-      </div>
-  </header>
-    <nav>
-      <ul class="menu">
-        <li><a href="">Mục A</a></li>
-        <li class="menuFa">
-          <a href="">Mục B</a>
-          <ul class="dropdow">
-            <li><a href="">Mục B.1</a></li>
-            <li><a href="">Mục B.2</a></li>
-            <li><a href="">Mục B.3</a></li>
-          </ul>
-        </li>
-        <li><a href="">Mục C</a></li>
-        <li><a href="">Mục D</a></li>
-        <li><a href="">Mục E</a></li>
-      </ul>
-    </nav>
-    <div class="snowflakes" aria-hidden="true">
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❆</div>
-      <div class="snowflake">❅</div>
-      <div class="snowflake">❆</div>
-    </div>
-    <div class="mainContent">
-      <div class="contRightTop">
-        <div class="form">
-          <form action="/tasks/submitConfig" method="POST">
-            <table>
-              <tr>
-                <td colspan="2" style="text-align: center; font-size: 25px; font-weight: bold">
-                  Config
-                </td>
-              </tr>
-              <tr>
-                <td><label for="machineNo">Machine no</label></td>
-                <td>
-                  <input style="outline: none;" id="machineNo" name="machineNo" type="text" value="" />
-                  <br />
-                </td>
-              </tr>
-              <tr>
-                <td><label for="factory">Factory</label></td>
-                <td>
-                  <select id="factory" name="factory" class="custom-select sources">
-                    <option value="">-- Select an option --</option>
-                  </select>
-                  <script src="{{ url_for('static', filename='js/styleselect.js') }}"></script>
-                  <br />
-                </td>
-              </tr>
-              <tr>
-                <td><label for="status">Status</label></td>
-                <td>
-                  <input style="outline: none;"
-                    id="status"
-                    name="status"
-                    type="number"
-                    min="0"
-                    max="4"
-                    step="1"
-                    value="0"
-                  />
-                  <br />
-                </td>
-              </tr>
-              <tr>
-                <td><label for="projectName">Project name</label></td>
-                <td>
-                  <input style="outline: none;" id="projectName" name="projectName" type="text" value="" />
-                  <br />
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2" style="text-align: center;">
-                  <input class="btn_submit" type="submit" value="Submit" />
-                  <input class="btn_submit" type="reset" value="Reset" />
-                </td>
-              </tr>
-            </table>
-          </form>
-          
-          <script>
-            $(document).ready(function() {
-                $('#form').on('submit', function(event) {
-                    event.preventDefault();
-                    $.ajax({
-                        url: '/tasks/submitConfig',
-                        type: 'POST',
-                        data: $(this).serialize(),
-                        success: function(response) {
-                            if (response.success) {
-                                alert('Data submitted successfully!');
-                            }
-                        },
-                        error: function(xhr) {
-                            alert('Error submitting data: ' + xhr.responseJSON.error);
-                        }
-                    });
-                });
-            });
-        </script>
-        </div>
-        <div class="tableMain">
-          <table id="tasks-table" cellpadding="10">
-            <thead>
-              <tr>
-                <th>Machine No</th>
-                <th>NG Quantity</th>
-                <th>Run Time</th>
-                <th>Work Date</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          <div class="pagination">
-            <button id="prev-page" class="page-button">Previous</button>
-            <span id="current-page" class="page-indicator">Page 1</span>
-            <button id="next-page" class="page-button">Next</button>
-          </div>
-          <script>
-            $(document).ready(function () {
-              var currentPage = 1; // Trang hiện tại
-              var perPage = 5;
-              // Hàm tải dữ liệu từ backend
-              function loadTasks(page) {
-                $.get(
-                  `http://localhost:5000/tasks?page=${page}&per_page=${perPage}`,
-                  function (response) {
-                    var data = response.data;
-                    var tableBody = $("#tasks-table tbody");
-                    tableBody.empty();
-                    data.forEach(function (task) {
-                      var row = "<tr>";
-                      row += "<td>" + task.MACHINE_NO + "</td>";
-                      row +="<td>" +(task.NG_QTY !== null ? task.NG_QTY : 0) +"</td>";
-                      row += "<td>" + task.RUN_TIME + "</td>";
-                      row += "<td>" + task.WORK_DATE + "</td>";
-                      row += `<td><button class="delete-btn" data-id="${task.MACHINE_NO}">Delete</button></td>`;
-                      row += "</tr>";
-                      tableBody.append(row);
-                    });
-                    $("#current-page").text(`Page ${response.page}`);
-                    $("#prev-page").prop("disabled", response.page <= 1);
-                    $("#next-page").prop(
-                      "disabled",
-                      response.page >= response.total_pages
-                    );
-                  }
-                );
-              }
-              loadTasks(currentPage);
-              // Sự kiện chuyển trang
-              $("#prev-page").click(function () {
-                if (currentPage > 1) {
-                  currentPage--;
-                  loadTasks(currentPage);
-                }
-              });
-
-              $("#next-page").click(function () {
-                currentPage++;
-                loadTasks(currentPage);
-              });
-
-              // Sự kiện nhấn nút "Delete"
-              $(document).on("click", ".delete-btn", function () {
-                var machineNo = $(this).data("id");
-                if (confirm("Are you sure you want to delete this Machine ?")) {
-                  $.ajax({
-                    url: `http://localhost:5000/tasks/${machineNo}`,
-                    type: "DELETE",
-                    success: function (result) {
-                      alert("Deleted successfully");
-                      loadTasks(currentPage);
-                    },
-                    error: function (err) {
-                      alert(
-                        "Error deleting task: " + err.responseJSON.description
-                      );
-                    },
-                  });
-                }
-              });
-            });
-          </script>
-        </div>
-        <div class="contLeft">
-          <div class="leftBot">
-            <h1 style="text-align: center">Chart</h1>
-            <canvas
-              id="myChart"
-              style="max-width: 400px; max-height: 400px"
-            ></canvas>
-            <script>
-              let myChart; // Biến lưu trữ chart instance
-              // Hàm lấy dữ liệu từ API
-              async function fetchData() {
-                const response = await fetch("/chartData");
-                const data = await response.json();
-                return data;
-              }
-              async function initChart() {
-                const data = await fetchData();
-                const ctx = document.getElementById("myChart").getContext("2d");
-                myChart = new Chart(ctx, {
-                  type: "doughnut",
-                  data: data,
-                  options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                  },
-                });
-              }
-
-              // Hàm cập nhật biểu đồ
-              async function updateChart() {
-                const newData = await fetchData(); 
-                myChart.data.labels = newData.labels;
-                myChart.data.datasets[0].data = newData.datasets[0].data;
-
-                // Nếu cần, cập nhật màu sắc (nếu dữ liệu thay đổi số lượng phần tử)
-                myChart.data.datasets[0].backgroundColor =
-                  newData.datasets[0].backgroundColor;
-
-                myChart.update(); // Gọi hàm update để vẽ lại biểu đồ
-              }
-
-              // Khởi tạo biểu đồ khi tải trang
-              initChart();
-
-              // Cập nhật biểu đồ mỗi 5 giây
-              setInterval(updateChart, 60000);
-            </script>
-          </div>
-        </div>
-      </div>
-      <div class="conRightBot">
-        <div class="leftBot">
-          <script>
-            function renderChart(data) {
-              // Tạo biểu đồ với dữ liệu mới
-              var options = {
-                series: [
-                  {
-                    name: "Run Time",
-                    type: "column",
-                    data: data.datasets[0].data,
-                  },
-                  {
-                    name: "Error Time",
-                    type: "line",
-                    data: data.datasets[1].data,
-                    dataLabels: {
-                      enabled: true,
-                      enabledOnSeries: [1],
-                      style: {
-                        colors: ["#2326c2"],
-                        fontSize: "12px",
-                      },
-                      offsetY: -20,
-                    },
-                  },
-                ],
-                chart: {
-                  height: 350,
-                  type: "line",
-                },
-                stroke: {
-                  width: [0, 4],
-                },
-                title: {
-                  text: "STATIC",
-                },
-                xaxis: {
-                  categories: data.labels,
-                },
-                yaxis: [
-                  {
-                    title: {
-                      text: "Run Time",
-                    },
-                  },
-                  {
-                    opposite: true,
-                    title: {
-                      text: "Error Time",
-                    },
-                  },
-                ],
-              };
-
-              var chartElement = document.querySelector(".conRightBot");
-              chartElement.innerHTML = "";
-              var chart = new ApexCharts(chartElement, options);
-              chart.render();
-            }
-            function fetchAndUpdateChart() {
-              fetch("/chartData2")
-                .then((response) => response.json())
-                .then((data) => {
-                  renderChart(data);
-                })
-                .catch((error) => console.log("Error fetching data:", error));
-            }
-            fetchAndUpdateChart();
-            setInterval(fetchAndUpdateChart, 60000);
-          </script>
-        </div>
-      </div>
-      <div class="ggmap">
-        <div class="container">
-          <div id="map"></div>
-      </div>
-      <script>
-        function initMap() {
-            var map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 21.0168864, lng: 105.7855574 },
-                zoom: 15
-            });
-        }
-    </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCT61ROrIlygoNTLRRiMW5dil_TLETDFeI&callback=initMap" async defer></script>
-      </div>
-      <hr />
-      <div class="conTBottom">
-        <div class="rightBot">
-          <div class="modeFullScreen">
-            <a href="#" id="toggle_fullscreen">
-              <img
-                id="fullscreenic"
-                src="/static/images/fullscreen.png"
-                alt="Fullscreen Icon"
-                style="width: 25px; height: 25px"
-              />
+    <div class="wrapper">
+      <nav id="navbar">
+        <ul class="navbar-items flexbox-col">
+          <li class="navbar-logo flexbox-left">
+            <a class="navbar-item-inner flexbox">
+              <span class="logo"></span>
+                <polygon points="925.79 318.48 830.56 0 183.51 1384.12 510.41 1178.46 925.79 318.48"/>
+                <polygon points="1438.88 1663.28 1126.35 948.08 111.98 1586.26 0 1819.54 1020.91 1250.57 1123.78 1471.02 783.64 1663.28 1438.88 1663.28"/>
+              </svg>
             </a>
-          </div>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left"  href="{{ url_for('dashboard_page') }}" >
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="search-outline"></ion-icon>
+              </div>
+              <span style="color: #fff;" class="link-text">Dashboard Screw Force</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="home-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục B</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="folder-open-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục C</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="pie-chart-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục D</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="people-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục E</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="chatbubbles-outline"></ion-icon>
+              </div>
+              <span class="link-text">Mục F</span>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left" href="{{ url_for('logout') }}">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <ion-icon name="settings-outline"></ion-icon>
+              </div>
+              <span style="color: #fff;" class="link-text">Logout</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <div class="container">
+        <!-- <header>MET
+        </header> -->
+        <div class="video-background">
+          <div class="overlay"></div>
+          <video  autoplay muted loop preload="auto" src="{{ url_for('static', filename='images/videobg.mp4') }}" ></video>
         </div>
-        <div class="centerBot"></div>
-      </div>
-      <script>
-        document
-          .getElementById("toggle_fullscreen")
-          .addEventListener("click", function (e) {
-            e.preventDefault();
-            const fullscreenIcon = document.getElementById("fullscreenic");
-            const container = document.documentElement;
-            if (document.fullscreenElement) {
-              document.exitFullscreen();
-              fullscreenIcon.src = "/static/images/fullscreen.png";
-            } else {
-              container.requestFullscreen();
-              fullscreenIcon.src = "/static/images/fullscreen2.png";
+        <div class="mainContent">
+          <script>
+            // Lấy query string từ URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+    
+            // Hiển thị toast nếu có thông báo
+            if (message === "success") {
+                Toastify({
+                    text: "Đăng nhập thành công!",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "center",
+                    backgroundColor: "green",
+                    close: true,
+            stopOnFocus: true,
+                }).showToast();
             }
-          });
-      </script>
-
+        </script>
+          <div class="content">
+            <div class="content-left">
+              <div class="typing-demo">
+                WELCOME TO WEBSITE MET
+              </div>
+              <div class="information">
+                <div class="card">
+                  <div class="card-number">01</div>
+                  <div class="card-icon">🔧</div>
+                  <p>The MET department specializing in automation, assembly, and robotics plays a crucial role in improving production efficiency and effectiveness.</p>
+                </div>
+                <div class="card">
+                  <div class="card-number">02</div>
+                  <div class="card-icon">⚙️</div>
+                  <p>The MET department designs, programs, and deploys automated systems, from small to large scale. This improves production efficiency and creates higher quality products.</p>
+                </div>
+                <div class="card">
+                  <div class="card-number">03</div>
+                  <div class="card-icon">🤖</div>
+                  <p>Systems controlled by computers that perform tasks, especially those that are difficult, dangerous, or repetitive.</p>
+                </div>
+                <div class="card">
+                  <div class="card-number">04</div>
+                  <div class="card-icon">💻</div>
+                  <p>The MET department not only provides ready-made automation solutions but also has the ability to develop customized solutions to meet the specific needs of each customer.</p>
+                </div>
+              </div>
+            </div>
+            <div class="content-right">
+                <!-- <img src="{{ url_for('static', filename='images/robot.png') }}" alt="">
+                <img src="{{ url_for('static', filename='images/asembly.png') }}" alt=""> -->
+            </div>
+          </div>
+          
+        </div>
+      </div>
     </div>
-
-    <!-- <footer>Thank you</footer> -->
   </body>
 </html>

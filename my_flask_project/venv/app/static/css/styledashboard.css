@@ -487,11 +487,16 @@ img#fullscreenic{
     box-sizing: border-box;
     margin-top: -3em;
   }
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 1;
+}
+
 div#container-toperr {
-      color: blue; /* Or any color you want */
+      color: blue; 
     }
     figure.highcharts-figure {
-      color: blue; /* Or any color you want */
+      color: blue
     }
   #filter{
     cursor: pointer;
@@ -582,7 +587,7 @@ div#container-toperr {
     box-sizing: border-box;
   }
   .chartContent2 .chart3{
-    border-radius: 0.5em;
+    border-radius: 0.3em;
     padding: 10px;
     width: 50%;
     height: 450px;
@@ -596,7 +601,7 @@ div#container-toperr {
     outline-offset: -2px;
   }
   .chartContent2 .chart4{
-    border-radius: 0.5em;
+    border-radius: 0.3em;
     padding: 10px;
     width: 49%;
     height: 450px;
@@ -610,7 +615,7 @@ div#container-toperr {
     outline-offset: -2px;
   }
   .chartCotent1 .chartColumn{
-    border-radius: 0.5em;
+    border-radius: 0.3em;
     padding: 10px;
     box-shadow: rgba(21, 226, 253, 0.5) 0px 3px 5px;
     width: 50%;
@@ -624,7 +629,7 @@ div#container-toperr {
     outline-offset: -2px;
   }
   .chartCotent1 .chartColumn2{
-    border-radius: 0.5em;
+    border-radius: 0.3em;
     padding: 10px;
     width: 49%;
     box-shadow: rgba(21, 226, 253, 0.5) 0px 3px 5px;
@@ -646,7 +651,7 @@ div#container-toperr {
     left: 0;
     width: 50%;
     box-shadow: rgba(21, 226, 253, 0.5) 0px 3px 5px;
-    border-radius: 0.5em;
+    border-radius: 0.3em;
     padding: 10px;
     height: 468px;
     box-sizing: border-box;
@@ -677,7 +682,7 @@ div#container-toperr {
     right: 0;
     width: 49%;
     height: 468px;
-    border-radius: 0.5em;
+    border-radius: 0.3em;
     padding: 10px;
     box-sizing: border-box;
     border: 1px solid rgba(21, 226, 253, 0.5);

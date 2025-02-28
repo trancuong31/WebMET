@@ -15,7 +15,7 @@ async function login(username, password) {
 
     if (response.ok) {
       console.log('Login successful');
-      window.location.href = '/index1'; 
+      window.location.href = '/index'; 
     } else {
       const errorData = await response.json();
       alert(errorData.error || 'Login failed');

@@ -735,37 +735,31 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("No data available.");
             return { dates: [], seriesData: [], drilldownSeries: [] };
         }
-    
-        const validDays = columnData.filter(day =>
-            day.machines.some(machine => machine.fail_count > 0)
-        );
-        const dates = validDays.map(item => item.date);
+        const dates = columnData
+            .map(item => item.date)
+            .sort((a, b) => new Date(a) - new Date(b));
     
         let machineMap = {};
         let drilldownSeries = [];
     
-        validDays.forEach(day => {
-            const sortedMachines = day.machines
-                .filter(machine => machine.fail_count > 0)
-                .sort((a, b) => b.fail_count - a.fail_count);
+        columnData.forEach(day => {
+            const dayIndex = dates.indexOf(day.date);
+            if (!day.machines || day.machines.length === 0) {
+                return;
+            }
     
-            sortedMachines.forEach(machine => {
+            day.machines.forEach(machine => {
                 if (!machineMap[machine.name]) {
                     machineMap[machine.name] = Array(dates.length).fill(null);
                 }
-            });
     
-            sortedMachines.forEach(machine => {
-                const dayIndex = dates.indexOf(day.date);
                 machineMap[machine.name][dayIndex] = machine.fail_count;
-    
                 let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
                 if (machine.hourly_data && Array.isArray(machine.hourly_data)) {
                     machine.hourly_data.forEach(hourItem => {
                         fullHourlyData[parseInt(hourItem.hour)][1] = hourItem.fail_count;
                     });
-                }
-                
+                }    
                 drilldownSeries.push({
                     id: `${machine.name}-${day.date}`,
                     name: `Detail for ${machine.name} day ${day.date}`,
@@ -774,7 +768,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             });
         });
-    
         let seriesData = Object.keys(machineMap).map(machineName => ({
             name: machineName,
             data: machineMap[machineName],
@@ -787,6 +780,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
         return { dates, seriesData, drilldownSeries };
     }
+    
     
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processBackendData(columnData);
@@ -824,25 +818,22 @@ document.addEventListener("DOMContentLoaded", function () {
                     stacking: 'normal'
                 },
                 series: { 
-                    cursor: 'pointer',
+                    cursor: 'pointer',                    
                     dataLabels: { enabled: true },
                     point: {
                         events: {
                             click: function () {
                                 const drilldownId = `${this.series.name}-${this.category}`;
-                                const drilldownExists = chart.options.drilldown.series.some(d => d.id === drilldownId);    
-    
+                                const drilldownExists = chart.options.drilldown.series.some(d => d.id === drilldownId); 
                                 if (drilldownExists) {
                                     chart.xAxis[0].update({ visible: false });
                                     chart.xAxis[1].update({ visible: true });
-    
                                     chart.addSeriesAsDrilldown(this, {
                                         id: drilldownId,
-                                        name: `Fail count for ${this.category}`,
+                                        name: `Fail Count By Hour for ${this.series.name}`,
                                         data: chart.options.drilldown.series.find(d => d.id === drilldownId).data,
                                         xAxis: 1
                                     });
-    
                                     chart.applyDrilldown();
                                 } else {                                    
                                     alert('No drilldown data found for', this.series.name);
@@ -855,22 +846,8 @@ document.addEventListener("DOMContentLoaded", function () {
             accessibility: { enabled: false },
             series: seriesData,
             drilldown: {
-                series: drilldownSeries,
-                events: {
-                    drillup: function () {
-                        chart.xAxis[0].update({ visible: true });
-                        chart.xAxis[0].setCategories(dates, false); // 🔥 FIX lỗi mất trục X
-                        chart.xAxis[1].update({ visible: false });
-            
-                        while (chart.series.length > seriesData.length) {
-                            chart.series[chart.series.length - 1].remove(false);
-                        }
-            
-                        chart.redraw();
-                    }
-                }
-            }
-            ,
+                series: drilldownSeries
+            },
             credits: { enabled: false },
             legend: {
                 align: 'center',
@@ -899,10 +876,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
-    
-    
-    
-    
+ 
     function startPolling() {
         fetchPage(currentPage);
         fetchChart();

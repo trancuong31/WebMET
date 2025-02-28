@@ -48,7 +48,7 @@ def admin_dashboard():
         flash('Invalid token, please log in again.', 'error')
         return redirect(url_for('login'))
     return render_template('adminDashboard.html', username=username)
-@app.route('/index1', methods=['GET'])
+@app.route('/index', methods=['GET'])
 def index1():
     token = request.cookies.get('token')
     if not token:
@@ -62,7 +62,7 @@ def index1():
     except jwt.InvalidTokenError:
         flash('Invalid token, please log in again.', 'error')
         return redirect(('login'))
-    return render_template('index1.html', username=username)
+    return render_template('index.html', username=username)
 @app.route('/dashboard_page', methods=['GET'])
 def dashboard_page():
     token = request.cookies.get('token')
@@ -374,9 +374,11 @@ def get_pie_chart_data(start_date=None, end_date=None):
 def get_column_chart_data(start_date=None, end_date=None):
     connection = get_db_connection()
     cursor = connection.cursor()
+
     if not start_date or not end_date:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=4)
+
     query = """
         WITH FilteredData AS (
             SELECT
@@ -412,23 +414,27 @@ def get_column_chart_data(start_date=None, end_date=None):
         WHERE rm.rn <= 3
         ORDER BY fd.report_date DESC, rm.total_fail DESC, fd.report_hour ASC
     """
-    
+
     params = {
         "start_date": start_date.strftime("%Y-%m-%d 00:00:00"),
         "end_date": end_date.strftime("%Y-%m-%d 23:59:59")
     }
+
     cursor.execute(query, params)
-    
     raw_data = cursor.fetchall()
     cursor.close()
     connection.close()
-    
+
     column_chart_data = []
     date_dict = {}
-    
+
+    # Tạo danh sách tất cả các ngày trong khoảng
+    all_dates = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(5)]
+
+    # Xử lý dữ liệu lấy được từ SQL
     for row in raw_data:
         date, machine, total_fail, hour, fail_count = row
-        
+
         if date not in date_dict:
             date_dict[date] = {}
         if machine not in date_dict[date]:
@@ -437,20 +443,26 @@ def get_column_chart_data(start_date=None, end_date=None):
                 "fail_count": total_fail,
                 "hourly_data": []
             }
-        
+
         date_dict[date][machine]["hourly_data"].append({
             "hour": hour,
             "fail_count": fail_count
         })
-    
+
+    # Bổ sung các ngày bị thiếu
+    for date in all_dates:
+        if date not in date_dict:
+            date_dict[date] = {}  # Ngày này không có máy nào lỗi
+
+    # Định dạng dữ liệu đầu ra
     for date, machines in date_dict.items():
         column_chart_data.append({
             "date": date,
             "machines": list(machines.values())
         })
-    
+
     return column_chart_data
-    
+  
 # Hàm chính - API Dashboard
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -675,7 +687,7 @@ def login():
                     'exp': datetime.now(timezone.utc) + timedelta(days=7),
                     'type': 'refresh'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
-                resp = make_response(redirect('/adminDashboard' if role == 'admin' else '/index1'))
+                resp = make_response(redirect('/adminDashboard' if role == 'admin' else '/index'))
                 # Thiết lập cookie an toàn
                 resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60, samesite='Strict')
                 resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60, samesite='Strict')
