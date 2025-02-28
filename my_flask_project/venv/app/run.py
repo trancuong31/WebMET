@@ -374,11 +374,9 @@ def get_pie_chart_data(start_date=None, end_date=None):
 def get_column_chart_data(start_date=None, end_date=None):
     connection = get_db_connection()
     cursor = connection.cursor()
-
     if not start_date or not end_date:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=4)
-
     query = """
         WITH FilteredData AS (
             SELECT
@@ -392,7 +390,7 @@ def get_column_chart_data(start_date=None, end_date=None):
                 AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
             GROUP BY TO_CHAR(TIME_UPDATE, 'YYYY-MM-DD'), NAME_MACHINE, TO_CHAR(TIME_UPDATE, 'HH24')
         ),
-        RankedMachines AS (
+        TopMachines AS (
             SELECT
                 report_date,
                 NAME_MACHINE,
@@ -407,31 +405,24 @@ def get_column_chart_data(start_date=None, end_date=None):
             rm.total_fail,
             fd.report_hour,
             fd.fail_count
-        FROM RankedMachines rm
+        FROM TopMachines rm
         JOIN FilteredData fd
             ON rm.report_date = fd.report_date 
             AND rm.NAME_MACHINE = fd.NAME_MACHINE
         WHERE rm.rn <= 3
         ORDER BY fd.report_date DESC, rm.total_fail DESC, fd.report_hour ASC
     """
-
     params = {
         "start_date": start_date.strftime("%Y-%m-%d 00:00:00"),
         "end_date": end_date.strftime("%Y-%m-%d 23:59:59")
     }
-
     cursor.execute(query, params)
     raw_data = cursor.fetchall()
     cursor.close()
     connection.close()
-
     column_chart_data = []
     date_dict = {}
-
-    # Tạo danh sách tất cả các ngày trong khoảng
     all_dates = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(5)]
-
-    # Xử lý dữ liệu lấy được từ SQL
     for row in raw_data:
         date, machine, total_fail, hour, fail_count = row
 
@@ -443,18 +434,13 @@ def get_column_chart_data(start_date=None, end_date=None):
                 "fail_count": total_fail,
                 "hourly_data": []
             }
-
         date_dict[date][machine]["hourly_data"].append({
             "hour": hour,
             "fail_count": fail_count
         })
-
-    # Bổ sung các ngày bị thiếu
     for date in all_dates:
         if date not in date_dict:
-            date_dict[date] = {}  # Ngày này không có máy nào lỗi
-
-    # Định dạng dữ liệu đầu ra
+            date_dict[date] = {}
     for date, machines in date_dict.items():
         column_chart_data.append({
             "date": date,
@@ -762,7 +748,7 @@ def register():
         print(error_message) 
         return render_template('register.html', error=f"An error occurred: {e}")
  
-@app.route('/getLines', methods=['GET'])
+@app.route('/getDataComboboxs', methods=['GET'])
 def get_lines():
     try:
         query = """

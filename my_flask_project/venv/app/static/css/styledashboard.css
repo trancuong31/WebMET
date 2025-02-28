@@ -808,6 +808,7 @@ div#container-toperr {
     margin-top: 3em;
     margin-left: 1.5em;
     text-align: center;
+    cursor: pointer;
     width: 85px;
   }
   #download-excel:hover{

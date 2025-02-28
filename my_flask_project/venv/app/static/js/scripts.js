@@ -704,6 +704,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     series: [{
                         name: "Rate",
                         colorByPoint: true,
+                        cursor: 'pointer',
                         data: chartData
                     }],
                     drilldown: {
@@ -730,7 +731,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     chart = Highcharts.chart("container-pie", chartOptions);
                 }
     }
-    function processBackendData(columnData) {
+    function processDataColumnChart(columnData) {
         if (!columnData || columnData.length === 0) {
             console.error("No data available.");
             return { dates: [], seriesData: [], drilldownSeries: [] };
@@ -746,8 +747,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const dayIndex = dates.indexOf(day.date);
             if (!day.machines || day.machines.length === 0) {
                 return;
-            }
-    
+            }    
             day.machines.forEach(machine => {
                 if (!machineMap[machine.name]) {
                     machineMap[machine.name] = Array(dates.length).fill(null);
@@ -759,7 +759,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     machine.hourly_data.forEach(hourItem => {
                         fullHourlyData[parseInt(hourItem.hour)][1] = hourItem.fail_count;
                     });
-                }    
+                }
                 drilldownSeries.push({
                     id: `${machine.name}-${day.date}`,
                     name: `Detail for ${machine.name} day ${day.date}`,
@@ -779,11 +779,10 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     
         return { dates, seriesData, drilldownSeries };
-    }
-    
+    }    
     
     function drawColumnChart(columnData) {
-        const { dates, seriesData, drilldownSeries } = processBackendData(columnData);
+        const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
     
         let chart = Highcharts.chart('container-toperr', {
             chart: { type: 'column', backgroundColor: null },
@@ -793,15 +792,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
             },
             xAxis: [
-                { 
+                {
                     categories: dates,
                     title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } },
-                    labels: { style: { color: '#fff', fontSize: '12px' } }
+                    labels: { style: { color: '#fff', fontSize: '12px' } },
+                    visible: true
                 },
                 {
                     title: { text: 'Hour', style: { color: '#fff', fontSize: '12px' } },
                     labels: { style: { color: '#fff', fontSize: '12px' } },
-                    categories: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+                    categories: Array.from({ length: 24 }, (_, i) => `${i}:00 - ${i+1}:00`),
                     visible: false
                 }
             ],
@@ -817,25 +817,25 @@ document.addEventListener("DOMContentLoaded", function () {
                     states: { hover: { brightness: 0.2 } },
                     stacking: 'normal'
                 },
-                series: { 
-                    cursor: 'pointer',                    
+                series: {
+                    cursor: 'pointer',
                     dataLabels: { enabled: true },
                     point: {
                         events: {
                             click: function () {
                                 const drilldownId = `${this.series.name}-${this.category}`;
-                                const drilldownExists = chart.options.drilldown.series.some(d => d.id === drilldownId); 
+                                const drilldownExists = chart.options.drilldown.series.some(d => d.id === drilldownId);
                                 if (drilldownExists) {
                                     chart.xAxis[0].update({ visible: false });
                                     chart.xAxis[1].update({ visible: true });
                                     chart.addSeriesAsDrilldown(this, {
                                         id: drilldownId,
-                                        name: `Fail Count By Hour for ${this.series.name}`,
+                                        name: `Fail Count`,
                                         data: chart.options.drilldown.series.find(d => d.id === drilldownId).data,
                                         xAxis: 1
                                     });
                                     chart.applyDrilldown();
-                                } else {                                    
+                                } else {
                                     alert('No drilldown data found for', this.series.name);
                                 }
                             }
@@ -854,7 +854,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 verticalAlign: 'bottom',
                 itemStyle: { color: '#fff' },
                 itemHoverStyle: { color: '#cccccc' }
-            },
+            },            
             exporting: {
                 enabled: true,
                 buttons: {
@@ -874,6 +874,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
             }
+        });
+        Highcharts.addEvent(chart, 'drillup', function () {
+            chart.update({
+                xAxis: [
+                    { visible: true },  
+                    { visible: false }
+                ]
+            });
         });
     }
  
@@ -993,9 +1001,8 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Failed to download the Excel file. Please try again.");
         }
     }
-
     // Fetch data from route /getLines 
-    fetch("/getLines")
+    fetch("/getDataComboboxs")
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
