@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/toastify-js.js')}}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesmain.css') }}" />
     <title>Information MET</title>
     <link rel="icon" href="{{ url_for('static', filename='images/automation.png') }}" type="image/png">
@@ -89,11 +88,8 @@
         </div>
         <div class="mainContent">
           <script>
-            // Lấy query string từ URL
             const urlParams = new URLSearchParams(window.location.search);
             const message = urlParams.get('message');
-    
-            // Hiển thị toast nếu có thông báo
             if (message === "success") {
                 Toastify({
                     text: "Đăng nhập thành công!",
@@ -135,8 +131,8 @@
               </div>
             </div>
             <div class="content-right">
-                <!-- <img src="{{ url_for('static', filename='images/robot.png') }}" alt="">
-                <img src="{{ url_for('static', filename='images/asembly.png') }}" alt=""> -->
+
+              
             </div>
           </div>
           

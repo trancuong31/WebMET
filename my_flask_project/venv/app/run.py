@@ -14,10 +14,6 @@ DB_CONFIG = {
     "password": "123456",
     "dsn": "localhost:1521/orcl3"
 }
-# Thư mục lưu file tải lên
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'jpg', 'jpeg', 'png'}
 CORS(app)
 #kết nối Oracle
 def get_db_connection():
@@ -31,6 +27,8 @@ def get_db_connection():
     except oracledb.DatabaseError as e:
         print(f"Lỗi kết nối cơ sở dữ liệu: {e}")
         abort(500, description="Không thể kết nối cơ sở dữ liệu.")
+
+# redirect page adminDashboard
 @app.route('/adminDashboard', methods=['GET'])
 def admin_dashboard():
     token = request.cookies.get('token')
@@ -48,6 +46,8 @@ def admin_dashboard():
         flash('Invalid token, please log in again.', 'error')
         return redirect(url_for('login'))
     return render_template('adminDashboard.html', username=username)
+
+#redirect page index
 @app.route('/index', methods=['GET'])
 def index1():
     token = request.cookies.get('token')
@@ -63,6 +63,8 @@ def index1():
         flash('Invalid token, please log in again.', 'error')
         return redirect(('login'))
     return render_template('index.html', username=username)
+
+# redirect page dashboard
 @app.route('/dashboard_page', methods=['GET'])
 def dashboard_page():
     token = request.cookies.get('token')
@@ -78,112 +80,6 @@ def dashboard_page():
         flash('Invalid token, please log in again.', 'error')
         return redirect(('login'))
     return render_template('dashboard.html', username=username)
-
-# @app.route('/dashboard', methods=['GET'])
-# def dashboard():
-#     try:
-#         page = request.args.get('page', 1, type=int)
-#         per_page = 10 
-#         offset = (page - 1) * per_page 
-#         connection = get_db_connection()
-#         cursor = connection.cursor()
-#         query = """
-#             SELECT 
-#                 ROWNUM as stt,
-#                 t.factory,
-#                 t.line, 
-#                 t.name_machine, 
-#                 t.model_name,
-#                 t.serial_number,
-#                 t.force_1, 
-#                 t.force_2, 
-#                 t.force_3, 
-#                 t.force_4,
-#                 t.time_update,
-#                 t.state
-                
-#             FROM (
-#                 SELECT 
-#                     factory,
-#                     line, 
-#                     name_machine, 
-#                     model_name,
-#                     serial_number,
-#                     force_1,
-#                     force_2,
-#                     force_3,
-#                     force_4,
-#                     TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
-#                     state
-#                 FROM SCREW_FORCE_INFO 
-#                 ORDER BY TIME_UPDATE DESC
-#                 OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
-#             ) t
-#         """
-        
-#         cursor.execute(query, {"offset": offset, "limit": per_page})
-#         rows = []
-#         for row in cursor:
-#             rows.append({
-#                 'stt': row[0],
-#                 'factory': row[1],
-#                 'line': row[2],
-#                 'serial_number': row[3],
-#                 'model_name': row[4], 
-#                 'name_machine': row[5],
-#                 'force_1': row[6],
-#                 'force_2': row[7],
-#                 'force_3': row[8],
-#                 'force_4': row[9],
-#                 'time_update': row[10],
-#                 'state': row[11]
-#             })
-
-#         # Tính tổng số trang
-#         cursor.execute("SELECT COUNT(*) FROM SCREW_FORCE_INFO")
-#         total_records = cursor.fetchone()[0]
-#         total_pages = (total_records + per_page - 1) // per_page 
-#         group_size = 5
-#         if page<0 :
-#             page = 1
-#         elif page > total_pages:
-#             page = total_pages
-#         group_start = ((page - 1) // group_size) * group_size + 1
-#         group_end = min(group_start + group_size - 1, total_pages)
-#         datapie = """
-#             SELECT
-#                 COUNT(*) AS total,
-#                 SUM(CASE WHEN STATE = 'PASS' THEN 1 ELSE 0 END) AS output,
-#                 SUM(CASE WHEN STATE = 'FAIL' THEN 1 ELSE 0 END) AS fail
-#             FROM SCREW_FORCE_INFO
-#         """
-#         cursor.execute(datapie)
-#         result = cursor.fetchone()
-#         total, output, fail = result
-#         fpyPass = (output / total) * 100 if total > 0 else 0
-#         fpyFail = (fail / total) * 100 if total > 0 else 0
-#         rowPieChart = {
-#             'fpyPass': fpyPass,
-#             'fpyFail': fpyFail
-#         }
-#         return jsonify({
-#             "data": rows,
-#             "page": page,
-#             "per_page": per_page,
-#             "total_pages": total_pages,
-#             "total_records": total_records,
-#             "group_start": group_start,
-#             "group_end": group_end,
-#             "pie_chart_data":rowPieChart
-#         })
-#     except Exception as e:
-#         app.logger.error(f"Error querying data: {str(e)}")
-#         return render_template('dashboard.html', error=str(e))
-#     finally:
-#         if cursor:
-#             cursor.close()
-#         if connection:
-#             connection.close()
 
 # Hàm lấy dữ liệu với phân trang
 def get_paginated_data(page, per_page):
@@ -275,7 +171,7 @@ def calculate_pagination(page, per_page, total_records):
         "group_end": group_end
     }
 
-#     return pie_chart_data
+# return pie_chart_data
 def get_pie_chart_data(start_date=None, end_date=None):
     query = """
         WITH FilteredData AS (
@@ -371,6 +267,7 @@ def get_pie_chart_data(start_date=None, end_date=None):
     connection.close()
     return pie_chart_data
 
+# return column_chart_data
 def get_column_chart_data(start_date=None, end_date=None):
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -422,7 +319,7 @@ def get_column_chart_data(start_date=None, end_date=None):
     connection.close()
     column_chart_data = []
     date_dict = {}
-    all_dates = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(5)]
+    all_dates = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range((end_date - start_date).days + 1)]
     for row in raw_data:
         date, machine, total_fail, hour, fail_count = row
 
@@ -449,7 +346,7 @@ def get_column_chart_data(start_date=None, end_date=None):
 
     return column_chart_data
   
-# Hàm chính - API Dashboard
+# Dashboard
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
     try:
@@ -471,6 +368,7 @@ def dashboard():
         app.logger.error(f"Error querying data: {str(e)}")
         return render_template('dashboard.html', error=str(e))
 
+# get data table
 @app.route('/api/dashboard/table', methods=['GET'])
 def get_table():
     try:
@@ -490,6 +388,7 @@ def get_table():
         app.logger.error(f"Error querying table data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+#get data All charts
 @app.route('/api/dashboard/charts', methods=['GET'])
 def get_charts():
     try:
@@ -503,6 +402,7 @@ def get_charts():
         app.logger.error(f"Error querying chart data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+#get data table by filter
 @app.route('/filter', methods=['POST'])
 def filter_data():
     try:
@@ -619,6 +519,7 @@ def filter_data():
             "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
             "message": str(e)
         }), 500
+
 # Filter pie chart
 @app .route('/filterPieChart', methods=['POST'])
 def filter_pie_chart():
@@ -636,12 +537,30 @@ def filter_pie_chart():
         return jsonify({"success": True, "pie_chart_date":pie_chart_date})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
+
+# Filter column chart
+@app .route('/filterColumnChart', methods=['POST'])
+def filter_column_chart():
+    try:
+        data = request.json
+        time_update = data.get("time_update")
+        time_end = data.get("time_end")
+        if time_update and time_end:
+            start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
+            end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
+        column_chart_date = get_column_chart_data(start_date, end_date)
+        return jsonify({"success": True, "column_chart_date":column_chart_date})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+#logout
 @app.route('/logout', methods=['GET'])
 def logout():
     resp = make_response(redirect(('login')))
     resp.delete_cookie('token')
     return resp
 
+# login
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     if request.method == 'POST':
@@ -713,6 +632,7 @@ def refresh():
     except jwt.invalidTokenError:
         return jsonify({"error": "Invalid refresh token"}), 401
 
+#register
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     try:
@@ -747,7 +667,9 @@ def register():
         error_message = f"Database error: {e}"
         print(error_message) 
         return render_template('register.html', error=f"An error occurred: {e}")
- 
+ #
+
+#get data combobox
 @app.route('/getDataComboboxs', methods=['GET'])
 def get_lines():
     try:
@@ -779,6 +701,7 @@ def get_lines():
     except Exception as e:
         print(f"Error fetching: {e}")
         return jsonify({"error": "Unable to fetch"}), 500
+
 #get total , output, fpy
 @app.route('/getinfo', methods=['GET'])
 def getinfo():
@@ -811,6 +734,7 @@ def getinfo():
             "message": str(e)
         }), 500
 
+#get data table by filter
 def fetch_filtered_data(filters):
     try:
         connection = get_db_connection()
@@ -864,6 +788,7 @@ def fetch_filtered_data(filters):
         app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
         raise
 
+#download excel
 @app.route('/downloadExcel', methods=['POST'])
 def download_excel():
     try:
@@ -907,4 +832,5 @@ def download_excel():
 
 if __name__=='__main__':
     app.run(debug=True)
+
 

@@ -392,7 +392,7 @@ video {
 }
 .typing-demo {
   width: 22ch;
-  animation: typing 2s steps(22), blink 1s step-end infinite alternate;
+  animation: typing 3s steps(22), blink 1s step-end infinite alternate;
   white-space: nowrap;
   overflow: hidden;
   border-right: 3px solid;
