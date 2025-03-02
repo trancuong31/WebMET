@@ -1,27 +1,21 @@
 from flask import Flask, request, jsonify, abort, render_template, redirect, flash, send_file, make_response, url_for
 import oracledb
 from flask_cors import CORS
-import jwt, time
+import jwt
 from flask_socketio import SocketIO
-import os, io
+import io
 from datetime import datetime, timezone, timedelta
 import pandas as pd
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abc'
 socketio =SocketIO(app)
-# Thông tin kết nối đến Oracle Database
 DB_CONFIG = {
     "username": "system",
     "password": "123456",
     "dsn": "localhost:1521/orcl1"
 }
-# Thư mục lưu file tải lên
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'jpg', 'jpeg', 'png'}
 CORS(app)
-# Hàm kết nối Oracle
+#kết nối Oracle
 def get_db_connection():
     try:
         connection = oracledb.connect(
@@ -33,21 +27,8 @@ def get_db_connection():
     except oracledb.DatabaseError as e:
         print(f"Lỗi kết nối cơ sở dữ liệu: {e}")
         abort(500, description="Không thể kết nối cơ sở dữ liệu.")
-# @app.route('/configForm', methods=['GET'])
-# def show_form():
-    # token = request.cookies.get('token')
-    # if not token:
-    #     return redirect(('login'))
-    # try:
-    #     data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-    #     username = data['username']
-    # except jwt.ExpiredSignatureError:
-    #     flash('Token has expired, please log in again.', 'error')
-    #     return redirect(('login'))
-    # except jwt.InvalidTokenError:
-    #     flash('Invalid token, please log in again.', 'error')
-    #     return redirect(('login'))
-    # return render_template('index.html', username=username)
+
+# redirect page adminDashboard
 @app.route('/adminDashboard', methods=['GET'])
 def admin_dashboard():
     token = request.cookies.get('token')
@@ -65,7 +46,9 @@ def admin_dashboard():
         flash('Invalid token, please log in again.', 'error')
         return redirect(url_for('login'))
     return render_template('adminDashboard.html', username=username)
-@app.route('/index1', methods=['GET'])
+
+#redirect page index
+@app.route('/index', methods=['GET'])
 def index1():
     token = request.cookies.get('token')
     if not token:
@@ -79,7 +62,9 @@ def index1():
     except jwt.InvalidTokenError:
         flash('Invalid token, please log in again.', 'error')
         return redirect(('login'))
-    return render_template('index1.html', username=username)
+    return render_template('index.html', username=username)
+
+# redirect page dashboard
 @app.route('/dashboard_page', methods=['GET'])
 def dashboard_page():
     token = request.cookies.get('token')
@@ -96,95 +81,328 @@ def dashboard_page():
         return redirect(('login'))
     return render_template('dashboard.html', username=username)
 
+# Hàm lấy dữ liệu với phân trang
+def get_paginated_data(page, per_page):
+    offset = (page - 1) * per_page
+    offset = (page - 1) * per_page 
+    query = """
+        SELECT 
+            ROWNUM as stt,
+            t.factory,
+            t.line, 
+            t.name_machine, 
+            t.model_name,
+            t.serial_number,
+            t.force_1, 
+            t.force_2, 
+            t.force_3, 
+            t.force_4,
+            t.time_update,
+            t.state            
+        FROM (
+            SELECT 
+                factory,
+                line, 
+                name_machine, 
+                model_name,
+                serial_number,
+                force_1,
+                force_2,
+                force_3,
+                force_4,
+                TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
+                state
+            FROM SCREW_FORCE_INFO 
+            ORDER BY TIME_UPDATE DESC
+            OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+        ) t
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute(query, {"offset": offset, "limit": per_page})
+    rows = [
+        {
+            'stt': row[0],
+            'factory': row[1],
+            'line': row[2],
+            'name_machine': row[3], 
+            'model_name': row[4], 
+            'serial_number': row[5],
+            'force_1': row[6],
+            'force_2': row[7],
+            'force_3': row[8],
+            'force_4': row[9],
+            'time_update': row[10],
+            'state': row[11]
+        }
+        for row in cursor
+    ]    
+    cursor.close()
+    connection.close()
+    return rows
+
+# Hàm lấy tổng số bản ghi trong bảng
+def get_total_records():
+    query = "SELECT COUNT(*) FROM SCREW_FORCE_INFO"
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute(query)
+    total_records = cursor.fetchone()[0]
+    cursor.close()
+    connection.close()
+    return total_records
+
+# Hàm xử lý phân trang
+def calculate_pagination(page, per_page, total_records):
+    total_pages = (total_records + per_page - 1) // per_page
+    if page < 1:
+        page = 1
+    elif page > total_pages:
+        page = total_pages
+
+    group_size = 5
+    group_start = ((page - 1) // group_size) * group_size + 1
+    group_end = min(group_start + group_size - 1, total_pages)
+    
+    return {
+        "page": page,
+        "total_pages": total_pages,
+        "group_start": group_start,
+        "group_end": group_end
+    }
+
+# return pie_chart_data
+def get_pie_chart_data(start_date=None, end_date=None):
+    query = """
+        WITH FilteredData AS (
+            SELECT * FROM SCREW_FORCE_INFO WHERE 1=1
+    """
+    params = {}
+    if start_date:
+        query += " AND TIME_UPDATE >= TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')"
+        params["start_date"] = start_date.strftime("%Y-%m-%d %H:%M:%S")
+    if end_date:
+        query += " AND TIME_UPDATE <= TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')"
+        params["end_date"] = end_date.strftime("%Y-%m-%d %H:%M:%S")
+
+    query += """
+        ),
+        TotalStats AS (
+            SELECT 
+                COUNT(*) AS total,
+                SUM(CASE WHEN STATE = 'PASS' THEN 1 ELSE 0 END) AS output,
+                SUM(CASE WHEN STATE = 'FAIL' THEN 1 ELSE 0 END) AS fail
+            FROM FilteredData
+        ),
+        PassStats AS (
+            SELECT
+                MODEL_NAME,
+                COUNT(*) AS count,
+                COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () AS percentage
+            FROM FilteredData
+            WHERE STATE = 'PASS'
+            GROUP BY MODEL_NAME
+        ),
+        FailStats AS (
+            SELECT
+                MODEL_NAME,
+                COUNT(*) AS count,
+                COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () AS percentage
+            FROM FilteredData
+            WHERE STATE = 'FAIL'
+            GROUP BY MODEL_NAME
+        )
+        SELECT
+            ts.total,
+            ts.output,
+            ts.fail,
+            'PASS' AS STATE,
+            ps.MODEL_NAME,
+            ps.count,
+            ps.percentage
+        FROM TotalStats ts
+        LEFT JOIN PassStats ps ON 1=1
+        UNION ALL
+        SELECT
+            ts.total,
+            ts.output,
+            ts.fail,
+            'FAIL' AS STATE,
+            fs.MODEL_NAME,
+            fs.count,
+            fs.percentage
+        FROM TotalStats ts
+        LEFT JOIN FailStats fs ON 1=1
+    """
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute(query, params)
+
+    result = cursor.fetchall()
+    pie_chart_data = {
+        "total": 0,
+        "output": 0,
+        "fail": 0,
+        "fpyPass": 0,
+        "fpyFail": 0,
+        "details": []
+    }
+
+    for row in result:
+        pie_chart_data["total"] = row[0]
+        pie_chart_data["output"] = row[1]
+        pie_chart_data["fail"] = row[2]
+        pie_chart_data["fpyPass"] = (pie_chart_data["output"] / pie_chart_data["total"]) * 100 if pie_chart_data["total"] > 0 else 0
+        pie_chart_data["fpyFail"] = (pie_chart_data["fail"] / pie_chart_data["total"]) * 100 if pie_chart_data["total"] > 0 else 0
+
+        pie_chart_data["details"].append({
+            "state": row[3], 
+            "model_name": row[4] if row[4] else "Unknown", 
+            "count": row[5] if row[5] is not None else 0,
+            "percentage": row[6] if row[6] is not None else 0
+        })
+
+    cursor.close()
+    connection.close()
+    return pie_chart_data
+
+# return column_chart_data
+def get_column_chart_data(start_date=None, end_date=None):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    if not start_date or not end_date:
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=4)
+    query = """
+        WITH FilteredData AS (
+            SELECT
+                TO_CHAR(TIME_UPDATE, 'YYYY-MM-DD') AS report_date,
+                NAME_MACHINE,
+                TO_CHAR(TIME_UPDATE, 'HH24') AS report_hour,
+                COUNT(*) AS fail_count
+            FROM SCREW_FORCE_INFO
+            WHERE STATE = 'FAIL'
+                AND TIME_UPDATE BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
+                AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
+            GROUP BY TO_CHAR(TIME_UPDATE, 'YYYY-MM-DD'), NAME_MACHINE, TO_CHAR(TIME_UPDATE, 'HH24')
+        ),
+        TopMachines AS (
+            SELECT
+                report_date,
+                NAME_MACHINE,
+                SUM(fail_count) AS total_fail,
+                ROW_NUMBER() OVER (PARTITION BY report_date ORDER BY SUM(fail_count) DESC) AS rn
+            FROM FilteredData
+            GROUP BY report_date, NAME_MACHINE
+        )
+        SELECT 
+            fd.report_date,
+            rm.NAME_MACHINE,
+            rm.total_fail,
+            fd.report_hour,
+            fd.fail_count
+        FROM TopMachines rm
+        JOIN FilteredData fd
+            ON rm.report_date = fd.report_date 
+            AND rm.NAME_MACHINE = fd.NAME_MACHINE
+        WHERE rm.rn <= 3
+        ORDER BY fd.report_date DESC, rm.total_fail DESC, fd.report_hour ASC
+    """
+    params = {
+        "start_date": start_date.strftime("%Y-%m-%d 00:00:00"),
+        "end_date": end_date.strftime("%Y-%m-%d 23:59:59")
+    }
+    cursor.execute(query, params)
+    raw_data = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    column_chart_data = []
+    date_dict = {}
+    all_dates = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range((end_date - start_date).days + 1)]
+    for row in raw_data:
+        date, machine, total_fail, hour, fail_count = row
+
+        if date not in date_dict:
+            date_dict[date] = {}
+        if machine not in date_dict[date]:
+            date_dict[date][machine] = {
+                "name": machine,
+                "fail_count": total_fail,
+                "hourly_data": []
+            }
+        date_dict[date][machine]["hourly_data"].append({
+            "hour": hour,
+            "fail_count": fail_count
+        })
+    for date in all_dates:
+        if date not in date_dict:
+            date_dict[date] = {}
+    for date, machines in date_dict.items():
+        column_chart_data.append({
+            "date": date,
+            "machines": list(machines.values())
+        })
+
+    return column_chart_data
+  
+# Dashboard
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
     try:
         page = request.args.get('page', 1, type=int)
-        per_page = 10 
-        offset = (page - 1) * per_page 
-        connection = get_db_connection()
-        cursor = connection.cursor()
-        query = """
-            SELECT 
-                ROWNUM as stt,
-                t.factory,
-                t.line, 
-                t.name_machine, 
-                t.model_name,
-                t.serial_number,
-                t.force_1, 
-                t.force_2, 
-                t.force_3, 
-                t.force_4,
-                t.time_update,
-                t.state
-            FROM (
-                SELECT 
-                    factory,
-                    line, 
-                    name_machine, 
-                    model_name,
-                    serial_number,
-                    force_1,
-                    force_2,
-                    force_3,
-                    force_4,
-                    TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
-                    state
-                FROM SCREW_FORCE_INFO 
-                ORDER BY TIME_UPDATE DESC
-                OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
-            ) t
-        """
-        
-        cursor.execute(query, {"offset": offset, "limit": per_page})
-        rows = []
-        for row in cursor:
-            rows.append({
-                'stt': row[0],
-                'factory': row[1],
-                'line': row[2],
-                'serial_number': row[3],
-                'model_name': row[4], 
-                'name_machine': row[5],
-                'force_1': row[6],
-                'force_2': row[7],
-                'force_3': row[8],
-                'force_4': row[9],
-                'time_update': row[10],
-                'state': row[11]
-            })
-
-        # Tính tổng số trang
-        cursor.execute("SELECT COUNT(*) FROM SCREW_FORCE_INFO")
-        total_records = cursor.fetchone()[0]
-        total_pages = (total_records + per_page - 1) // per_page 
-        group_size = 5
-        if page<0 :
-            page = 1
-        elif page > total_pages:
-            page = total_pages
-        group_start = ((page - 1) // group_size) * group_size + 1
-        group_end = min(group_start + group_size - 1, total_pages)
+        per_page = 10
+        rows = get_paginated_data(page, per_page)
+        total_records = get_total_records()
+        pagination_data = calculate_pagination(page, per_page, total_records)
+        pie_chart_data = get_pie_chart_data()
 
         return jsonify({
             "data": rows,
-            "page": page,
             "per_page": per_page,
-            "total_pages": total_pages,
             "total_records": total_records,
-            "group_start": group_start,
-            "group_end": group_end
+            **pagination_data, 
+            "pie_chart_data": pie_chart_data
         })
     except Exception as e:
         app.logger.error(f"Error querying data: {str(e)}")
         return render_template('dashboard.html', error=str(e))
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
 
+# get data table
+@app.route('/api/dashboard/table', methods=['GET'])
+def get_table():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        rows = get_paginated_data(page, per_page)
+        total_records = get_total_records()
+        pagination_data = calculate_pagination(page, per_page, total_records)
+
+        return jsonify({
+            "data": rows,
+            "per_page": per_page,
+            "total_records": total_records,
+            **pagination_data
+        })
+    except Exception as e:
+        app.logger.error(f"Error querying table data: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+#get data All charts
+@app.route('/api/dashboard/charts', methods=['GET'])
+def get_charts():
+    try:
+        pie_chart_data = get_pie_chart_data()
+        column_chart_data = get_column_chart_data()
+        return jsonify({
+            "pie_chart_data": pie_chart_data,
+            "column_chart_data": column_chart_data
+        })
+    except Exception as e:
+        app.logger.error(f"Error querying chart data: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+#get data table by filter
 @app.route('/filter', methods=['POST'])
 def filter_data():
     try:
@@ -200,10 +418,9 @@ def filter_data():
         offset = (page - 1) * per_page
         connection = get_db_connection()
         cursor = connection.cursor()
-
         base_query = """
             SELECT factory,
-                    line, 
+                    line,
                     name_machine, 
                     model_name,
                     serial_number,
@@ -217,8 +434,7 @@ def filter_data():
             WHERE 1=1
         """
         count_query = "SELECT COUNT(*) FROM Screw_force_info WHERE 1=1"
-        params = {}
-
+        params = {}        
         # Xử lý điều kiện lọc
         if line:
             base_query += " AND UPPER(line) = UPPER(:line)"
@@ -304,58 +520,93 @@ def filter_data():
             "message": str(e)
         }), 500
 
+# Filter pie chart
+@app .route('/filterPieChart', methods=['POST'])
+def filter_pie_chart():
+    try:
+        data = request.json
+        time_update = data.get("time_update")
+        time_end = data.get("time_end")
+        if time_update and time_end:
+            start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
+            end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
+        else:
+            end_date = datetime.datetime.now()
+            start_date = end_date - datetime.timedelta(days=7)
+        pie_chart_date = get_pie_chart_data(start_date, end_date)
+        return jsonify({"success": True, "pie_chart_date":pie_chart_date})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+# Filter column chart
+@app .route('/filterColumnChart', methods=['POST'])
+def filter_column_chart():
+    try:
+        data = request.json
+        time_update = data.get("time_update")
+        time_end = data.get("time_end")
+        if time_update and time_end:
+            start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
+            end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
+        column_chart_date = get_column_chart_data(start_date, end_date)
+        return jsonify({"success": True, "column_chart_date":column_chart_date})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+#logout
 @app.route('/logout', methods=['GET'])
 def logout():
     resp = make_response(redirect(('login')))
     resp.delete_cookie('token')
     return resp
+
+# login
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username').strip()
-        password = request.form.get('password').strip()
 
+        password = request.form.get('password').strip()
         try:
-            # Kết nối tới cơ sở dữ liệu
+            # Kết nối CSDL
             connection = get_db_connection()
             cursor = connection.cursor()
             query = """
-                SELECT 1
-                FROM USERS
-                WHERE USERNAME = :username AND PASSWORD = :password
+                SELECT PASSWORD, ROLE 
+                FROM USERS 
+                WHERE USERNAME = :username
             """
-            cursor.execute(query, {"username": username, "password": password})
-            rows = cursor.fetchone()
-
-            if rows and rows[0] > 0:
-                # Tạo JWT token
+            cursor.execute(query, {"username": username})
+            row = cursor.fetchone()
+            if row and password== row[0]:
+                role = row[1]
                 access_token = jwt.encode({
                     'username': username,
+                    'role': role,
                     'exp': datetime.now(timezone.utc) + timedelta(hours=2),
                     'type': 'access'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
                 refresh_token = jwt.encode({
                     'username': username,
+                    'role': role,
                     'exp': datetime.now(timezone.utc) + timedelta(days=7),
                     'type': 'refresh'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
-                resp = make_response(redirect(('index1')))
-                # Trả về JSON chứa các token
-                resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60)
-                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60)
+                resp = make_response(redirect('/adminDashboard' if role == 'admin' else '/index'))
+                # Thiết lập cookie an toàn
+                resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60, samesite='Strict')
+                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60, samesite='Strict')
                 return resp
             else:
                 return render_template('login.html', error='Incorrect username or password')
-
         except Exception as e:
-             return render_template('login.html', error=f"An error occurred: {e}")
-
+            error_message = str(e)
+            return render_template('login.html', error=f"{error_message} Please check backend.")
         finally:
             if cursor:
                 cursor.close()
             if connection:
                 connection.close()
-
     return render_template('login.html')
 
 @app.route('/refresh', methods=['POST'])
@@ -381,6 +632,7 @@ def refresh():
     except jwt.invalidTokenError:
         return jsonify({"error": "Invalid refresh token"}), 401
 
+#register
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     try:
@@ -415,8 +667,10 @@ def register():
         error_message = f"Database error: {e}"
         print(error_message) 
         return render_template('register.html', error=f"An error occurred: {e}")
- 
-@app.route('/getLines', methods=['GET'])
+ #
+
+#get data combobox
+@app.route('/getDataComboboxs', methods=['GET'])
 def get_lines():
     try:
         query = """
@@ -480,13 +734,15 @@ def getinfo():
             "message": str(e)
         }), 500
 
+#get data table by filter
 def fetch_filtered_data(filters):
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
 
         query = """
-            SELECT line, name_machine, force_1, force_2, force_3, force_4, 
+            SELECT line, factory, name_machine,
+                   force_1, force_2, force_3, force_4, 
                    TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update, 
                    state
             FROM Screw_force_info
@@ -532,25 +788,25 @@ def fetch_filtered_data(filters):
         app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
         raise
 
+#download excel
 @app.route('/downloadExcel', methods=['POST'])
 def download_excel():
     try:
         filters = request.json
         result = fetch_filtered_data(filters)
         df = pd.DataFrame(result, columns=[
-            'LINE', 'NAME_MACHINE', 'FORCE_1', 'FORCE_2', 
+            'LINE','FACTORY', 'NAME_MACHINE', 'FORCE_1', 'FORCE_2', 
             'FORCE_3', 'FORCE_4', 'STATE', 'TIME_UPDATE'
         ])
+        df = df.fillna("N/A")
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'dataScrewForce_{timestamp}.xlsx'
         # Tạo file Excel trong bộ nhớ
-
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Dữ liệu lực vít')
             workbook = writer.book
-            worksheet = writer.sheets['Dữ liệu lực vít']
-        
+            worksheet = writer.sheets['Dữ liệu lực vít']        
             header_format = workbook.add_format({
                 'bold': True,
                 'font_size': 12,
@@ -563,14 +819,12 @@ def download_excel():
                 col_idx = df.columns.get_loc(column)
                 worksheet.set_column(col_idx, col_idx, column_length + 2)
         output.seek(0)
-
         return send_file(
             output,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             as_attachment=True,
             download_name=filename
         )
-
     except Exception as e:
         app.logger.error(f"Lỗi tải xuống Excel: {str(e)}")
         flash("Đã xảy ra lỗi khi tạo file Excel. Vui lòng thử lại sau.", "error")
@@ -578,4 +832,5 @@ def download_excel():
 
 if __name__=='__main__':
     app.run(debug=True)
+
 

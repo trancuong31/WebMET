@@ -3,18 +3,41 @@ $(window).on("load resize ", function() {
     var scrollWidth = $('.tbl-content').width() - $('.tbl-content table').width();
     $('.tbl-header').css({'padding-right':scrollWidth});
     }).resize();
+
 //filter data
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
     const paginationDiv = document.getElementById("pagination");
+    let chart;
+    let isInDrilldown = false;
+    let currentDrilldownId = null;
+    let isFiltering = false;
 
+    function stopPolling() {
+        if (pollingTimer) {
+            clearInterval(pollingTimer);
+            pollingTimer = null;
+            console.log("Polling stopped");
+        }
+    }
+    function startPolling() {
+        if (!isFiltering) {
+            fetchPage(currentPage);
+            pollingTimer = setInterval(() => {
+                fetchPage(currentPage);
+            }, POLLING_INTERVAL);
+            console.log("Polling started");
+        }
+    }
     // Xử lý sự kiện filter
     document.getElementById('filter').addEventListener('click', function () {
         event.preventDefault();
         this.dataset.filtering = 'true'; 
         fetchFilteredData(1); 
+        isFiltering = true; 
+        stopPolling();
+        fetchFilteredData(1);
     });
-
     function fetchFilteredData(page = 1) {
         // Lấy giá trị từ các input
         const line = document.getElementById('line-combobox').value.trim();
@@ -26,7 +49,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const formatDatetime = (datetime) => {
             return datetime ? datetime.replace('T', ' ') + ':00' : null;
         };
-
         const payload = {
             line: line || null,
             factory: factory || null,
@@ -35,10 +57,9 @@ document.addEventListener("DOMContentLoaded", function () {
             time_end: formatDatetime(time_end),
             state: state || null,
             page: page,
-            per_page: 10 
-
+            per_page: 10
         };
-
+        document.getElementById('loading').style.display = 'block';
         fetch('/filter', {
             method: 'POST',
             headers: {
@@ -48,71 +69,68 @@ document.addEventListener("DOMContentLoaded", function () {
         })
             .then(response => response.json())
             .then(data => {
+                
+                document.getElementById('loading').style.display = 'none';
                 if (data.success) {
                     document.getElementById('count').textContent = data.message ||""
                     updateTable(data.data);
                     updatePagination(data.current_page, data.total_pages, data.group_start, data.group_end);
                     if (data.total_records == 0){
-                        tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
+                        tableBody.innerHTML = `<tr><td class="no-data" colspan="12">No data found.</td></tr>`;
                         paginationDiv.innerHTML = '';
                     }
+                    fetchPieChartData(time_update, time_end);
+                    fetchColumnChartData(time_update, time_end);
                 } else {
                     tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
                     paginationDiv.innerHTML = '';
                 }
             })
+
             .catch(error => {
                 console.error("Error fetching filtered data:", error);
+                alert("Error fetching filtered data");
                 tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
                 paginationDiv.innerHTML = '';
                 document.getElementById('loading').style.display = 'none';
             });
     }
-
-    // Hàm cập nhật bảng
     function updateTable(rows) {
         tableBody.innerHTML = rows.map(row => {
             const stateClass = row.state === 'PASS' ? 'state-pass' : 'state-fail';
-
             return `
                 <tr>
                     <td>${row.stt}</td>
-                    <td>${row.factory}</td>
-                    <td>${row.line}</td>
-                    <td>${row.name_machine}</td>
-                    <td>${row.model_name}</td>
-                    <td>${row.serial_number}</td>
-                    <td>${row.force_1}</td>
-                    <td>${row.force_2}</td>
-                    <td>${row.force_3}</td>
-                    <td>${row.force_4}</td>
-                    <td>${row.time_update}</td>
+                    <td>${row.factory ?? 'N/A'}</td>
+                    <td>${row.line ?? 'N/A'}</td>
+                    <td>${row.name_machine ?? 'N/A'}</td>
+                    <td>${row.model_name ?? 'N/A'}</td>
+                    <td>${row.serial_number ?? 'N/A'}</td>
+                    <td>${row.force_1 ?? 'N/A'}</td>
+                    <td>${row.force_2 ?? 'N/A'}</td>
+                    <td>${row.force_3 ?? 'N/A'}</td>
+                    <td>${row.force_4 ?? 'N/A'}</td>
+                    <td>${row.time_update ?? 'N/A'}</td>
                     <td class="${stateClass}">${row.state}</td>
                 </tr>
             `;
         }).join("");
     }
-
     function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
         paginationDiv.innerHTML = "";
-
         if (currentPage > 1) {
             paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
         }
-
         for (let i = groupStart; i <= groupEnd; i++) {
             paginationDiv.innerHTML += `
                 <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
             `;
         }
-
         if (currentPage < totalPages) {
             paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
         }
-
         bindPaginationEvents();
     }
-    // Gắn sự kiện click phân trang
     function bindPaginationEvents() {
         const links = paginationDiv.querySelectorAll(".page-link");
         links.forEach(link => {
@@ -121,7 +139,6 @@ document.addEventListener("DOMContentLoaded", function () {
     
                 const page = parseInt(this.getAttribute("data-page"), 10);
                 if (!isNaN(page)) {
-                    // Kiểm tra trạng thái lọc hay dashboard
                     if (document.getElementById('filter').dataset.filtering === 'true') {
                         fetchFilteredData(page);
                     } else {
@@ -131,88 +148,422 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-    const tableBody = document.getElementById("table-body");
-    const paginationDiv = document.getElementById("pagination");
-    const POLLING_INTERVAL = 60000; // 60s
-
-    let currentPage = 1;
-    let pollingTimer;
-
-    // Hàm gọi API dashboard
-    function fetchPage(page = 1) {
-        fetch(`/dashboard?page=${page}`, {
+    function fetchPieChartData(time_update, time_end) {
+        const payload = {
+            time_update: time_update ? time_update.replace('T', ' ') + ':00' : null,
+            time_end: time_end ? time_end.replace('T', ' ') + ':00' : null
+        };
+        fetch('/filterPieChart', {
+            method: 'POST',
             headers: {
-                "X-Requested-With": "XMLHttpRequest"
-            }
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
         })
         .then(response => response.json())
         .then(data => {
+            // console.log("Dữ liệu nhận được từ API:", data);
+            if (data.success) {
+                updatePieChart(data.pie_chart_date); 
+            } else {
+                return
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching Pie Chart data:", error);
+        });
+    }
+
+    function fetchColumnChartData(time_update, time_end) {
+        const payload = {
+            time_update: time_update ? time_update.replace('T', ' ') + ':00' : null,
+            time_end: time_end ? time_end.replace('T', ' ') + ':00' : null
+        };
+        fetch('/filterColumnChart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                drawColumnChart(data.column_chart_date); 
+            } else {
+                return
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching Pie Chart data:", error);
+        });
+    }
+    //update pie chart
+    function updatePieChart(pieData) {
+        if (!pieData || !pieData.details) {
+            console.error("Dữ liệu biểu đồ tròn không hợp lệ:", pieData);
+            return; // Thoát khỏi hàm nếu không có dữ liệu hợp lệ
+        }
+        const passData = [];
+        const failData = [];
+        const drilldownPass = [];
+        const drilldownFail = [];
+        pieData.details.forEach(item => {
+            if (item.state === "PASS") {
+                passData.push({ name: item.model_name, y: item.percentage });
+                drilldownPass.push([item.model_name, item.percentage]);
+            } else {
+                failData.push({ name: item.model_name, y: item.percentage });
+                drilldownFail.push([item.model_name, item.percentage]);
+            }
+        });
+
+        const chartData = [
+            { name: "Pass", y: pieData.fpyPass, drilldown: "Pass", color: "#337cf2" },
+            { name: "Fail", y: pieData.fpyFail, drilldown: "Fail", color: "#dc3545" }
+        ];
+
+        const drilldownSeries = [
+            { name: "Pass", id: "Pass", data: drilldownPass },
+            { name: "Fail", id: "Fail", data: drilldownFail }
+        ];
+
+        const chartOptions = {
+            chart: {
+                type: "pie",
+                backgroundColor: null,
+                plotBackgroundColor: null,
+                events: {
+                    drilldown: function(e) {
+                        isInDrilldown = true;
+                        currentDrilldownId = e.point.drilldown;
+                    },
+                    drillup: function() {
+                        isInDrilldown = false;
+                        currentDrilldownId = null;
+                    }
+                }
+            },
+            title: {
+                text: "Rate Pass/Fail By 7 Day",
+                align: "left",
+                style: {
+                    color: "#fff",
+                    fontSize: "16px"
+                }
+            },
+            accessibility: {
+                announceNewData: {
+                    enabled: true
+                },
+                point: {
+                    valueSuffix: "%"
+                },
+                enabled: false
+            },
+            credits: false,
+            plotOptions: {
+                series: {
+                    borderRadius: 5,
+                    dataLabels: [{
+                        enabled: true,
+                        distance: 15,
+                        format: "{point.name}"
+                    }, {
+                        enabled: true,
+                        distance: "-30%",
+                        filter: {
+                            property: "percentage",
+                            operator: ">",
+                            value: 5
+                        },
+                        format: "{point.y:.1f}%",
+                        style: {
+                            fontSize: "1em",
+                            color: "#fff",
+                            textOutline: "none"
+                        }
+                    }]
+                }
+            },
+            tooltip: {
+                headerFormat: '<span style="font-size:12px">{series.name}</span><br>',
+                pointFormat: '<span style="color:{point.color}">{point.name}</span>: ' +
+                    "<b>{point.y:.2f}%</b> of total<br/>"
+            },
+            series: [{
+                name: "Rate",
+                colorByPoint: true,
+                data: chartData
+            }],
+            drilldown: {
+                series: drilldownSeries
+            }
+        };
+
+        if (chart) {
+            if (isInDrilldown && currentDrilldownId) {
+                const currentDrilldownData = drilldownSeries.find(s => s.id === currentDrilldownId);
+                if (currentDrilldownData) {
+                    const drilldownSerie = chart.get(currentDrilldownId);
+                    if (drilldownSerie) {
+                        drilldownSerie.setData(currentDrilldownData.data);
+                    }
+                }
+            } else {
+                chart.series[0].setData(chartData);
+                chart.drilldown.update({
+                    series: drilldownSeries
+                });
+            }
+        } else {
+            chart = Highcharts.chart("container-pie", chartOptions);
+        }
+    }
+
+    function processDataColumnChart(columnData) {
+        if (!columnData || columnData.length === 0) {
+            console.error("No data available.");
+            return { dates: [], seriesData: [], drilldownSeries: [] };
+        }
+        const dates = columnData
+            .map(item => item.date)
+            .sort((a, b) => new Date(a) - new Date(b));
+    
+        let machineMap = {};
+        let drilldownSeries = [];
+    
+        columnData.forEach(day => {
+            const dayIndex = dates.indexOf(day.date);
+            if (!day.machines || day.machines.length === 0) {
+                return;
+            }    
+            day.machines.forEach(machine => {
+                if (!machineMap[machine.name]) {
+                    machineMap[machine.name] = Array(dates.length).fill(null);
+                }
+    
+                machineMap[machine.name][dayIndex] = machine.fail_count;
+                let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
+                if (machine.hourly_data && Array.isArray(machine.hourly_data)) {
+                    machine.hourly_data.forEach(hourItem => {
+                        fullHourlyData[parseInt(hourItem.hour)][1] = hourItem.fail_count;
+                    });
+                }
+                drilldownSeries.push({
+                    id: `${machine.name}-${day.date}`,
+                    name: `Detail for ${machine.name} day ${day.date}`,
+                    data: fullHourlyData,
+                    xAxis: 1
+                });
+            });
+        });
+        let seriesData = Object.keys(machineMap).map(machineName => ({
+            name: machineName,
+            data: machineMap[machineName],
+            drilldown: machineName
+        })).sort((a, b) => {
+            const totalA = a.data.reduce((sum, val) => sum + (val || 0), 0);
+            const totalB = b.data.reduce((sum, val) => sum + (val || 0), 0);
+            return totalA - totalB;
+        });
+        console.log(seriesData)
+        return { dates, seriesData, drilldownSeries };
+    }    
+    function drawColumnChart(columnData) {
+        const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
+    
+        let chart = Highcharts.chart('container-toperr', {
+            chart: { type: 'column', backgroundColor: null, zooming: {
+                type: 'x'
+              } },
+            
+            title: {
+                text: 'Top 3 Machine Fail Per Day',
+                align: 'left',
+                style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+            },
+            xAxis: [
+                {
+                    categories: dates,
+                    title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } },
+                    labels: { style: { color: '#fff', fontSize: '12px' } },
+                    visible: true
+                },
+                {
+                    title: { text: 'Hour', style: { color: '#fff', fontSize: '12px' } },
+                    labels: { style: { color: '#fff', fontSize: '12px' } },
+                    categories: Array.from({ length: 24 }, (_, i) => `${i}:00 - ${i+1}:00`),
+                    visible: false
+                }
+            ],
+            yAxis: {
+                min: 0,
+                title: { text: 'Fail Count', style: { color: '#fff', fontSize: '12px' } },
+                labels: { style: { color: '#fff', fontSize: '12px' } }
+            },
+            tooltip: { shared: true, useHTML: true },
+            plotOptions: {
+                column: {
+                    groupPadding: 0.1,
+                    states: { hover: { brightness: 0.2 } },
+                    stacking: 'normal'
+                },
+                series: {
+                    cursor: 'pointer',
+                    dataLabels: { enabled: true },
+                    point: {
+                        events: {
+                            click: function () {
+                                const drilldownId = `${this.series.name}-${this.category}`;
+                                const drilldownExists = chart.options.drilldown.series.some(d => d.id === drilldownId);
+                                if (drilldownExists) {
+                                    chart.xAxis[0].update({ visible: false });
+                                    chart.xAxis[1].update({ visible: true });
+                                    chart.addSeriesAsDrilldown(this, {
+                                        id: drilldownId,
+                                        name: `Fail Count`,
+                                        data: chart.options.drilldown.series.find(d => d.id === drilldownId).data,
+                                        xAxis: 1
+                                    });
+                                    chart.applyDrilldown();
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            accessibility: { enabled: false },
+            series: seriesData,
+            drilldown: {
+                series: drilldownSeries
+            },
+            credits: { enabled: false },
+            legend: {
+                align: 'center',
+                verticalAlign: 'bottom',
+                itemStyle: { color: '#fff' },
+                itemHoverStyle: { color: '#cccccc' }
+            },            
+            exporting: {
+                enabled: true,
+                buttons: {
+                    contextButton: {
+                        menuItems: [
+                            'viewFullscreen',
+                            'separator',
+                            'downloadPNG',
+                            'downloadJPEG',
+                            'downloadPDF',
+                            'downloadSVG',
+                            'separator',
+                            'downloadCSV',
+                            'downloadXLS',
+                            'viewData'
+                        ]
+                    }
+                }
+            }
+        });
+        Highcharts.addEvent(chart, 'drillup', function () {
+            chart.update({
+                xAxis: [
+                    { visible: true },  
+                    { visible: false }
+                ]
+            });
+        });
+    } 
+    
+});
+//load dashboard
+document.addEventListener("DOMContentLoaded", function () {
+    const tableBody = document.getElementById("table-body");
+    const paginationDiv = document.getElementById("pagination");
+    const POLLING_INTERVAL = 60000;
+    let currentPage = 1;
+    let chart;
+    let isInDrilldown = false;
+    let currentDrilldownId = null;
+    function fetchPage(page = 1) {
+        document.getElementById('loading').style.display = 'block';
+        fetch(`/api/dashboard/table?page=${page}`, {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading').style.display = 'none';
             if (data.data) {
                 updateTable(data.data);
-                document.getElementById('count').textContent =""
+                document.getElementById('count').textContent = "";
                 updatePagination(data.page, data.total_pages, data.group_start, data.group_end);
             } else {
-                tableBody.innerHTML = `<tr><td colspan="12">Không tìm thấy dữ liệu.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
                 paginationDiv.innerHTML = '';
             }
         })
         .catch(error => {
-            console.error("Error fetching page data:", error);
+            console.error("Error fetching table data:", error);
             tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
             paginationDiv.innerHTML = '';
         });
     }
-
-    // Hàm cập nhật bảng
-    function updateTable(rows) {
-        tableBody.innerHTML = "";
-        const tableRows = rows.map(row => {
-            return `
-                <tr>
-                    <td>${row.stt}</td>
-                    <td>${row.factory}</td>
-                    <td>${row.line}</td>
-                    <td>${row.serial_number}</td>
-                    <td>${row.model_name}</td>
-                    <td>${row.name_machine}</td>
-                    <td>${row.force_1}</td>
-                    <td>${row.force_2}</td>
-                    <td>${row.force_3}</td>
-                    <td>${row.force_4}</td>
-                    <td>${row.time_update}</td>
-                    <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
-                </tr>
-            `;
-        }).join("");
-        tableBody.innerHTML = tableRows;
+    function fetchChart() {
+        fetch(`/api/dashboard/charts`, {
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.pie_chart_data || data.column_chart_data) {
+                updatePieChart(data.pie_chart_data);
+                drawColumnChart(data.column_chart_data);
+            } else {
+                console.error("Charts data not available.");
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching pie chart data:", error);            
+        });
     }
-
+    function updateTable(rows) {
+        let fragment = document.createDocumentFragment();
+        rows.forEach(row => {
+            let tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${row.stt}</td>
+                <td>${row.factory ?? 'N/A'}</td>
+                <td>${row.line ?? 'N/A'}</td>
+                <td>${row.serial_number ?? 'N/A'}</td>
+                <td>${row.model_name ?? 'N/A'}</td>
+                <td>${row.name_machine ?? 'N/A'}</td>
+                <td>${row.force_1 ?? 'N/A'}</td>
+                <td>${row.force_2 ?? 'N/A'}</td>
+                <td>${row.force_3 ?? 'N/A'}</td>
+                <td>${row.force_4 ?? 'N/A'}</td>
+                <td>${row.time_update}</td>
+                <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
+            `;
+            fragment.appendChild(tr);
+        });
+        tableBody.innerHTML = "";
+        tableBody.appendChild(fragment);
+    }
     function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
         let paginationHTML = "";
-
         if (currentPage > 1) {
             paginationHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
         }
-
         for (let i = groupStart; i <= groupEnd; i++) {
             paginationHTML += `
                 <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
             `;
         }
-
         if (currentPage < totalPages) {
             paginationHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
         }
-
         paginationDiv.innerHTML = paginationHTML;
         bindPaginationEvents();
     }
-
-    // Gắn sự kiện click phân trang
     function bindPaginationEvents() {
         const links = paginationDiv.querySelectorAll(".page-link");
         links.forEach(link => {
@@ -226,51 +577,310 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+    function updatePieChart(pieData) {
+                const passData = [];
+                const failData = [];
+                const drilldownPass = [];
+                const drilldownFail = [];
+                pieData.details.forEach(item => {
+                    if (item.state === "PASS") {
+                        passData.push({ name: item.model_name, y: item.percentage });
+                        drilldownPass.push([item.model_name, item.percentage]);
+                    } else {
+                        failData.push({ name: item.model_name, y: item.percentage });
+                        drilldownFail.push([item.model_name, item.percentage]);
+                    }
+                });
+                const chartData = [
+                    { name: "Pass", y: pieData.fpyPass, drilldown: "Pass", color: "#337cf2" },
+                    { name: "Fail", y: pieData.fpyFail, drilldown: "Fail", color: "#dc3545" }
+                ];
+                const drilldownSeries = [
+                    { name: "Pass", id: "Pass", data: drilldownPass },
+                    { name: "Fail", id: "Fail", data: drilldownFail }
+                ];
+                const chartOptions = {
+                    chart: {
+                        type: "pie",
+                        backgroundColor: null,
+                        plotBackgroundColor: null,
+                        events: {
+                            drilldown: function(e) {
+                                isInDrilldown = true;
+                                currentDrilldownId = e.point.drilldown;
+                            },
+                            drillup: function() {
+                                isInDrilldown = false;
+                                currentDrilldownId = null;
+                            }
+                        }
+                    },
+                    title: {
+                        text: "Rate Pass/Fail By 7 Day",
+                        align: "left",
+                        style: {
+                            color: "#fff",
+                            fontSize: "16px"
+                        }
+                    },
+                    accessibility: {
+                        announceNewData: {
+                            enabled: true
+                        },
+                        point: {
+                            valueSuffix: "%"
+                        },
+                        enabled: false
+                    },
+                    credits: false,
+                    plotOptions: {
+                        series: {
+                            borderRadius: 5,
+                            dataLabels: [{
+                                enabled: true,
+                                distance: 15,
+                                format: "{point.name}"
+                            }, {
+                                enabled: true,
+                                distance: "-30%",
+                                filter: {
+                                    property: "percentage",
+                                    operator: ">",
+                                    value: 5
+                                },
+                                format: "{point.y:.1f}%",
+                                style: {
+                                    fontSize: "1em",
+                                    color: "#fff",
+                                    textOutline: "none"
+                                }
+                            }]
+                        }
+                    },
+                    tooltip: {
+                        headerFormat: '<span style="font-size:12px">{series.name}</span><br>',
+                        pointFormat: '<span style="color:{point.color}">{point.name}</span>: ' +
+                            "<b>{point.y:.2f}%</b> of total<br/>"
+                    },
+                    series: [{
+                        name: "Rate",
+                        colorByPoint: true,
+                        cursor: 'pointer',
+                        data: chartData
+                    }],
+                    drilldown: {
+                        series: drilldownSeries
+                    }
+                };
+        
+                if (chart) {
+                    if (isInDrilldown && currentDrilldownId) {
+                        const currentDrilldownData = drilldownSeries.find(s => s.id === currentDrilldownId);
+                        if (currentDrilldownData) {
+                            const drilldownSerie = chart.get(currentDrilldownId);
+                            if (drilldownSerie) {
+                                drilldownSerie.setData(currentDrilldownData.data);
+                            }
+                        }
+                    } else {
+                        chart.series[0].setData(chartData);
+                        chart.drilldown.update({
+                            series: drilldownSeries
+                        });
+                    }
+                } else {
+                    chart = Highcharts.chart("container-pie", chartOptions);
+                }
+    }
+    function processDataColumnChart(columnData) {
+        if (!columnData || columnData.length === 0) {
+            console.error("No data available.");
+            return { dates: [], seriesData: [], drilldownSeries: [] };
+        }
+        const dates = columnData
+            .map(item => item.date)
+            .sort((a, b) => new Date(a) - new Date(b));
+    
+        let machineMap = {};
+        let drilldownSeries = [];
+    
+        columnData.forEach(day => {
+            const dayIndex = dates.indexOf(day.date);
+            if (!day.machines || day.machines.length === 0) {
+                return;
+            }    
+            day.machines.forEach(machine => {
+                if (!machineMap[machine.name]) {
+                    machineMap[machine.name] = Array(dates.length).fill(null);
+                }
+    
+                machineMap[machine.name][dayIndex] = machine.fail_count;
+                let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
+                if (machine.hourly_data && Array.isArray(machine.hourly_data)) {
+                    machine.hourly_data.forEach(hourItem => {
+                        fullHourlyData[parseInt(hourItem.hour)][1] = hourItem.fail_count;
+                    });
+                }
+                drilldownSeries.push({
+                    id: `${machine.name}-${day.date}`,
+                    name: `Detail for ${machine.name} day ${day.date}`,
+                    data: fullHourlyData,
+                    xAxis: 1
+                });
+            });
+        });
+        let seriesData = Object.keys(machineMap).map(machineName => ({
+            name: machineName,
+            data: machineMap[machineName],
+            drilldown: machineName
+        })).sort((a, b) => {
+            const totalA = a.data.reduce((sum, val) => sum + (val || 0), 0);
+            const totalB = b.data.reduce((sum, val) => sum + (val || 0), 0);
+            return totalA - totalB;
+        });
+        return { dates, seriesData, drilldownSeries };
+    }
+    function drawColumnChart(columnData) {
+        const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
+    
+        let chart = Highcharts.chart('container-toperr', {
+            chart: { type: 'column', backgroundColor: null },
+            title: {
+                text: 'Top 3 Machine Fail Per Day',
+                align: 'left',
+                style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+            },
+            xAxis: [
+                {
+                    categories: dates,
+                    title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } },
+                    labels: { style: { color: '#fff', fontSize: '12px' } },
+                    visible: true
+                },
+                {
+                    title: { text: 'Hour', style: { color: '#fff', fontSize: '12px' } },
+                    labels: { style: { color: '#fff', fontSize: '12px' } },
+                    categories: Array.from({ length: 24 }, (_, i) => `${i}:00 - ${i+1}:00`),
+                    visible: false
+                }
+            ],
+            yAxis: {
+                min: 0,
+                title: { text: 'Fail Count', style: { color: '#fff', fontSize: '12px' } },
+                labels: { style: { color: '#fff', fontSize: '12px' } }
+            },
+            tooltip: { shared: true, useHTML: true },
+            plotOptions: {
+                column: {
+                    groupPadding: 0.1,
+                    states: { hover: { brightness: 0.2 } },
+                    stacking: 'normal'
+                },
+                series: {
+                    cursor: 'pointer',
+                    dataLabels: { enabled: true },
+                    point: {
+                        events: {
+                            click: function () {
+                                const drilldownId = `${this.series.name}-${this.category}`;
+                                const drilldownExists = chart.options.drilldown.series.some(d => d.id === drilldownId);
+                                if (drilldownExists) {
+                                    chart.xAxis[0].update({ visible: false });
+                                    chart.xAxis[1].update({ visible: true });
+                                    chart.addSeriesAsDrilldown(this, {
+                                        id: drilldownId,
+                                        name: `Fail Count`,
+                                        data: chart.options.drilldown.series.find(d => d.id === drilldownId).data,
+                                        xAxis: 1
+                                    });
+                                    chart.applyDrilldown();
+                                } 
+                            }
+                        }
+                    }
+                }
+            },
+            accessibility: { enabled: false },
+            series: seriesData,
+            drilldown: {
+                series: drilldownSeries
+            },
+            credits: { enabled: false },
+            legend: {
+                align: 'center',
+                verticalAlign: 'bottom',
+                itemStyle: { color: '#fff' },
+                itemHoverStyle: { color: '#cccccc' }
+            },            
+            exporting: {
+                enabled: true,
+                buttons: {
+                    contextButton: {
+                        menuItems: [
+                            'viewFullscreen',
+                            'separator',
+                            'downloadPNG',
+                            'downloadJPEG',
+                            'downloadPDF',
+                            'downloadSVG',
+                            'separator',
+                            'downloadCSV',
+                            'downloadXLS',
+                            'viewData'
+                        ]
+                    }
+                }
+            }
+        });
+        Highcharts.addEvent(chart, 'drillup', function () {
+            chart.update({
+                xAxis: [
+                    { visible: true },  
+                    { visible: false }
+                ]
+            });
+        });
+    }
     function startPolling() {
-        fetchPage(currentPage); 
+        fetchPage(currentPage);
+        fetchChart();
+
         pollingTimer = setInterval(() => {
             fetchPage(currentPage);
+            fetchChart();
         }, POLLING_INTERVAL);
-    }
-    function stopPolling() {
-        clearInterval(pollingTimer);
     }
     startPolling();
 });
-
 //Loading data 
 async function fetchData(page) {
-    // Hiển thị GIF khi bắt đầu tải dữ liệu
     document.getElementById("loading").style.display = "block";
   
     try {
       const response = await fetch(`/data?page=${page}`);
       const data = await response.json();
-      
-      // Xử lý và hiển thị dữ liệu
       console.log(data);
   
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
-      // Ẩn GIF khi đã tải xong dữ liệu
       document.getElementById("loading").style.display = "none";
     }
   }
-
 /*load info overview*/
-
 document.addEventListener("DOMContentLoaded", function () {
     // DOM elements
     const totalRecords = document.getElementById("total-records");
     const outputPass = document.getElementById("pass-records");
     const failRecords = document.getElementById("fail-records");
     const fpyPercentage = document.getElementById("fpy-percentage");
-    // const loadingIndicator = document.getElementById('loading');
     const POLLING_INTERVAL = 300000; 
-
+    const lineCombobox = document.getElementById("line-combobox");
+    const factoryCombobox = document.getElementById("factory-combobox");
+    const stateCombobox = document.getElementById("state-combobox");
+    const nameMachineCombobox = document.getElementById("nameMachine-combobox");
+    const downloadButton = document.getElementById('download-excel');
     function fetchContentTop() {
-        // loadingIndicator.style.display = 'block';
 
         fetch("/getinfo", {
             method: "GET",
@@ -298,26 +908,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 fpyPercentage.textContent = "Error";
             })
             .finally(() => {
-                // loadingIndicator.style.display = 'none'; 
                 setTimeout(fetchContentTop, POLLING_INTERVAL); 
             });
     }
-
-    // Initial load
     fetchContentTop();
-});
 
-
-//download excel
-document.addEventListener("DOMContentLoaded", function () {
-    const downloadButton = document.getElementById('download-excel');
     
-    // Xóa sự kiện cũ (nếu có)
     downloadButton.removeEventListener('click', handleDownload);
-
-    // Gắn sự kiện mới
     downloadButton.addEventListener('click', handleDownload);
-
     async function handleDownload(event) {
         event.preventDefault();
         const formatDatetime = (datetime) => {
@@ -331,7 +929,6 @@ document.addEventListener("DOMContentLoaded", function () {
             time_end: formatDatetime(document.getElementById("time_end").value),
             state: document.getElementById("state-combobox").value || null
         };
-
         try {
             const response = await fetch('/downloadExcel', {
                 method: 'POST',
@@ -341,11 +938,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 },
                 body: JSON.stringify(payload)
             });
-
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -360,16 +955,8 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Failed to download the Excel file. Please try again.");
         }
     }
-}); 
-//get lines, states, factories, namemachines
-document.addEventListener("DOMContentLoaded", function () {
-    const lineCombobox = document.getElementById("line-combobox");
-    const factoryCombobox = document.getElementById("factory-combobox");
-    const stateCombobox = document.getElementById("state-combobox");
-    const nameMachineCombobox = document.getElementById("nameMachine-combobox");
-    
     // Fetch data from route /getLines 
-    fetch("/getLines")
+    fetch("/getDataComboboxs")
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -410,8 +997,6 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error fetching lines and states:", error);
         });
 });
-
-//full screen
 document.getElementById("toggle_fullscreen").addEventListener("click", function (e) {
     e.preventDefault();
     const fullscreenIcon = document.getElementById("fullscreenic");
@@ -424,6 +1009,19 @@ document.getElementById("toggle_fullscreen").addEventListener("click", function 
         fullscreenIcon.src = "/static/images/disfullscreen.png";
     }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
