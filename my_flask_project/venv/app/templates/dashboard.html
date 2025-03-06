@@ -13,7 +13,7 @@
       rel="stylesheet" type="text/css"
       href="{{ url_for('static', filename='css/styledashboard.css')}}"
     />
-    <title>MET/Dashboard</title>
+    <title>Dashboard</title>
     <link rel="icon" href="{{ url_for('static', filename='images/automation.png') }}" type="image/png">
   </head>
   <body>
@@ -21,11 +21,17 @@
       <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading..."/>
     </div>
     <div class="wrapper">
-      <div id="coppyright"><a href="{{ url_for('index1') }}">©2025 Copyright MET-Automation | IOT</a></div>
+      <div id="coppyright">
+        <a href="{{ url_for('index1') }}">©<span id="year"></span> Copyright MET-Automation | IOT</a>
+    </div>    
+    <script>
+        document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+    
       <nav id="navbar">
         <ul class="navbar-items flexbox-col">
           <li class="navbar-logo flexbox-left">
-            <a class="navbar-item-inner flexbox" href="{{ url_for('index1') }}">
+            <a title="Home page" class="navbar-item-inner flexbox" href="{{ url_for('index1') }}">
               <span class="logo"></span>
                 <polygon points="925.79 318.48 830.56 0 183.51 1384.12 510.41 1178.46 925.79 318.48"/>
                 <polygon points="1438.88 1663.28 1126.35 948.08 111.98 1586.26 0 1819.54 1020.91 1250.57 1123.78 1471.02 783.64 1663.28 1438.88 1663.28"/>
@@ -38,7 +44,6 @@
                 <ion-icon name="search-outline"></ion-icon>
               </div>
               <div  class="link-text">
-                <!-- <span class="nav-icon">📊</span> -->
                 <span class="nav-text">Dashboard Screw Force</span>
               </div>
             </a>
@@ -49,7 +54,6 @@
                 <ion-icon name="home-outline"></ion-icon>
               </div>
               <div class="link-text">
-                <!-- <span class="nav-icon">🏠</span>  -->
                 <span  class="nav-text">Mục B</span>
               </div>
             </a>
@@ -60,8 +64,7 @@
                 <ion-icon name="folder-open-outline"></ion-icon>
               </div>
               <div class="link-text">
-                <!-- <span class="nav-icon">ℹ️</span>  -->
-                <span  class="nav-text">Mục B</span>
+                <span  class="nav-text">Mục C</span>
               </div>
             </a>
           </li>
@@ -71,8 +74,7 @@
                 <ion-icon name="pie-chart-outline"></ion-icon>
               </div>
               <div class="link-text">
-                <!-- <span class="nav-icon">ℹ️</span>  -->
-                <span  class="nav-text">Mục C</span>
+                <span  class="nav-text">Mục D</span>
               </div>
             </a>
           </li>
@@ -82,8 +84,7 @@
                 <ion-icon name="people-outline"></ion-icon>
               </div>
               <div class="link-text">
-                <!-- <span class="nav-icon">ℹ️</span>  -->
-                <span  class="nav-text">Mục D</span>
+                <span  class="nav-text">Mục E</span>
               </div>
             </a>
           </li>
@@ -94,7 +95,7 @@
               </div>
               <div class="link-text">
                 <!-- <span class="nav-icon">ℹ️</span>  -->
-                <span  class="nav-text">Mục B</span>
+                <span  class="nav-text">Mục F</span>
               </div>
             </a>
           </li>
@@ -120,8 +121,7 @@
         <div class="mainContent">
           <h1 style="padding: 10px;"></h1>
           <div class="content">
-            <div class="content-top">
-              
+            <div class="content-top">              
               <div class="info1" >
                 <div class="infor">Total</div>
                 <div class="card" style="color: #fff; " id="total-records">N/A</div>
@@ -142,8 +142,9 @@
                 <div class="card" style="color: #fff;" id="fpy-percentage">N/A</div>
                 <div class="glow-line"></div>
                 </div>
-              <div class="dowfile">
+              <div class="dowfile" title="Dowload Exel">
                 <a id="download-excel"><span><img style="width: 32px; height: 32px; " src="{{ url_for('static', filename='images/download.png') }}"  alt="Expoprt File"></span></a>
+
               </div>
             </div>
             <div class="tbl-header">
@@ -183,7 +184,7 @@
             To: <input style="width: 180px; border-radius: 2px;"  type="datetime-local" name="time_end" id="time_end">
             State: <select id="state-combobox">
             </select>
-              <input style=" transition: all .3s ease-in-out; padding: 0.5em; width: 5em; " type="submit" value="Search" id="filter">
+              <input style=" transition: all .3s ease-in-out; padding: 0.5em; width: 5em; " type="submit" title="Query data in table" value="Search" id="filter">
             </div>
             <div id="count"></div>
           </div>
@@ -211,149 +212,6 @@
                   <figure class="highcharts-figure">
                       <div id="container-toperr"></div>
                   </figure>
-                  <!-- <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        const dailyData = {
-                            dates: ['01/02', '02/02', '03/02', '04/02', '05/02'],
-                            machineA: [150, 142, 138, 145, 133],
-                            machineB: [120, 125, 118, 130, 122],
-                            machineC: [90, 95, 88, 92, 85]
-                        };
-                        const hourlyData = {
-                        '01/02': {
-                            hours: [...Array(24).keys()].map(i => `${i}h`),
-                            machineA: [25, 28, 22, 26, 24, 25, 30, 28, 29, 0, 31, 26, 25, 24, 29, 27, 26, 25, 30, 29, 28, 27, 26, 25],
-                            machineB: [20, 22, 18, 21, 19, 20, 22, 21, 23, 22, 24, 21, 20, 19, 23, 22, 21, 20, 22, 21, 23, 22, 21, 20],
-                            machineC: [15, 16, 14, 15, 15, 15, 18, 16, 17, 15, 19, 16, 15, 14, 18, 17, 0, 15, 18, 17, 16, 15, 14, 15]
-                        },
-                        '02/02': {
-                            hours: [...Array(24).keys()].map(i => `${i}h`),
-                            machineA: [24, 23, 25, 24, 23, 23, 26, 25, 27, 24, 28, 23, 24, 22, 27, 26, 25, 24, 26, 25, 27, 26, 25, 24],
-                            machineB: [21, 20, 22, 21, 20, 21, 23, 22, 24, 21, 0, 20, 21, 19, 24, 23, 22, 21, 23, 0, 24, 23, 22, 21],
-                            machineC: [16, 15, 17, 16, 15, 16, 19, 17, 18, 16, 20, 17, 16, 14, 19, 18, 17, 16, 19, 18, 17, 16, 15, 16]
-                        },
-                        '03/02': {
-                            hours: [...Array(24).keys()].map(i => `${i}h`),
-                            machineA: [23, 22, 24, 23, 23, 23, 25, 24, 26, 23, 27, 22, 23, 21, 26, 25, 24, 23, 25, 24, 26, 25, 24, 23],
-                            machineB: [20, 0, 21, 20, 19, 19, 22, 21, 23, 20, 24, 19, 20, 18, 23, 22, 21, 20, 22, 21, 23, 22, 21, 20],
-                            machineC: [15, 14, 16, 15, 14, 14, 17, 15, 16, 14, 18, 15, 14, 13, 17, 16, 15, 14, 17, 16, 15, 14, 13, 14]
-                        },
-                        '04/02': {
-                            hours: [...Array(24).keys()].map(i => `${i}h`),
-                            machineA: [24, 25, 23, 24, 0, 24, 27, 26, 28, 25, 29, 24, 25, 23, 28, 27, 26, 25, 27, 26, 28, 27, 26, 25],
-                            machineB: [22, 21, 22, 22, 21, 22, 24, 23, 25, 22, 26, 21, 22, 20, 25, 24, 23, 22, 24, 23, 25, 24, 23, 22],
-                            machineC: [15, 16, 15, 15, 16, 0, 18, 16, 17, 15, 19, 16, 15, 14, 18, 17, 0, 15, 18, 17, 16, 15, 14, 15]
-                        },
-                        '05/02': {
-                            hours: [...Array(24).keys()].map(i => `${i}h`),
-                            machineA: [22, 21, 23, 22, 23, 22, 25, 0, 26, 22, 27, 21, 22, 20, 26, 25, 24, 22, 25, 24, 26, 25, 24, 22],
-                            machineB: [20, 21, 20, 21, 20, 20, 23, 22, 24, 21, 25, 0, 21, 19, 24, 23, 22, 20, 23, 22, 0, 23, 22, 20],
-                            machineC: [0, 15, 14, 14, 14, 14, 17, 15, 16, 14, 18, 15, 14, 13, 17, 16, 15, 14, 17, 16, 15, 14, 13, 14]
-                        }
-                    };
-                        Highcharts.chart('container-toperr', {
-                            chart: {
-                                type: 'column',
-                                backgroundColor: null,
-                                plotBackgroundColor: null,
-                                events: {
-                                    drilldown: function (e) {
-                                        if (!e.seriesOptions) {
-                                            const date = e.point.category;
-                                            const machine = e.point.series.name;
-        
-                                            if (!hourlyData[date]) return;
-        
-                                            const machineKey = machine === 'Máy A' ? 'machineA' : machine === 'Máy B' ? 'machineB' : 'machineC';
-        
-                                            this.xAxis[0].setCategories(hourlyData[date].hours);
-                                            this.setTitle({ text: `Detail Fail ${machine} day ${date}` });
-                                            this.addSeriesAsDrilldown(e.point, {
-                                                name: machine,
-                                                data: hourlyData[date].hours.map((hour, i) => [hour, hourlyData[date][machineKey][i]]),
-                                                color: e.point.color
-                                            });
-                                            this.applyDrilldown();
-                                        }
-                                    },
-                                    drillup: function () {
-                                        this.xAxis[0].setCategories(dailyData.dates);
-                                        this.setTitle({ text: 'Top 3 Machine Fail' });
-                                    }
-                                }
-                            },
-                            title: {
-                                text: 'Top 3 Machine Fail',
-                                align: 'left',
-                                style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
-                            },
-                            xAxis: {
-                                categories: dailyData.dates,
-                                title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } },
-                                labels: { style: { color: '#fff', fontSize: '12px' } },
-                                
-                            },
-                            yAxis: {
-                                min: 0,
-                                title: { text: 'Count Fail', style: { color: '#fff', fontSize: '12px' } },
-                                labels: { style: { color: '#fff', fontSize: '12px' } }
-                            },
-                            tooltip: {
-                                shared: true,
-                                useHTML: true
-                            },
-                            plotOptions: {
-                                column: {
-                                    groupPadding: 0.1,
-                                    states: { hover: { brightness: 0.2 } }
-                                },
-                                series: { cursor: 'pointer' }
-                            },
-                            series: [
-                                {
-                                    name: 'Máy A',
-                                    data: dailyData.machineA.map((value, i) => ({ name: dailyData.dates[i], y: value, drilldown: true })),
-                                    color: '#FF6B6B'
-                                },
-                                {
-                                    name: 'Máy B',
-                                    data: dailyData.machineB.map((value, i) => ({ name: dailyData.dates[i], y: value, drilldown: true })),
-                                    color: '#4ECDC4'
-                                },
-                                {
-                                    name: 'Máy C',
-                                    data: dailyData.machineC.map((value, i) => ({ name: dailyData.dates[i], y: value, drilldown: true })),
-                                    color: '#45B7D1'
-                                }
-                            ],
-                            drilldown: {
-                              series: [],
-                              breadcrumbs: {
-                                  position: {
-                                      align: 'left'
-                                  },
-                                  style: {
-                                      color: '#fff',
-                                      fontSize: '16px',
-                                      fontWeight: 'bold',
-                                      textDecoration: 'underline' 
-                                  },
-                              }
-                          },
-                            credits: { enabled: false },
-                            legend: {
-                            align: 'center',
-                            verticalAlign: 'bottom',
-                            itemStyle:{
-                              color: '#fff'
-                            },
-                            itemHoverStyle: {
-                            color: '#cccccc'
-                          }
-                          }
-                        });
-                    });
-                </script> -->
               </div>
           </div>
           </div>

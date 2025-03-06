@@ -352,7 +352,7 @@ video{
     right: 0;
   }
 .content-left {
-    height: 100vh;
+    height: 105vh;
     width: 50%;
     position: absolute;
     box-sizing: border-box;
@@ -397,7 +397,7 @@ video {
   overflow: hidden;
   border-right: 3px solid;
   font-family: monospace;
-  font-size: 5em;
+  font-size: 4.5em;
   
   --s: 0.1em;   /* the thickness of the line */
   --c: #2c4bff; /* the color */

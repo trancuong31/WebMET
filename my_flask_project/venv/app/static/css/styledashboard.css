@@ -1,8 +1,8 @@
 :root {
     --primary: 237, 94%, 81%;
     --background: 266, 16%, 92%;
-    --background-secondary: 187, 30%, 50%;
-    --background-secondary-dark: 187, 30%, 50%;
+    --background-secondary: 187, 56%, 32%;
+    --background-secondary-dark: 187, 56%, 32%;
     --background-secondary-light: 218, 100%, 46%;
     --text-primary: 0, 0%, 100%;
     /* Colors */
@@ -39,10 +39,6 @@ html, body {
 .wrapper {
     height: 100%;
   }
-/* ============
-    Typography
-   ============ */
-
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
     margin: 0;
@@ -206,17 +202,22 @@ select option:hover{
     transition: width .35s cubic-bezier(var(--transition-main), 1);
     overflow-y: auto;
     overflow-x: hidden;
-    transition: all .3s ease-in-out; 
 }
 #navbar:hover {
     width: 16em;
 }
 #navbar::-webkit-scrollbar-track {
-    background-color: hsl(var(--background-secondary));
+    background-color: rgba(21, 226, 253, 0.4);
 }
 #navbar::-webkit-scrollbar {
-    width: 8px;
-    background-color: hsl(var(--background-secondary));
+    width: 6px;
+    background-color: rgba(10, 126, 141, 0.4);
+}
+.navbar-item-inner-icon-wrapper {
+  width: 2.5rem;
+  text-align: center;
+  flex-shrink: 0;
+  font-size: 1.5rem;
 }
 #navbar::-webkit-scrollbar-thumb {
     background-color: hsl(var(--primary));
@@ -254,16 +255,20 @@ select option:hover{
     color: hsl(var(--quite-gray));
     border-radius: .25em;
     text-decoration: none;
-    transition: all .2s cubic-bezier(var(--transition-main), 1);
+    transition: all .3s cubic-bezier(var(--transition-main), 1);
 }
 .navbar-item-inner:hover {
     color: hsl(var(--white));
-    background: hsl(var(--background-secondary-light));
+    background: rgba(10, 181, 204, 0.815);
     box-shadow: 0 17px 30px -10px hsla(var(--black), .25);
+    transform: translateX(10px);
+}
+.navbar-item-inner:active {
+    transform: translateX(0);
 }
 .navbar-item-inner-icon-wrapper {
     width: calc(5rem - 1em - 8px);
-    position: relative;
+    position: relative;    
 }
 .navbar-item-inner-icon-wrapper ion-icon {
     position: absolute;
@@ -290,11 +295,11 @@ select option:hover{
 }
 /* Scrollbar */
 ::-webkit-scrollbar-track {
-    background-color: hsl(var(--background));
+    background-color: hsl(187, 65%, 84%);
 }
 ::-webkit-scrollbar {
-    width: 8px;
-    background-color: rgba(17, 143, 160, 0.5);
+    width: 6px;
+    background-color: hsl(186, 54%, 27%);
 }
 ::-webkit-scrollbar-thumb {
     background-color: rgba(17, 143, 160, 0.5);
@@ -466,7 +471,7 @@ img#fullscreenic{
     margin-bottom: 15px;
     height: 65px;
     color: white;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.466), 0 0 20px rgba(255, 255, 255, 0.5);
   
   }
   .mainContent{
@@ -721,15 +726,13 @@ div#container-toperr {
     align-items: center;
     text-align: center;
     color: #fff;
-    z-index: 1;
-    
+    z-index: 1;    
   }
  .card {
   position: relative; 
   font-size: 1.1em; 
   z-index: 2;
   font-weight: bold;
-  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); */
   animation: moveUpDown 3s infinite; 
 }
 
@@ -818,7 +821,7 @@ div#container-toperr {
     color: #fff;
     padding: 5px;
     display: block;
-    transition: all .5s ease-in-out;
+    transition: all .3s ease-in-out;
   }
   table{
     width:100%;

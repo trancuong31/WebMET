@@ -595,7 +595,7 @@ def login():
                 resp = make_response(redirect('/adminDashboard' if role == 'admin' else '/index'))
                 # Thiết lập cookie an toàn
                 resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60, samesite='Strict')
-                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60, samesite='Strict')
+                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60, samesite='Strict')                
                 return resp
             else:
                 return render_template('login.html', error='Incorrect username or password')
@@ -667,7 +667,7 @@ def register():
         error_message = f"Database error: {e}"
         print(error_message) 
         return render_template('register.html', error=f"An error occurred: {e}")
- #
+
 
 #get data combobox
 @app.route('/getDataComboboxs', methods=['GET'])
@@ -788,6 +788,7 @@ def fetch_filtered_data(filters):
         app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
         raise
 
+
 #download excel
 @app.route('/downloadExcel', methods=['POST'])
 def download_excel():
@@ -806,7 +807,7 @@ def download_excel():
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Dữ liệu lực vít')
             workbook = writer.book
-            worksheet = writer.sheets['Dữ liệu lực vít']        
+            worksheet = writer.sheets['Dữ liệu lực vít']
             header_format = workbook.add_format({
                 'bold': True,
                 'font_size': 12,
@@ -826,9 +827,9 @@ def download_excel():
             download_name=filename
         )
     except Exception as e:
-        app.logger.error(f"Lỗi tải xuống Excel: {str(e)}")
+        app.logger.error(f"Error download file Excel: {str(e)}")
         flash("Đã xảy ra lỗi khi tạo file Excel. Vui lòng thử lại sau.", "error")
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard_page'))
 
 if __name__=='__main__':
     app.run(debug=True)

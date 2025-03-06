@@ -99,14 +99,13 @@ input{
     width: 100%;
     background-color: rgba(255,255,255,0.07);
     border-radius: 3px;
-    padding: 0 10px;
+    padding: 0 0 0 5px;
     margin-top: 8px;
     font-size: 14px;
     position: relative;
     font-weight: 300;
     color: black;
 }
-
 
 button{
     margin-top: 50px;
@@ -124,9 +123,10 @@ button{
 button:hover{
     background-color: #3543ff;
     color: #ffffff;
+    transform: scale(1.05);
 }
 button:active{
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 .social{
   margin-top: 30px;
@@ -135,17 +135,14 @@ button:active{
   justify-content: center;
 }
 .social div{
-  background: red;
-  width: 150px;
+  /* background: red; */
+  width: 350px;
   border-radius: 3px;
   padding: 5px 10px 10px 5px;
-  background-color: rgba(255,255,255,0.27);
+  /* background-color: rgba(255,255,255,0.27); */
   color: #eaf0fb;
   text-align: center;
   transition: background-color 0.5s ease, color 0.5s ease;
-}
-.social div:hover{
-  background-color: rgba(255,255,255,0.47);
 }
 .social .fb{
   margin-left: 25px;

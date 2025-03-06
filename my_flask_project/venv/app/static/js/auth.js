@@ -10,7 +10,7 @@ async function login(username, password) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ username, password }), 
-      credentials: 'include', // Để gửi cookie
+      credentials: 'include',
     });
 
     if (response.ok) {
@@ -43,6 +43,3 @@ async function refreshToken() {
     window.location.href = '/login';
   }
 }
-
-// Gọi hàm getData khi trang được tải
-// document.addEventListener('DOMContentLoaded', getData);
