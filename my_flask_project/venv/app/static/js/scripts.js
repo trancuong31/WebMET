@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <td>${row.force_3 ?? 'N/A'}</td>
                     <td>${row.force_4 ?? 'N/A'}</td>
                     <td>${row.time_update ?? 'N/A'}</td>
-                    <td class="${stateClass}">${row.state}</td>
+                    <td class="${stateClass}">${row.state ?? 'N/A'}</td>
                 </tr>
             `;
         }).join("");
@@ -336,12 +336,11 @@ document.addEventListener("DOMContentLoaded", function () {
             const dayIndex = dates.indexOf(day.date);
             if (!day.machines || day.machines.length === 0) {
                 return;
-            }    
+            }
             day.machines.forEach(machine => {
                 if (!machineMap[machine.name]) {
                     machineMap[machine.name] = Array(dates.length).fill(null);
                 }
-    
                 machineMap[machine.name][dayIndex] = machine.fail_count;
                 let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
                 if (machine.hourly_data && Array.isArray(machine.hourly_data)) {
@@ -350,6 +349,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
                 }
                 drilldownSeries.push({
+
                     id: `${machine.name}-${day.date}`,
                     name: `Detail for ${machine.name} day ${day.date}`,
                     data: fullHourlyData,
@@ -360,16 +360,13 @@ document.addEventListener("DOMContentLoaded", function () {
         let seriesData = Object.keys(machineMap).map(machineName => ({
             name: machineName,
             data: machineMap[machineName],
-            drilldown: machineName
-        })).sort((a, b) => {
-            const totalA = a.data.reduce((sum, val) => sum + (val || 0), 0);
-            const totalB = b.data.reduce((sum, val) => sum + (val || 0), 0);
-            return totalA - totalB;
-        });
+            drilldown: machineName,
+            yAxis: 0 
+        }));
+        
         console.log(seriesData)
-        console.log(drilldownSeries)
         return { dates, seriesData, drilldownSeries };
-    }    
+    }
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
     
@@ -541,8 +538,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${row.force_2 ?? 'N/A'}</td>
                 <td>${row.force_3 ?? 'N/A'}</td>
                 <td>${row.force_4 ?? 'N/A'}</td>
-                <td>${row.time_update}</td>
-                <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
+                <td>${row.time_update ?? 'N/A'}</td>
+                <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state ?? 'N/A'}</td>
             `;
             fragment.appendChild(tr);
         });
@@ -709,12 +706,11 @@ document.addEventListener("DOMContentLoaded", function () {
             const dayIndex = dates.indexOf(day.date);
             if (!day.machines || day.machines.length === 0) {
                 return;
-            }    
+            }
             day.machines.forEach(machine => {
                 if (!machineMap[machine.name]) {
                     machineMap[machine.name] = Array(dates.length).fill(null);
                 }
-    
                 machineMap[machine.name][dayIndex] = machine.fail_count;
                 let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
                 if (machine.hourly_data && Array.isArray(machine.hourly_data)) {
@@ -723,6 +719,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
                 }
                 drilldownSeries.push({
+
                     id: `${machine.name}-${day.date}`,
                     name: `Detail for ${machine.name} day ${day.date}`,
                     data: fullHourlyData,
@@ -733,12 +730,11 @@ document.addEventListener("DOMContentLoaded", function () {
         let seriesData = Object.keys(machineMap).map(machineName => ({
             name: machineName,
             data: machineMap[machineName],
-            drilldown: machineName
-        })).sort((a, b) => {
-            const totalA = a.data.reduce((sum, val) => sum + (val || 0), 0);
-            const totalB = b.data.reduce((sum, val) => sum + (val || 0), 0);
-            return totalA - totalB;
-        });
+            drilldown: machineName,
+            yAxis: 0  // Đảm bảo dữ liệu xếp theo trục Y chính
+        }));
+        
+        console.log(seriesData)
         return { dates, seriesData, drilldownSeries };
     }
     function drawColumnChart(columnData) {
@@ -778,6 +774,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     stacking: 'normal'
                 },
                 series: {
+                    // stacking: 'normal',
                     cursor: 'pointer',
                     dataLabels: { enabled: true },
                     point: {
@@ -918,7 +915,7 @@ document.addEventListener("DOMContentLoaded", function () {
     //Download Excel
     async function handleDownload(event) {
         event.preventDefault();
-        const isConfirmed = window.confirm("Large data may slow down the download. Check the filter before proceeding. Continue?");
+        const isConfirmed = window.confirm("Large data may slow down the download. Check the filter before downloading. Continue?");
         if (!isConfirmed) {
             return;
         }
