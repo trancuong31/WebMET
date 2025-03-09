@@ -27,16 +27,22 @@
                 <i class="fas fa-eye"></i>
             </span>
         </div>
-        <a href="#" id="forgotpw">Forgot Password?</a>
-        <button style="position: relative;" type="submit">Log In</button>
-       
+        <a href="#" id="forgotpw"">Forgot Password?</a>
+        <button style="position: relative;" type="submit">Log In</button>       
         <div class="social">
-          <div class="go">Smart office</div>
-          <div class="fb">ICViet</div>
+          <div class="go">The website is managed by MET</div>
+          <!-- <div class="fb">ICViet</div> -->
         </div>
         <p style="text-align: center;">Don't have an account? <a id="signup" href="{{ url_for('register') }}">Sign Up</a></p>
-    </form>    
+    </form>
     <script>
+            document.addEventListener('DOMContentLoaded', () => {
+            const forgotpwLink = document.getElementById('forgotpw');
+            forgotpwLink.addEventListener('click', (event) => {
+                event.preventDefault(); 
+                alert('Please contact MET to reset your password.');
+            });
+        });
         function showAlert(message) {
             const alertDiv = document.getElementById("alert");
             alertDiv.style.display = "block";
@@ -59,7 +65,6 @@
                 togglePasswordIcon.classList.add("fa-eye");
             }
         }
-
     </script>
 
 </body>

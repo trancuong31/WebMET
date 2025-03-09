@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let isInDrilldown = false;
     let currentDrilldownId = null;
     let isFiltering = false;
+    let isFirstLoad = true;
 
     function stopPolling() {
         if (pollingTimer) {
@@ -30,15 +31,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
     // Xử lý sự kiện filter
-    document.getElementById('filter').addEventListener('click', function () {
+    document.getElementById('filter').addEventListener('click', function (event) {
         event.preventDefault();
         this.dataset.filtering = 'true'; 
-        fetchFilteredData(1); 
-        isFiltering = true; 
-        stopPolling();
-        fetchFilteredData(1);
+        isFiltering = true;
+        stopPolling();    
+        fetchFilteredData(1, false);
     });
-    function fetchFilteredData(page = 1) {
+    
+    function fetchFilteredData(page = 1, isPagination = false) {
         // Lấy giá trị từ các input
         const line = document.getElementById('line-combobox').value.trim();
         const factory = document.getElementById('factory-combobox').value.trim();
@@ -63,15 +64,14 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch('/filter', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json'                
             },
             body: JSON.stringify(payload)
         })
             .then(response => response.json())
             .then(data => {
-                
                 document.getElementById('loading').style.display = 'none';
-                if (data.success) {
+                if (data.success) {                    
                     document.getElementById('count').textContent = data.message ||""
                     updateTable(data.data);
                     updatePagination(data.current_page, data.total_pages, data.group_start, data.group_end);
@@ -79,8 +79,10 @@ document.addEventListener("DOMContentLoaded", function () {
                         tableBody.innerHTML = `<tr><td class="no-data" colspan="12">No data found.</td></tr>`;
                         paginationDiv.innerHTML = '';
                     }
-                    fetchPieChartData(time_update, time_end);
-                    fetchColumnChartData(time_update, time_end);
+                    if (!isPagination) {
+                        fetchPieChartData(time_update, time_end);
+                        fetchColumnChartData(time_update, time_end);
+                    }
                 } else {
                     tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
                     paginationDiv.innerHTML = '';
@@ -90,10 +92,11 @@ document.addEventListener("DOMContentLoaded", function () {
             .catch(error => {
                 console.error("Error fetching filtered data:", error);
                 alert("Error fetching filtered data");
-                tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="12">An error occurred while loading data.</td></tr>`;
                 paginationDiv.innerHTML = '';
                 document.getElementById('loading').style.display = 'none';
             });
+            isFirstLoad = false;
     }
     function updateTable(rows) {
         tableBody.innerHTML = rows.map(row => {
@@ -111,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <td>${row.force_3 ?? 'N/A'}</td>
                     <td>${row.force_4 ?? 'N/A'}</td>
                     <td>${row.time_update ?? 'N/A'}</td>
-                    <td class="${stateClass}">${row.state}</td>
+                    <td class="${stateClass}">${row.state ?? 'N/A'}</td>
                 </tr>
             `;
         }).join("");
@@ -135,12 +138,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const links = paginationDiv.querySelectorAll(".page-link");
         links.forEach(link => {
             link.addEventListener("click", function (event) {
-                event.preventDefault();
-    
+                event.preventDefault();    
                 const page = parseInt(this.getAttribute("data-page"), 10);
                 if (!isNaN(page)) {
                     if (document.getElementById('filter').dataset.filtering === 'true') {
-                        fetchFilteredData(page);
+                        fetchFilteredData(page, true);
                     } else {
                         fetchPage(page);
                     }
@@ -162,7 +164,6 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then(response => response.json())
         .then(data => {
-            // console.log("Dữ liệu nhận được từ API:", data);
             if (data.success) {
                 updatePieChart(data.pie_chart_date); 
             } else {
@@ -173,7 +174,6 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error fetching Pie Chart data:", error);
         });
     }
-
     function fetchColumnChartData(time_update, time_end) {
         const payload = {
             time_update: time_update ? time_update.replace('T', ' ') + ':00' : null,
@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(payload)
-        })
+        })    
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -202,7 +202,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function updatePieChart(pieData) {
         if (!pieData || !pieData.details) {
             console.error("Dữ liệu biểu đồ tròn không hợp lệ:", pieData);
-            return; // Thoát khỏi hàm nếu không có dữ liệu hợp lệ
+            return; 
         }
         const passData = [];
         const failData = [];
@@ -320,7 +320,6 @@ document.addEventListener("DOMContentLoaded", function () {
             chart = Highcharts.chart("container-pie", chartOptions);
         }
     }
-
     function processDataColumnChart(columnData) {
         if (!columnData || columnData.length === 0) {
             console.error("No data available.");
@@ -337,12 +336,11 @@ document.addEventListener("DOMContentLoaded", function () {
             const dayIndex = dates.indexOf(day.date);
             if (!day.machines || day.machines.length === 0) {
                 return;
-            }    
+            }
             day.machines.forEach(machine => {
                 if (!machineMap[machine.name]) {
                     machineMap[machine.name] = Array(dates.length).fill(null);
                 }
-    
                 machineMap[machine.name][dayIndex] = machine.fail_count;
                 let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
                 if (machine.hourly_data && Array.isArray(machine.hourly_data)) {
@@ -351,6 +349,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
                 }
                 drilldownSeries.push({
+
                     id: `${machine.name}-${day.date}`,
                     name: `Detail for ${machine.name} day ${day.date}`,
                     data: fullHourlyData,
@@ -361,15 +360,13 @@ document.addEventListener("DOMContentLoaded", function () {
         let seriesData = Object.keys(machineMap).map(machineName => ({
             name: machineName,
             data: machineMap[machineName],
-            drilldown: machineName
-        })).sort((a, b) => {
-            const totalA = a.data.reduce((sum, val) => sum + (val || 0), 0);
-            const totalB = b.data.reduce((sum, val) => sum + (val || 0), 0);
-            return totalA - totalB;
-        });
+            drilldown: machineName,
+            yAxis: 0 
+        }));
+        
         console.log(seriesData)
         return { dates, seriesData, drilldownSeries };
-    }    
+    }
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
     
@@ -473,8 +470,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 ]
             });
         });
-    } 
-    
+    }
 });
 //load dashboard
 document.addEventListener("DOMContentLoaded", function () {
@@ -482,6 +478,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const paginationDiv = document.getElementById("pagination");
     const POLLING_INTERVAL = 60000;
     let currentPage = 1;
+    console.log("Dashboard loaded and polling data :", POLLING_INTERVAL +"ms");
     let chart;
     let isInDrilldown = false;
     let currentDrilldownId = null;
@@ -504,7 +501,7 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch(error => {
             console.error("Error fetching table data:", error);
-            tableBody.innerHTML = `<tr><td colspan="12">Đã xảy ra lỗi khi tải dữ liệu.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="12">An error orccued while fetching data.</td></tr>`;
             paginationDiv.innerHTML = '';
         });
     }
@@ -522,7 +519,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         })
         .catch(error => {
-            console.error("Error fetching pie chart data:", error);            
+            console.error("Error fetching pie chart data:", error);
+            alert("Error fetch data charts:", error)            
         });
     }
     function updateTable(rows) {
@@ -540,8 +538,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 <td>${row.force_2 ?? 'N/A'}</td>
                 <td>${row.force_3 ?? 'N/A'}</td>
                 <td>${row.force_4 ?? 'N/A'}</td>
-                <td>${row.time_update}</td>
-                <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state}</td>
+                <td>${row.time_update ?? 'N/A'}</td>
+                <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state ?? 'N/A'}</td>
             `;
             fragment.appendChild(tr);
         });
@@ -708,12 +706,11 @@ document.addEventListener("DOMContentLoaded", function () {
             const dayIndex = dates.indexOf(day.date);
             if (!day.machines || day.machines.length === 0) {
                 return;
-            }    
+            }
             day.machines.forEach(machine => {
                 if (!machineMap[machine.name]) {
                     machineMap[machine.name] = Array(dates.length).fill(null);
                 }
-    
                 machineMap[machine.name][dayIndex] = machine.fail_count;
                 let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
                 if (machine.hourly_data && Array.isArray(machine.hourly_data)) {
@@ -722,6 +719,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
                 }
                 drilldownSeries.push({
+
                     id: `${machine.name}-${day.date}`,
                     name: `Detail for ${machine.name} day ${day.date}`,
                     data: fullHourlyData,
@@ -732,12 +730,11 @@ document.addEventListener("DOMContentLoaded", function () {
         let seriesData = Object.keys(machineMap).map(machineName => ({
             name: machineName,
             data: machineMap[machineName],
-            drilldown: machineName
-        })).sort((a, b) => {
-            const totalA = a.data.reduce((sum, val) => sum + (val || 0), 0);
-            const totalB = b.data.reduce((sum, val) => sum + (val || 0), 0);
-            return totalA - totalB;
-        });
+            drilldown: machineName,
+            yAxis: 0  // Đảm bảo dữ liệu xếp theo trục Y chính
+        }));
+        
+        console.log(seriesData)
         return { dates, seriesData, drilldownSeries };
     }
     function drawColumnChart(columnData) {
@@ -777,6 +774,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     stacking: 'normal'
                 },
                 series: {
+                    // stacking: 'normal',
                     cursor: 'pointer',
                     dataLabels: { enabled: true },
                     point: {
@@ -794,12 +792,12 @@ document.addEventListener("DOMContentLoaded", function () {
                                         xAxis: 1
                                     });
                                     chart.applyDrilldown();
-                                } 
+                                }
                             }
                         }
                     }
                 }
-            },
+            },            
             accessibility: { enabled: false },
             series: seriesData,
             drilldown: {
@@ -811,7 +809,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 verticalAlign: 'bottom',
                 itemStyle: { color: '#fff' },
                 itemHoverStyle: { color: '#cccccc' }
-            },            
+            },
             exporting: {
                 enabled: true,
                 buttons: {
@@ -867,14 +865,13 @@ async function fetchData(page) {
       document.getElementById("loading").style.display = "none";
     }
   }
-/*load info overview*/
+//load info overview
 document.addEventListener("DOMContentLoaded", function () {
-    // DOM elements
     const totalRecords = document.getElementById("total-records");
     const outputPass = document.getElementById("pass-records");
     const failRecords = document.getElementById("fail-records");
     const fpyPercentage = document.getElementById("fpy-percentage");
-    const POLLING_INTERVAL = 300000; 
+    const POLLING_INTERVAL = 300000; //(ms)
     const lineCombobox = document.getElementById("line-combobox");
     const factoryCombobox = document.getElementById("factory-combobox");
     const stateCombobox = document.getElementById("state-combobox");
@@ -912,15 +909,19 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
     fetchContentTop();
-
     
     downloadButton.removeEventListener('click', handleDownload);
     downloadButton.addEventListener('click', handleDownload);
+    //Download Excel
     async function handleDownload(event) {
         event.preventDefault();
-        const formatDatetime = (datetime) => {
-            return datetime ? datetime.replace('T', ' ') + ':00' : null;
-        };
+        const isConfirmed = window.confirm("Large data may slow down the download. Check the filter before downloading. Continue?");
+        if (!isConfirmed) {
+            return;
+        }
+            const formatDatetime = (datetime) => {
+                return datetime ? datetime.replace('T', ' ') + ':00' : null;
+            };
         const payload = {
             line: document.getElementById("line-combobox").value.trim() || null,
             factory: document.getElementById("factory-combobox").value.trim() || null,
@@ -929,6 +930,7 @@ document.addEventListener("DOMContentLoaded", function () {
             time_end: formatDatetime(document.getElementById("time_end").value),
             state: document.getElementById("state-combobox").value || null
         };
+        document.getElementById('loading').style.display = 'block';
         try {
             const response = await fetch('/downloadExcel', {
                 method: 'POST',
@@ -953,9 +955,11 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             console.error("Error downloading Excel:", error);
             alert("Failed to download the Excel file. Please try again.");
+        } finally{
+            document.getElementById('loading').style.display = 'none';
         }
     }
-    // Fetch data from route /getLines 
+    // Fetch data comboboxs
     fetch("/getDataComboboxs")
         .then(response => {
             if (!response.ok) {
@@ -997,18 +1001,26 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error fetching lines and states:", error);
         });
 });
+document.addEventListener("fullscreenchange", function () {
+    const fullscreenIcon = document.getElementById("fullscreenic");
+    if (document.fullscreenElement) {
+        fullscreenIcon.title = "Exit Fullscreen";
+        fullscreenIcon.src = "/static/images/disfullscreen.png";
+    } else {
+        fullscreenIcon.title = "Fullscreen";
+        fullscreenIcon.src = "/static/images/fullscreen1.png";
+    }
+});
 document.getElementById("toggle_fullscreen").addEventListener("click", function (e) {
     e.preventDefault();
-    const fullscreenIcon = document.getElementById("fullscreenic");
     const container = document.documentElement;
     if (document.fullscreenElement) {
         document.exitFullscreen();
-        fullscreenIcon.src = "/static/images/fullscreen1.png";
     } else {
         container.requestFullscreen();
-        fullscreenIcon.src = "/static/images/disfullscreen.png";
     }
 });
+
 
 
 

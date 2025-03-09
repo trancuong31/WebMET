@@ -87,21 +87,6 @@
           <video  autoplay muted loop preload="auto" src="{{ url_for('static', filename='images/videobg.mp4') }}" ></video>
         </div>
         <div class="mainContent">
-          <script>
-            const urlParams = new URLSearchParams(window.location.search);
-            const message = urlParams.get('message');
-            if (message === "success") {
-                Toastify({
-                    text: "Đăng nhập thành công!",
-                    duration: 3000,
-                    gravity: "top",
-                    position: "center",
-                    backgroundColor: "green",
-                    close: true,
-            stopOnFocus: true,
-                }).showToast();
-            }
-        </script>
           <div class="content">
             <div class="content-left">
               <div class="typing-demo">
