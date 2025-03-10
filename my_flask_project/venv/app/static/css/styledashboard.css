@@ -1119,3 +1119,114 @@ div#container-toperr {
     margin: 0.3rem 10px;
     text-align: center;
 }
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.btn-confirm, .btn-cancel {
+  margin: 10px;
+  padding: 5px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-confirm {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.btn-cancel {
+  background-color: #f44336;
+  color: white;
+}
+/* Overlay nền mờ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Nền đen mờ */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal chính */
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 400px;
+  margin-left: 3%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.5s ease;
+}
+
+/* Nút xác nhận và hủy */
+.modal-buttons {
+  margin-top: 15px;
+  text-align: right;
+}
+
+.modal-buttons button {
+  margin-left: 10px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.modal-buttons button:hover {
+  background-color: #e0e0e0;
+}
+
+.modal-buttons .confirm {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.modal-buttons .confirm:hover {
+  background-color: #45a049;
+}
+
+.modal-buttons .cancel {
+  background-color: #f44336;
+  color: white;
+}
+
+.modal-buttons .cancel:hover {
+  background-color: #e53935;
+}
+
+/* Hiệu ứng mờ dần */
+@keyframes fadeIn {
+  from {
+      opacity: 0;
+      transform: scale(0.7);
+  }
+  to {
+      opacity: 1;
+      transform: scale(1);
+  }
+}
+
