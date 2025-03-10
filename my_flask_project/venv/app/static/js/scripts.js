@@ -21,15 +21,16 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Polling stopped");
         }
     }
-    function startPolling() {
-        if (!isFiltering) {
-            fetchPage(currentPage);
-            pollingTimer = setInterval(() => {
-                fetchPage(currentPage);
-            }, POLLING_INTERVAL);
-            console.log("Polling started");
-        }
-    }
+    /* function startPolling() {
+    //     if (!isFiltering) {
+    //         fetchPage(currentPage);
+    //         pollingTimer = setInterval(() => {
+    //             fetchPage(currentPage);
+    //         }, POLLING_INTERVAL);
+    //         console.log("Polling started");
+    //     }
+    // } */
+
     // Xử lý sự kiện filter
     document.getElementById('filter').addEventListener('click', function (event) {
         event.preventDefault();
@@ -37,8 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
         isFiltering = true;
         stopPolling();    
         fetchFilteredData(1, false);
-    });
-    
+    });    
     function fetchFilteredData(page = 1, isPagination = false) {
         // Lấy giá trị từ các input
         const line = document.getElementById('line-combobox').value.trim();
@@ -82,6 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (!isPagination) {
                         fetchPieChartData(time_update, time_end);
                         fetchColumnChartData(time_update, time_end);
+                        fetchColumn2ChartData(time_update, time_end);
                     }
                 } else {
                     tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
@@ -196,6 +197,30 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch(error => {
             console.error("Error fetching Pie Chart data:", error);
+        });
+    }
+    function fetchColumn2ChartData(time_update, time_end) {
+        const payload = {
+            time_update: time_update ? time_update.replace('T', ' ') + ':00' : null,
+            time_end: time_end ? time_end.replace('T', ' ') + ':00' : null
+        };
+        fetch('/filterColumn2Chart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })    
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                drawColumn2Chart(data.column2_chart_date); 
+            } else {
+                return
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching Screw Trend Chart data:", error);
         });
     }
     //update pie chart
@@ -364,9 +389,11 @@ document.addEventListener("DOMContentLoaded", function () {
             yAxis: 0 
         }));
         
+        console.log(dates)
         console.log(seriesData)
+        console.log(drilldownSeries)
         return { dates, seriesData, drilldownSeries };
-    }
+    }     
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
     
@@ -376,7 +403,7 @@ document.addEventListener("DOMContentLoaded", function () {
               } },
             
             title: {
-                text: 'Top 3 Machine Fail Per Day',
+                text: 'Top 5 Machine Fail Per Day',
                 align: 'left',
                 style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
             },
@@ -471,6 +498,119 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+    function drawColumn2Chart(data) {
+        try {
+            const categories = data.map(item => item.date);
+            const passData = data.map(item => item.count_pass);
+            const failData = data.map(item => item.count_fail);
+            const fpyData = data.map(item => item.fpy);
+            if (passData.every(val => val === 0) && failData.every(val => val === 0) && fpyData.every(val => val === 0)) {
+                console.warn("No valid data to display in the chart.");
+                return;
+            }    
+            Highcharts.chart('container3', {
+                chart: {
+                    zooming: {
+                      type: 'x'
+                    },
+                    backgroundColor: null,
+                    plotBackgroundColor:null
+                  },
+                  title: {
+                    text: 'Screw Force Trend',
+                    align: 'left',
+                     style: {
+                        color: '#fff', 
+                        fontSize: '16px', 
+                        fontWeight: 'bold'
+                      }
+                  },
+                  credits: {
+                    enabled: null
+                  },
+                accessibility:{
+                  enabled: false
+                },
+                xAxis: {
+                    categories: categories,
+                    crosshair: true,
+                      labels: {
+                        style: {
+                          color: '#fff', 
+                          fontSize: '12px'
+                        }
+                      }
+                },
+                yAxis: [{
+                    labels: {
+                        format: '{value}°%',
+                        style: {
+                          color: '#fff'
+                        }
+                      },
+                      title: {
+                        text: 'FPY',
+                        style: {
+                          color: '#fff'
+                        }
+                      }
+                    }, { 
+                      title: {
+                        text: 'Count',
+                        style: {
+                          color: '#fff'
+                        }
+                      },
+                      labels: {
+                        format: '{value}',
+                        style: {
+                          color: '#fff'
+                        }
+                      },
+                      opposite: true
+                    }],
+                tooltip: {
+                    shared: true
+                },
+                legend: {
+                    align: 'center',
+                    verticalAlign: 'bottom',
+                    itemStyle:{
+                      color: '#fff'
+                    },
+                    itemHoverStyle: {
+                    color: '#cccccc'
+                  }
+                },
+                series: [{
+                    name: 'Pass',
+                    type: 'column',
+                    yAxis: 1,
+                    data: passData,
+                    tooltip: {
+                      valueSuffix: ''
+                    }
+                  }, {
+                    name: 'Fail',
+                    type: 'column',  
+                    yAxis: 1,
+                    data: failData,
+                    tooltip: {
+                      valueSuffix: ''
+                    }
+                  }, {
+                    name: 'FPY',
+                    type: 'spline', 
+                    data: fpyData,
+                    tooltip: {
+                      valueSuffix: ' %'
+                    }
+                  }]
+            });
+        } catch (error) {
+            console.error('Error generating column chart:', error);
+        }
+    }
 });
 //load dashboard
 document.addEventListener("DOMContentLoaded", function () {
@@ -511,9 +651,11 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.pie_chart_data || data.column_chart_data) {
+            // console.log("Charts data:", data);
+            if (data.pie_chart_data || data.column_chart_data || data.column2_chart_data) {
                 updatePieChart(data.pie_chart_data);
                 drawColumnChart(data.column_chart_data);
+                drawColumn2Chart(data.column2_chart_data);
             } else {
                 console.error("Charts data not available.");
             }
@@ -698,10 +840,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const dates = columnData
             .map(item => item.date)
             .sort((a, b) => new Date(a) - new Date(b));
-    
         let machineMap = {};
         let drilldownSeries = [];
-    
         columnData.forEach(day => {
             const dayIndex = dates.indexOf(day.date);
             if (!day.machines || day.machines.length === 0) {
@@ -719,7 +859,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
                 }
                 drilldownSeries.push({
-
                     id: `${machine.name}-${day.date}`,
                     name: `Detail for ${machine.name} day ${day.date}`,
                     data: fullHourlyData,
@@ -731,10 +870,8 @@ document.addEventListener("DOMContentLoaded", function () {
             name: machineName,
             data: machineMap[machineName],
             drilldown: machineName,
-            yAxis: 0  // Đảm bảo dữ liệu xếp theo trục Y chính
+            yAxis: 0
         }));
-        
-        console.log(seriesData)
         return { dates, seriesData, drilldownSeries };
     }
     function drawColumnChart(columnData) {
@@ -774,7 +911,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     stacking: 'normal'
                 },
                 series: {
-                    // stacking: 'normal',
                     cursor: 'pointer',
                     dataLabels: { enabled: true },
                     point: {
@@ -797,7 +933,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     }
                 }
-            },            
+            },
             accessibility: { enabled: false },
             series: seriesData,
             drilldown: {
@@ -839,6 +975,135 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+    function drawColumn2Chart(data) {
+        try {
+            // console.log("Column 2 Chart Data:", data);
+            const categories = data.map(item => item.date);
+            const passData = data.map(item => isNaN(item.count_pass) ? 0 : item.count_pass);
+            const failData = data.map(item => isNaN(item.count_fail) ? 0 : item.count_fail);
+            const fpyData = data.map(item => isNaN(item.fpy) ? 0 : item.fpy);
+            if (passData.every(val => val === 0) && failData.every(val => val === 0) && fpyData.every(val => val === 0)) {
+                console.warn("No valid data to display in the chart.");
+                return;
+            }
+    
+            Highcharts.chart('container3', {
+                chart: {
+                    zooming: {
+                      type: 'x'
+                    },
+                    backgroundColor: null,
+                    plotBackgroundColor:null
+                  },
+                  title: {
+                    text: 'Screw Force Trend',
+                    align: 'left',
+                     style: {
+                        color: '#fff', 
+                        fontSize: '16px', 
+                        fontWeight: 'bold'
+                      }
+                  },
+                  credits: {
+                    enabled: null
+                  },
+                accessibility:{
+                  enabled: false
+                },
+                xAxis: {
+                    categories: categories,
+                    crosshair: true,
+                      labels: {
+                        style: {
+                          color: '#fff', 
+                          fontSize: '12px'
+                        }
+                      }
+                },
+                yAxis: [{
+                    labels: {
+                        format: '{value}°%',
+                        style: {
+                          color: '#fff'
+                        }
+                      },
+                      title: {
+                        text: 'FPY',
+                        style: {
+                          color: '#fff'
+                        }
+                      }
+                    }, { 
+                      title: {
+                        text: 'Count',
+                        style: {
+                          color: '#fff'
+                        }
+                      },
+                      labels: {
+                        format: '{value}',
+                        style: {
+                          color: '#fff'
+                        }
+                      },
+                      opposite: true
+                    }],
+                tooltip: {
+                    shared: true
+                },
+                legend: {
+                    align: 'center',
+                    verticalAlign: 'bottom',
+                    itemStyle:{
+                      color: '#fff'
+                    },
+                    itemHoverStyle: {
+                    color: '#cccccc'
+                  }
+                },
+                series: [{
+                    name: 'Pass',
+                    type: 'column',
+                    yAxis: 1,
+                    color: {
+                        linearGradient: { x1: 0, y1: 1, x2: 0, y2: 0 },
+                        stops: [
+                            [0, '#007bff'],
+                            [1, '#003366']
+                        ]
+                    },
+                    data: passData,
+                    tooltip: {
+                      valueSuffix: ''
+                    }
+                  }, {
+                    name: 'Fail',
+                    type: 'column',  
+                    yAxis: 1,
+                    color: {
+                        linearGradient: { x1: 0, y1: 1, x2: 0, y2: 0 },
+                        stops: [
+                            [0, '#f88e8e'],
+                            [1, '#f84646']
+                        ]
+                    },
+                    data: failData,
+                    tooltip: {
+                      valueSuffix: ''
+                    }
+                  }, {
+                    name: 'FPY',
+                    type: 'spline', 
+                    data: fpyData,
+                    tooltip: {
+                      valueSuffix: ' %'
+                    }
+                  }]
+            });
+        } catch (error) {
+            console.error('Error generating column chart:', error);
+        }
+    }    
     function startPolling() {
         fetchPage(currentPage);
         fetchChart();
@@ -1001,25 +1266,33 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error fetching lines and states:", error);
         });
 });
-document.addEventListener("fullscreenchange", function () {
+
+document.addEventListener("DOMContentLoaded", function () {
     const fullscreenIcon = document.getElementById("fullscreenic");
-    if (document.fullscreenElement) {
-        fullscreenIcon.title = "Exit Fullscreen";
-        fullscreenIcon.src = "/static/images/disfullscreen.png";
-    } else {
-        fullscreenIcon.title = "Fullscreen";
-        fullscreenIcon.src = "/static/images/fullscreen1.png";
-    }
+    const toggleFullscreen = document.getElementById("toggle_fullscreen");
+
+    document.addEventListener("fullscreenchange", function () {
+        if (document.fullscreenElement) {
+            fullscreenIcon.title = "Exit Fullscreen";
+            fullscreenIcon.src = "/static/images/disfullscreen.png";
+        } else {
+            fullscreenIcon.title = "Fullscreen";
+            fullscreenIcon.src = "/static/images/fullscreen1.png";
+        }
+    });
+
+    toggleFullscreen.addEventListener("click", function (e) {
+        e.preventDefault();
+        const container = document.documentElement;
+
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            container.requestFullscreen();
+        }
+    });
 });
-document.getElementById("toggle_fullscreen").addEventListener("click", function (e) {
-    e.preventDefault();
-    const container = document.documentElement;
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
-    } else {
-        container.requestFullscreen();
-    }
-});
+
 
 
 
