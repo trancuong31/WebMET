@@ -304,10 +304,10 @@ def get_column_chart_data(start_date=None, end_date=None):
             fd.fail_count
         FROM TopMachines rm
         JOIN FilteredData fd
-            ON rm.report_date = fd.report_date
+            ON rm.report_date = fd.report_date 
             AND rm.NAME_MACHINE = fd.NAME_MACHINE
         WHERE rm.rn <= 3
-        ORDER BY fd.report_date DESC, rm.total_fail ASC, fd.report_hour ASC
+        ORDER BY fd.report_date DESC, rm.total_fail DESC, fd.report_hour ASC
     """
     params = {
         "start_date": start_date.strftime("%Y-%m-%d 00:00:00"),
@@ -339,15 +339,57 @@ def get_column_chart_data(start_date=None, end_date=None):
         if date not in date_dict:
             date_dict[date] = {}
     for date, machines in date_dict.items():
-        sorted_machines = sorted(machines.values(), key=lambda x: x["fail_count"], reverse=True)
-        print(f'{date}: {sorted_machines}')
         column_chart_data.append({
             "date": date,
-            "machines": sorted_machines
+            "machines": list(machines.values())
         })
 
     return column_chart_data
 
+#return column2_chart_data
+def get_column2_chart_data(start_date=None, end_date=None):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    if not start_date or not end_date:
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=4)
+    # Câu truy vấn SQL
+    query = """
+        SELECT TO_CHAR(TIME_UPDATE, 'YYYY-MM-DD') AS report_date,
+               COUNT(CASE WHEN STATE = 'PASS' THEN 1 END) AS count_pass,
+               COUNT(CASE WHEN STATE = 'FAIL' THEN 1 END) AS count_fail,
+               ROUND((COUNT(CASE WHEN STATE = 'PASS' THEN 1 END) / COUNT(*)) * 100, 2) AS fpy
+        FROM SCREW_FORCE_INFO
+        WHERE TIME_UPDATE BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
+                              AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
+        GROUP BY TO_CHAR(TIME_UPDATE, 'YYYY-MM-DD')
+        ORDER BY report_date DESC
+    """
+    params = {
+        "start_date": start_date.strftime("%Y-%m-%d 00:00:00"),
+        "end_date": end_date.strftime("%Y-%m-%d 23:59:59")
+    }
+    cursor.execute(query, params)
+    raw_data = cursor.fetchall()
+
+    # Đóng kết nối
+    cursor.close()
+    connection.close()
+
+    # Xử lý dữ liệu trả về
+    fpy_chart_data = []
+    all_dates = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range((end_date - start_date).days + 1)]
+    date_dict = {date: {"date": date, "count_pass": 0, "count_fail": 0, "fpy": 0} for date in all_dates}
+    for row in raw_data:
+        date, count_pass, count_fail, fpy = row
+        date_dict[date] = {
+            "date": date,
+            "count_pass": count_pass,
+            "count_fail": count_fail,
+            "fpy": fpy
+        }
+    fpy_chart_data = list(date_dict.values())
+    return fpy_chart_data
 # Dashboard
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -396,9 +438,11 @@ def get_charts():
     try:
         pie_chart_data = get_pie_chart_data()
         column_chart_data = get_column_chart_data()
+        column2_chart_data = get_column2_chart_data()
         return jsonify({
             "pie_chart_data": pie_chart_data,
-            "column_chart_data": column_chart_data
+            "column_chart_data": column_chart_data,
+            "column2_chart_data": column2_chart_data
         })
     except Exception as e:
         app.logger.error(f"Error querying chart data: {str(e)}")
@@ -555,6 +599,20 @@ def filter_column_chart():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+@app .route('/filterColumn2Chart', methods=['POST'])
+def filter_column2_chart():
+    try:
+        data = request.json
+        time_update = data.get("time_update")
+        time_end = data.get("time_end")
+        if time_update and time_end:
+            start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
+            end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
+        column2_chart_date = get_column2_chart_data(start_date, end_date)
+        return jsonify({"success": True, "column2_chart_date":column2_chart_date})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
 #logout
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -669,7 +727,6 @@ def register():
         error_message = f"Database error: {e}"
         print(error_message) 
         return render_template('register.html', error=f"An error occurred: {e}")
-
 
 #get data combobox
 @app.route('/getDataComboboxs', methods=['GET'])
