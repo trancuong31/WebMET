@@ -3,7 +3,6 @@ $(window).on("load resize ", function() {
     var scrollWidth = $('.tbl-content').width() - $('.tbl-content table').width();
     $('.tbl-header').css({'padding-right':scrollWidth});
     }).resize();
-
 //filter data
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
@@ -398,9 +397,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
     
         let chart = Highcharts.chart('container-toperr', {
-            chart: { type: 'column', backgroundColor: null, zooming: {
+            chart: { type: 'column', 
+                backgroundColor: null, 
+                zooming: {
                 type: 'x'
-              } },
+              },
+              animation: {
+                duration: 600, 
+                easing: 'easeOutExpo'
+            } },
             
             title: {
                 text: 'Top 5 Machine Fail Per Day',
@@ -625,7 +630,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } catch (error) {
             console.error('Error generating column chart:', error);
         }
-    }  
+    }
 });
 //load dashboard
 document.addEventListener("DOMContentLoaded", function () {
@@ -1315,15 +1320,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
     downloadButton.addEventListener('click', function(event) {
         event.preventDefault();
-        downloadModal.style.display = 'flex'; // Hiển thị modal
+        downloadModal.style.display = 'flex';
     });
 
     cancelDownload.addEventListener('click', function() {
-        downloadModal.style.display = 'none'; // Ẩn modal nếu hủy
+        downloadModal.style.display = 'none';
     });
 
     confirmDownload.addEventListener('click', async function() {
-        downloadModal.style.display = 'none'; // Ẩn modal khi xác nhận
+        downloadModal.style.display = 'none';
 
         const formatDatetime = (datetime) => {
             return datetime ? datetime.replace('T', ' ') + ':00' : null;

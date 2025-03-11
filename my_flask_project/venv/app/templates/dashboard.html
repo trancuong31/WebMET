@@ -9,6 +9,10 @@
     <script src="{{ url_for('static', filename='js/exporting.js') }}"></script>
     <script src="{{ url_for('static', filename='js/export-data.js') }}"></script>
     <script src="{{ url_for('static', filename='js/drilldown.js') }}"></script>
+    <link
+      rel="stylesheet" type="text/css"
+      href="{{ url_for('static', filename='css/all.min.css')}}"
+    />
     
     <link
       rel="stylesheet" type="text/css"
@@ -36,10 +40,11 @@
               <span class="logo"></span>
             </a>
           </li>
+          <hr style="width: 16em; border: 1px solid rgb(255, 255, 255)">
           <li class="navbar-item flexbox-left">
             <a class="navbar-item-inner flexbox-left" style="color: #fff;"  href="{{ url_for('dashboard_page') }}" >
               <div class="navbar-item-inner-icon-wrapper flexbox">
-                <ion-icon name="search-outline"></ion-icon>
+                <i class="fas fa-chart-line"></i>
               </div>
               <div  class="link-text">
                 <span class="nav-text">Dashboard Screw Force</span>
@@ -49,7 +54,7 @@
           <li class="navbar-item flexbox-left">
             <a class="navbar-item-inner flexbox-left">
               <div class="navbar-item-inner-icon-wrapper flexbox">
-                <ion-icon name="home-outline"></ion-icon>
+                <i class="fas fa-search" ></i>
               </div>
               <div class="link-text">
                 <span  class="nav-text">Mục B</span>
@@ -59,7 +64,7 @@
           <li class="navbar-item flexbox-left">
             <a class="navbar-item-inner flexbox-left">
               <div class="navbar-item-inner-icon-wrapper flexbox">
-                <ion-icon name="folder-open-outline"></ion-icon>
+                <i class="fas fa-user"></i>
               </div>
               <div class="link-text">
                 <span  class="nav-text">Mục C</span>
@@ -69,7 +74,7 @@
           <li class="navbar-item flexbox-left">
             <a class="navbar-item-inner flexbox-left">
               <div class="navbar-item-inner-icon-wrapper flexbox">
-                <ion-icon name="pie-chart-outline"></ion-icon>
+                <i class="fas fa-edit"></i>
               </div>
               <div class="link-text">
                 <span  class="nav-text">Mục D</span>
@@ -79,7 +84,7 @@
           <li class="navbar-item flexbox-left">
             <a class="navbar-item-inner flexbox-left">
               <div class="navbar-item-inner-icon-wrapper flexbox">
-                <ion-icon name="people-outline"></ion-icon>
+                <i class="fas fa-cog"></i>
               </div>
               <div class="link-text">
                 <span  class="nav-text">Mục E</span>
@@ -89,10 +94,9 @@
           <li class="navbar-item flexbox-left">
             <a class="navbar-item-inner flexbox-left">
               <div class="navbar-item-inner-icon-wrapper flexbox">
-                <ion-icon name="chatbubbles-outline"></ion-icon>
+                <i class="fas fa-bell"></i>
               </div>
               <div class="link-text">
-                <!-- <span class="nav-icon">ℹ️</span>  -->
                 <span  class="nav-text">Mục F</span>
               </div>
             </a>
@@ -100,10 +104,9 @@
           <li class="navbar-item flexbox-left">
             <a class="navbar-item-inner flexbox-left" href="{{ url_for('logout') }}">
               <div class="navbar-item-inner-icon-wrapper flexbox">
-                <ion-icon name="settings-outline"></ion-icon>
+                <i class="fas fa-sign-out-alt"></i>
               </div>
               <div style="color: #fff;" class="link-text">
-                <!-- <span class="nav-icon">🔒</span>  -->
                 <span  class="nav-text">Logout</span>
               </div>
             </a>
@@ -119,7 +122,7 @@
         <div class="mainContent">
           <h1 style="padding: 10px;"></h1>
           <div class="content">
-            <div class="content-top">              
+            <div class="content-top">
               <div class="info1" >
                 <div class="infor">Total</div>
                 <div class="card" style="color: #fff; " id="total-records">N/A</div>
@@ -152,7 +155,7 @@
                     <th>STT</th>
                     <th>FACTORY</th>
                     <th>LINE</th>
-                    <th>NAME MACHINE</th>
+                    <th>MACHINE NAME</th>
                     <th>MODEL NAME</th>
                     <th>SERIAL NUMBER</th>
                     <th>FORCE 1</th>
