@@ -3,7 +3,6 @@ $(window).on("load resize ", function() {
     var scrollWidth = $('.tbl-content').width() - $('.tbl-content table').width();
     $('.tbl-header').css({'padding-right':scrollWidth});
     }).resize();
-
 //filter data
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
@@ -398,9 +397,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
     
         let chart = Highcharts.chart('container-toperr', {
-            chart: { type: 'column', backgroundColor: null, zooming: {
+            chart: { type: 'column', 
+                backgroundColor: null, 
+                zooming: {
                 type: 'x'
-              } },
+              },
+              animation: {
+                duration: 600, 
+                easing: 'easeOutExpo'
+            } },
             
             title: {
                 text: 'Top 5 Machine Fail Per Day',
@@ -501,9 +506,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function drawColumn2Chart(data) {
         try {
             const categories = data.map(item => item.date);
-            const passData = data.map(item => item.count_pass);
-            const failData = data.map(item => item.count_fail);
-            const fpyData = data.map(item => item.fpy);
+            const passData = data.map(item => isNaN(item.count_pass) ? 0 : item.count_pass);
+            const failData = data.map(item => isNaN(item.count_fail) ? 0 : item.count_fail);
+            const fpyData = data.map(item => isNaN(item.fpy) ? 0 : item.fpy);
             if (passData.every(val => val === 0) && failData.every(val => val === 0) && fpyData.every(val => val === 0)) {
                 console.warn("No valid data to display in the chart.");
                 return;
@@ -539,7 +544,8 @@ document.addEventListener("DOMContentLoaded", function () {
                           color: '#fff', 
                           fontSize: '12px'
                         }
-                      }
+                      },
+                      title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } }
                 },
                 yAxis: [{
                     labels: {
@@ -586,6 +592,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     name: 'Pass',
                     type: 'column',
                     yAxis: 1,
+                    color: {
+                        linearGradient: { x1: 0, y1: 1, x2: 0, y2: 0 },
+                        stops: [
+                            [0, '#007bff'],
+                            [1, '#003366']
+                        ]
+                    },
                     data: passData,
                     tooltip: {
                       valueSuffix: ''
@@ -594,6 +607,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     name: 'Fail',
                     type: 'column',  
                     yAxis: 1,
+                    color: {
+                        linearGradient: { x1: 0, y1: 1, x2: 0, y2: 0 },
+                        stops: [
+                            [0, '#f88e8e'],
+                            [1, '#f84646']
+                        ]
+                    },
                     data: failData,
                     tooltip: {
                       valueSuffix: ''
@@ -977,7 +997,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     function drawColumn2Chart(data) {
         try {
-            // console.log("Column 2 Chart Data:", data);
             const categories = data.map(item => item.date);
             const passData = data.map(item => isNaN(item.count_pass) ? 0 : item.count_pass);
             const failData = data.map(item => isNaN(item.count_fail) ? 0 : item.count_fail);
@@ -985,8 +1004,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (passData.every(val => val === 0) && failData.every(val => val === 0) && fpyData.every(val => val === 0)) {
                 console.warn("No valid data to display in the chart.");
                 return;
-            }
-    
+            }    
             Highcharts.chart('container3', {
                 chart: {
                     zooming: {
@@ -1018,7 +1036,8 @@ document.addEventListener("DOMContentLoaded", function () {
                           color: '#fff', 
                           fontSize: '12px'
                         }
-                      }
+                      },
+                      title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } }
                 },
                 yAxis: [{
                     labels: {
@@ -1178,53 +1197,52 @@ document.addEventListener("DOMContentLoaded", function () {
     // downloadButton.removeEventListener('click', handleDownload);
     // downloadButton.addEventListener('click', handleDownload);
     //Download Excel
-    // async function handleDownload(event) {
-    //     event.preventDefault();
-    //     // const isConfirmed = window.confirm("Large data may slow down the download. Check the filter before downloading. Continue?");
-    //     // if (!isConfirmed) {
-    //     //     return;
-    //     // }
-    //         const formatDatetime = (datetime) => {
-    //             return datetime ? datetime.replace('T', ' ') + ':00' : null;
-    //         };
-    //     const payload = {
-    //         line: document.getElementById("line-combobox").value.trim() || null,
-    //         factory: document.getElementById("factory-combobox").value.trim() || null,
-    //         nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
-    //         time_update: formatDatetime(document.getElementById("time_update").value),
-    //         time_end: formatDatetime(document.getElementById("time_end").value),
-    //         state: document.getElementById("state-combobox").value || null
-    //     };
-    //     document.getElementById('loading').style.display = 'block';
-    //     try {
-    //         const response = await fetch('/downloadExcel', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'X-Requested-With': 'XMLHttpRequest'
-    //             },
-    //             body: JSON.stringify(payload)
-    //         });
-    //         if (!response.ok) {
-    //             throw new Error(`HTTP error! status: ${response.status}`);
-    //         }
-    //         const blob = await response.blob();
-    //         const url = window.URL.createObjectURL(blob);
-    //         const a = document.createElement('a');
-    //         a.style.display = 'none';
-    //         a.href = url;
-    //         a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    //         document.body.appendChild(a);
-    //         a.click();
-    //         window.URL.revokeObjectURL(url);
-    //     } catch (error) {
-    //         console.error("Error downloading Excel:", error);
-    //         alert("Failed to download the Excel file. Please try again.");
-    //     } finally{
-    //         document.getElementById('loading').style.display = 'none';
-    //     }
-    // }
-    
+    async function handleDownload(event) {
+        event.preventDefault();
+        const isConfirmed = window.confirm("Large data may slow down the download. Check the filter before downloading. Continue?");
+        if (!isConfirmed) {
+            return;
+        }
+            const formatDatetime = (datetime) => {
+                return datetime ? datetime.replace('T', ' ') + ':00' : null;
+            };
+        const payload = {
+            line: document.getElementById("line-combobox").value.trim() || null,
+            factory: document.getElementById("factory-combobox").value.trim() || null,
+            nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
+            time_update: formatDatetime(document.getElementById("time_update").value),
+            time_end: formatDatetime(document.getElementById("time_end").value),
+            state: document.getElementById("state-combobox").value || null
+        };
+        document.getElementById('loading').style.display = 'block';
+        try {
+            const response = await fetch('/downloadExcel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error downloading Excel:", error);
+            alert("Failed to download the Excel file. Please try again.");
+        } finally{
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
     // Fetch data comboboxs
     fetch("/getDataComboboxs")
         .then(response => {
@@ -1267,7 +1285,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Error fetching lines and states:", error);
         });
 });
-
+//full screen
 document.addEventListener("DOMContentLoaded", function () {
     const fullscreenIcon = document.getElementById("fullscreenic");
     const toggleFullscreen = document.getElementById("toggle_fullscreen");
@@ -1296,71 +1314,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-
-document.addEventListener("DOMContentLoaded", function() {
-    const downloadButton = document.getElementById('download-excel');
-    const downloadModal = document.getElementById('downloadModal');
-    const confirmDownload = document.getElementById('confirmDownload');
-    const cancelDownload = document.getElementById('cancelDownload');
-
-    downloadButton.addEventListener('click', function(event) {
-        event.preventDefault();
-        downloadModal.style.display = 'flex'; // Hiển thị modal
-    });
-
-    cancelDownload.addEventListener('click', function() {
-        downloadModal.style.display = 'none'; // Ẩn modal nếu hủy
-    });
-
-    confirmDownload.addEventListener('click', async function() {
-        downloadModal.style.display = 'none'; // Ẩn modal khi xác nhận
-
-        const formatDatetime = (datetime) => {
-            return datetime ? datetime.replace('T', ' ') + ':00' : null;
-        };
-
-        const payload = {
-            line: document.getElementById("line-combobox").value.trim() || null,
-            factory: document.getElementById("factory-combobox").value.trim() || null,
-            nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
-            time_update: formatDatetime(document.getElementById("time_update").value),
-            time_end: formatDatetime(document.getElementById("time_end").value),
-            state: document.getElementById("state-combobox").value || null
-        };
-
-        document.getElementById('loading').style.display = 'block';
-
-        try {
-            const response = await fetch('/downloadExcel', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error("Error downloading Excel:", error);
-            alert("Failed to download the Excel file. Please try again.");
-        } finally {
-            document.getElementById('loading').style.display = 'none';
-        }
-    });
-});
 
 
 
