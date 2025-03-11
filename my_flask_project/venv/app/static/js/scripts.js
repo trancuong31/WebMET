@@ -1197,52 +1197,52 @@ document.addEventListener("DOMContentLoaded", function () {
     // downloadButton.removeEventListener('click', handleDownload);
     // downloadButton.addEventListener('click', handleDownload);
     //Download Excel
-    async function handleDownload(event) {
-        event.preventDefault();
-        const isConfirmed = window.confirm("Large data may slow down the download. Check the filter before downloading. Continue?");
-        if (!isConfirmed) {
-            return;
-        }
-            const formatDatetime = (datetime) => {
-                return datetime ? datetime.replace('T', ' ') + ':00' : null;
-            };
-        const payload = {
-            line: document.getElementById("line-combobox").value.trim() || null,
-            factory: document.getElementById("factory-combobox").value.trim() || null,
-            nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
-            time_update: formatDatetime(document.getElementById("time_update").value),
-            time_end: formatDatetime(document.getElementById("time_end").value),
-            state: document.getElementById("state-combobox").value || null
-        };
-        document.getElementById('loading').style.display = 'block';
-        try {
-            const response = await fetch('/downloadExcel', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error("Error downloading Excel:", error);
-            alert("Failed to download the Excel file. Please try again.");
-        } finally{
-            document.getElementById('loading').style.display = 'none';
-        }
-    }
+    // async function handleDownload(event) {
+    //     event.preventDefault();
+    //     const isConfirmed = window.confirm("Large data may slow down the download. Check the filter before downloading. Continue?");
+    //     if (!isConfirmed) {
+    //         return;
+    //     }
+    //         const formatDatetime = (datetime) => {
+    //             return datetime ? datetime.replace('T', ' ') + ':00' : null;
+    //         };
+    //     const payload = {
+    //         line: document.getElementById("line-combobox").value.trim() || null,
+    //         factory: document.getElementById("factory-combobox").value.trim() || null,
+    //         nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
+    //         time_update: formatDatetime(document.getElementById("time_update").value),
+    //         time_end: formatDatetime(document.getElementById("time_end").value),
+    //         state: document.getElementById("state-combobox").value || null
+    //     };
+    //     document.getElementById('loading').style.display = 'block';
+    //     try {
+    //         const response = await fetch('/downloadExcel', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 'X-Requested-With': 'XMLHttpRequest'
+    //             },
+    //             body: JSON.stringify(payload)
+    //         });
+    //         if (!response.ok) {
+    //             throw new Error(`HTTP error! status: ${response.status}`);
+    //         }
+    //         const blob = await response.blob();
+    //         const url = window.URL.createObjectURL(blob);
+    //         const a = document.createElement('a');
+    //         a.style.display = 'none';
+    //         a.href = url;
+    //         a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    //         document.body.appendChild(a);
+    //         a.click();
+    //         window.URL.revokeObjectURL(url);
+    //     } catch (error) {
+    //         console.error("Error downloading Excel:", error);
+    //         alert("Failed to download the Excel file. Please try again.");
+    //     } finally{
+    //         document.getElementById('loading').style.display = 'none';
+    //     }
+    // }
     // Fetch data comboboxs
     fetch("/getDataComboboxs")
         .then(response => {
@@ -1312,22 +1312,67 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+document.addEventListener("DOMContentLoaded", function() {
+    const downloadButton = document.getElementById('download-excel');
+    const downloadModal = document.getElementById('downloadModal');
+    const confirmDownload = document.getElementById('confirmDownload');
+    const cancelDownload = document.getElementById('cancelDownload');
 
+    downloadButton.addEventListener('click', function(event) {
+        event.preventDefault();
+        downloadModal.style.display = 'flex';
+    });
 
+    cancelDownload.addEventListener('click', function() {
+        downloadModal.style.display = 'none';
+    });
 
+    confirmDownload.addEventListener('click', async function() {
+        downloadModal.style.display = 'none';
 
+        const formatDatetime = (datetime) => {
+            return datetime ? datetime.replace('T', ' ') + ':00' : null;
+        };
 
+        const payload = {
+            line: document.getElementById("line-combobox").value.trim() || null,
+            factory: document.getElementById("factory-combobox").value.trim() || null,
+            nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
+            time_update: formatDatetime(document.getElementById("time_update").value),
+            time_end: formatDatetime(document.getElementById("time_end").value),
+            state: document.getElementById("state-combobox").value || null
+        };
 
+        document.getElementById('loading').style.display = 'block';
 
+        try {
+            const response = await fetch('/downloadExcel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            });
 
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-
-
-
-
-
-
-
-
-
-
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error downloading Excel:", error);
+            alert("Failed to download the Excel file. Please try again.");
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    });
+});

@@ -483,43 +483,6 @@ line-height: 25px;
 color: #006eff;
 text-shadow: 0 0 10px rgba(0, 38, 255, 0.5), 0 0 20px rgba(0, 47, 255, 0.39);
 }
-<<<<<<< HEAD
-  .conTBottom {
-    position: fixed;
-    bottom: 20px;
-    right: 30px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-  }
-  h1{
-    font-size: 30px;
-    color: #fff;
-    text-transform: uppercase;
-    font-weight: 300;
-    text-align: center;
-    margin-bottom: 15px;
-    height: 65px;
-    color: white;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.466), 0 0 20px rgba(255, 255, 255, 0.5);
-  
-  }
-  .mainContent{
-    margin-left: 3%;
-    margin-right: 1%;
-  }
-  .content{
-    position: relative;
-  }
-  .filter{
-    position: absolute;
-    top: 0;
-    left: 0;
-    flex-wrap: wrap;
-    padding: 5px;
-    color: #ffffff;
-    border-bottom: #fff;
-=======
 .conTBottom {
   position: fixed;
   bottom: 20px;
@@ -538,7 +501,6 @@ h1{
   height: 65px;
   color: white;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.466), 0 0 20px rgba(255, 255, 255, 0.5);
->>>>>>> 6c55b46efa61332b9d0d9691dcb924b0f7b457f2
 
 }
 .mainContent{
@@ -814,16 +776,6 @@ animation: moveUpDown 3s infinite;
   100% {
       transform: translateY(0); 
   }
-<<<<<<< HEAD
-  .infor {
-    position: absolute;
-    top: 6.6em;
-    font-size: 1em;
-    font-weight: 900;
-    color: rgba(0, 225, 255, 0.9);
-    text-shadow: 0 0 10px rgba(0, 225, 255, 0.8), 0 0 20px rgba(0, 225, 255, 0.6);
-=======
->>>>>>> 6c55b46efa61332b9d0d9691dcb924b0f7b457f2
   }
 .info1::before {
   content: '';
@@ -1197,55 +1149,6 @@ text-decoration: underline !important;
 }
 
 .modal {
-<<<<<<< HEAD
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.btn-confirm, .btn-cancel {
-  margin: 10px;
-  padding: 5px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.btn-confirm {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.btn-cancel {
-  background-color: #f44336;
-  color: white;
-}
-/* Overlay nền mờ */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Nền đen mờ */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-=======
 position: fixed;
 top: 0;
 left: 0;
@@ -1292,57 +1195,10 @@ display: flex;
 justify-content: center;
 align-items: center;
 z-index: 1000;
->>>>>>> 6c55b46efa61332b9d0d9691dcb924b0f7b457f2
 }
 
 /* Modal chính */
 .modal-content {
-<<<<<<< HEAD
-  background-color: white;
-  padding: 20px;
-  border-radius: 12px;
-  width: 400px;
-  margin-left: 3%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  animation: fadeIn 0.5s ease;
-}
-
-/* Nút xác nhận và hủy */
-.modal-buttons {
-  margin-top: 15px;
-  text-align: right;
-}
-
-.modal-buttons button {
-  margin-left: 10px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.modal-buttons button:hover {
-  background-color: #e0e0e0;
-}
-
-.modal-buttons .confirm {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.modal-buttons .confirm:hover {
-  background-color: #45a049;
-}
-
-.modal-buttons .cancel {
-  background-color: #f44336;
-  color: white;
-}
-
-.modal-buttons .cancel:hover {
-  background-color: #e53935;
-=======
 background-color: rgb(250, 239, 239);
 padding: 20px;
 border-radius: 12px;
@@ -1389,23 +1245,10 @@ color: white;
 .modal-buttons .cancel:hover {
 background-color: #e53935;
 transform: translateY(-3px);
->>>>>>> 6c55b46efa61332b9d0d9691dcb924b0f7b457f2
 }
 
 /* Hiệu ứng mờ dần */
 @keyframes fadeIn {
-<<<<<<< HEAD
-  from {
-      opacity: 0;
-      transform: scale(0.7);
-  }
-  to {
-      opacity: 1;
-      transform: scale(1);
-  }
-}
-
-=======
 from {
     opacity: 0;
     transform: scale(0.7);
@@ -1420,4 +1263,3 @@ to {
   height: 40px;
   vertical-align: middle;
 }
->>>>>>> 6c55b46efa61332b9d0d9691dcb924b0f7b457f2
