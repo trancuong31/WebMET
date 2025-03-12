@@ -800,7 +800,7 @@ def fetch_filtered_data(filters):
         cursor = connection.cursor()
 
         query = """
-            SELECT line, factory, name_machine,
+            SELECT line, factory, name_machine, model_name, serial_number,
                    force_1, force_2, force_3, force_4, 
                    TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update, 
                    state
@@ -854,8 +854,8 @@ def download_excel():
         filters = request.json
         result = fetch_filtered_data(filters)
         df = pd.DataFrame(result, columns=[
-            'LINE','FACTORY', 'NAME_MACHINE', 'FORCE_1', 'FORCE_2',
-            'FORCE_3', 'FORCE_4', 'STATE', 'TIME_UPDATE'
+            'LINE','FACTORY', 'NAME_MACHINE','MODEL_NAME','SERIAL_NUMBER', 'FORCE_1', 'FORCE_2',
+            'FORCE_3', 'FORCE_4', 'TIME_UPDATE', 'STATE'
         ])
         df = df.fillna("N/A")
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')

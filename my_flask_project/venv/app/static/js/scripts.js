@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const stateClass = row.state === 'PASS' ? 'state-pass' : 'state-fail';
             return `
                 <tr>
-                    <td>${row.stt}</td>
+                    <td class ="stt">${row.stt}</td>
                     <td>${row.factory ?? 'N/A'}</td>
                     <td>${row.line ?? 'N/A'}</td>
                     <td>${row.name_machine ?? 'N/A'}</td>
@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <td>${row.force_2 ?? 'N/A'}</td>
                     <td>${row.force_3 ?? 'N/A'}</td>
                     <td>${row.force_4 ?? 'N/A'}</td>
-                    <td>${row.time_update ?? 'N/A'}</td>
+                    <td class ="time">${row.time_update ?? 'N/A'}</td>
                     <td class="${stateClass}">${row.state ?? 'N/A'}</td>
                 </tr>
             `;
@@ -690,17 +690,17 @@ document.addEventListener("DOMContentLoaded", function () {
         rows.forEach(row => {
             let tr = document.createElement("tr");
             tr.innerHTML = `
-                <td>${row.stt}</td>
+                <td class ="stt">${row.stt}</td>
                 <td>${row.factory ?? 'N/A'}</td>
                 <td>${row.line ?? 'N/A'}</td>
                 <td>${row.serial_number ?? 'N/A'}</td>
                 <td>${row.model_name ?? 'N/A'}</td>
                 <td>${row.name_machine ?? 'N/A'}</td>
-                <td>${row.force_1 ?? 'N/A'}</td>
+                <td >${row.force_1 ?? 'N/A'}</td>
                 <td>${row.force_2 ?? 'N/A'}</td>
                 <td>${row.force_3 ?? 'N/A'}</td>
                 <td>${row.force_4 ?? 'N/A'}</td>
-                <td>${row.time_update ?? 'N/A'}</td>
+                <td class = "time">${row.time_update ?? 'N/A'}</td>
                 <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state ?? 'N/A'}</td>
             `;
             fragment.appendChild(tr);

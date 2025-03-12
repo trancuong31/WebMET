@@ -9,6 +9,7 @@
     <script src="{{ url_for('static', filename='js/exporting.js') }}"></script>
     <script src="{{ url_for('static', filename='js/export-data.js') }}"></script>
     <script src="{{ url_for('static', filename='js/drilldown.js') }}"></script>
+    
     <link
       rel="stylesheet" type="text/css"
       href="{{ url_for('static', filename='css/all.min.css')}}"
@@ -40,7 +41,7 @@
               <span class="logo"></span>
             </a>
           </li>
-          <hr style="width: 16em; border: 1px solid rgb(255, 255, 255)">
+          <!-- <hr style="width: 16em; border: 1px solid rgb(255, 255, 255)"> -->
           <li class="navbar-item flexbox-left">
             <a class="navbar-item-inner flexbox-left" style="color: #fff;"  href="{{ url_for('dashboard_page') }}" >
               <div class="navbar-item-inner-icon-wrapper flexbox">
@@ -152,17 +153,17 @@
               <table  cellpadding="0" cellspacing="0" border="0">
                 <thead>
                   <tr>
-                    <th>STT</th>
+                    <th class="stt">STT</th>
                     <th>FACTORY</th>
                     <th>LINE</th>
                     <th>MACHINE NAME</th>
                     <th>MODEL NAME</th>
                     <th>SERIAL NUMBER</th>
-                    <th>FORCE 1</th>
+                    <th >FORCE 1</th>
                     <th>FORCE 2</th>
                     <th>FORCE 3</th>
                     <th>FORCE 4</th>
-                    <th>TIME</th>
+                    <th class="time">TIME</th>
                     <th>STATE</th>
                   </tr>
                 </thead>
@@ -357,6 +358,7 @@
       </div>
   </div>
 </div>
+
 
   </body>
 </html>

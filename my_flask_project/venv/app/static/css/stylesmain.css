@@ -110,7 +110,12 @@ a:visited {
   overflow-y: auto;
   overflow-x: hidden;
 }
-
+/* .mainContent {
+  transition: margin-left 0.3s cubic-bezier(var(--transition-main), 1);
+}
+#navbar:hover + .mainContent {
+  margin-left: 13.5em;
+} */
 #navbar:hover {
   width: 16em;
 }
