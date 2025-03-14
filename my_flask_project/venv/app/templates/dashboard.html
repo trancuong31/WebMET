@@ -13,8 +13,7 @@
     <link
       rel="stylesheet" type="text/css"
       href="{{ url_for('static', filename='css/all.min.css')}}"
-    />
-    
+    />    
     <link
       rel="stylesheet" type="text/css"
       href="{{ url_for('static', filename='css/styledashboard.css')}}"
@@ -95,10 +94,70 @@
           <li class="navbar-item flexbox-left">
             <a class="navbar-item-inner flexbox-left">
               <div class="navbar-item-inner-icon-wrapper flexbox">
-                <i class="fas fa-bell"></i>
+                <i class="fas fa-save"></i>
               </div>
               <div class="link-text">
                 <span  class="nav-text">Mục F</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-upload"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục G</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-home"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục H</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fab fa-linkedin"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục J</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục K</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-shopping-cart"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục L</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục M</span>
               </div>
             </a>
           </li>
@@ -118,10 +177,11 @@
         <div  class="overlay-image" alt="overlay"></div>
         <header>
           <h4>DASHBOARD</h4>
-          <h1 style="display: inline;"> Screw machine Infomation</h1>
+          <h1 style="display: inline;"> Screw machine Infomation</h1>          
         </header>
         <div class="mainContent">
           <h1 style="padding: 10px;"></h1>
+          <div class="solution"><img id="solution" src="{{ url_for('static', filename='images/solution.png') }}"  alt="Solution"></div>
           <div class="content">
             <div class="content-top">
               <div class="info1" >
@@ -177,14 +237,15 @@
             </div>
             <!-- filter -->
             <div class="filter">
-            Factory: <select id="factory-combobox">
+            Factory: <select id="factory-combobox" style="cursor: pointer;">
             </select>
-            Line: <select id="line-combobox">
+            Line: <select id="line-combobox" style="cursor: pointer;">
             </select>
-            Name machine: <select id="nameMachine-combobox" style="width: 80px;"></select>
-            Time: <input style="width: 180px; border-radius: 2px;"  type="datetime-local" name="time_update" id="time_update">
+            Name machine: <select id="nameMachine-combobox" style="width: 80px; cursor: pointer;"></select>
+            Model: <select id="modelNamecombobox" style="width: 70px; cursor: pointer;"></select>
+            Time: <input style="width: 180px; border-radius: 2px; "  type="datetime-local" name="time_update" id="time_update">
             To: <input style="width: 180px; border-radius: 2px;"  type="datetime-local" name="time_end" id="time_end">
-            State: <select id="state-combobox">
+            State: <select id="state-combobox" style="cursor: pointer;" >
             </select>
               <input style=" transition: all .3s ease-in-out; padding: 0.5em; width: 5em; " type="submit" title="Query data" value="Search" id="filter">
             </div>
@@ -198,8 +259,7 @@
                 alt="Fullscreen Icon"
               />
             </a>
-          </div>
-        
+          </div>        
         <div class="chartAll">
           <div class="chartContent">
             <div class="pagination"  id="pagination">
@@ -343,22 +403,59 @@
           </div>
         </div>
       </div>
-
-    </div>
-
-    
+    </div>    
 </div>
 <div id="downloadModal" class="modal-overlay" style="display: none;">
   <div class="modal-content">
       <h6 style="color: #000; text-transform: capitalize;"> <span> <img src="/static/images/warning.png" id="imgwarning" alt=""></span>Confirm download</h6>
-      <p style="color: #ff0000;">Large data may slow down the download. Check the filter before downloading. Continue?</p>
+      <p style="color: #f74141; font-family:'Lucida Sans', Arial, sans-serif">Large data may slow down the download. Check the filter before downloading. Continue?</p>
       <div class="modal-buttons">
           <button id="cancelDownload" class="cancel">Cancel</button>
           <button id="confirmDownload" class="confirm">Continute</button>
       </div>
   </div>
 </div>
-
-
+<div id="solutionModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content1">
+    <span class="close-modal">&times;</span>
+    <div id="titleModal">recommend solution</div>
+    <table cellpadding="0" cellspacing="0" border="0">
+      <thead>
+        <tr>
+            <th>ID</th>
+            <th>ERROR CODE</th>
+            <th>name</th>
+            <th>problem</th>
+            <th>solution</th>
+            <th>action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>E10001</td>
+            <td>A</td>
+            <td>B</td>
+            <td>B</td>
+            <td>
+                <button class="btn btn-edit">Edit</button>
+                <button class="btn btn-delete">Delete</button>
+            </td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>E10002</td>
+            <td>C</td>
+            <td>D</td>
+            <td>B</td>
+            <td>
+                <button class="btn btn-edit">Edit</button>
+                <button class="btn btn-delete">Delete</button>
+            </td>
+        </tr>
+    </tbody>
+    </table>
+  </div>
+</div>
   </body>
 </html>

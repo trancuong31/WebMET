@@ -456,6 +456,7 @@ def filter_data():
         line = data.get('line') if data.get('line') != "" else None
         factory = data.get('factory') if data.get('factory') != "" else None
         nameMachine = data.get('nameMachine') if data.get('nameMachine') != "" else None
+        model = data.get('model') if data.get('model') != "" else None
         time_update = data.get('time_update') if data.get('time_update') != "" else None
         time_end = data.get('time_end') if data.get('time_end') != "" else None
         state = data.get('state') if data.get('state') != "" else None
@@ -490,6 +491,10 @@ def filter_data():
             base_query += " AND UPPER(factory) = UPPER(:factory)"
             count_query += " AND UPPER(factory) = UPPER(:factory)"
             params['factory'] = factory
+        if model:
+            base_query += " AND UPPER(model_name) = UPPER(:model_name)"
+            count_query += " AND UPPER(model_name) = UPPER(:model_name)"
+            params['MODEL_NAME'] = model
         if nameMachine:
             base_query += " AND UPPER(NAME_MACHINE) = UPPER(:NAME_MACHINE)"
             count_query += " AND UPPER(NAME_MACHINE) = UPPER(:NAME_MACHINE)"
@@ -740,12 +745,14 @@ def get_lines():
             SELECT 'NameMachine', NAME_MACHINE FROM SCREW_FORCE_INFO WHERE NAME_MACHINE IS NOT NULL
             UNION
             SELECT 'Factory', FACTORY FROM SCREW_FORCE_INFO WHERE FACTORY IS NOT NULL
+            UNION
+            SELECT 'ModelName', MODEL_NAME FROM SCREW_FORCE_INFO WHERE MODEL_NAME IS NOT NULL
         """
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(query)
                 rows = cursor.fetchall()
-        result = {"lines": [], "states": [], "nameMachines": [], "factories": []}
+        result = {"lines": [], "states": [], "nameMachines": [], "factories": [], "modelNames": []}
         for category, value in rows:
             if category == 'Line':
                 result["lines"].append(value)
@@ -755,7 +762,8 @@ def get_lines():
                 result["nameMachines"].append(value)
             elif category == 'Factory':
                 result["factories"].append(value)
-
+            elif category == 'ModelName':
+                result["modelNames"].append(value)
         return jsonify(result)
     except Exception as e:
         print(f"Error fetching: {e}")

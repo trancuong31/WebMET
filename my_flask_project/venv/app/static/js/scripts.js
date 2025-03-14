@@ -37,11 +37,12 @@ document.addEventListener("DOMContentLoaded", function () {
         isFiltering = true;
         stopPolling();    
         fetchFilteredData(1, false);
-    });    
+    });
     function fetchFilteredData(page = 1, isPagination = false) {
         // Lấy giá trị từ các input
         const line = document.getElementById('line-combobox').value.trim();
         const factory = document.getElementById('factory-combobox').value.trim();
+        const model = document.getElementById('modelNamecombobox').value.trim();
         const time_update = document.getElementById('time_update').value.trim();
         const time_end = document.getElementById('time_end').value.trim();
         const state = document.getElementById('state-combobox').value.trim();
@@ -52,6 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const payload = {
             line: line || null,
             factory: factory || null,
+            model: model || null,
             nameMachine: nameMachine||null,
             time_update: formatDatetime(time_update),
             time_end: formatDatetime(time_end),
@@ -349,66 +351,68 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("No data available.");
             return { dates: [], seriesData: [], drilldownSeries: [] };
         }
-        const dates = columnData
-            .map(item => item.date)
-            .sort((a, b) => new Date(a) - new Date(b));
+        const dates = [...new Set(columnData.map(item => item.date))].sort((a, b) => new Date(a) - new Date(b));
     
         let machineMap = {};
         let drilldownSeries = [];
     
         columnData.forEach(day => {
             const dayIndex = dates.indexOf(day.date);
-            if (!day.machines || day.machines.length === 0) {
-                return;
-            }
+            if (!day.machines || day.machines.length === 0) return;
+    
+            day.machines.sort((a, b) => b.fail_count - a.fail_count);
             day.machines.forEach(machine => {
                 if (!machineMap[machine.name]) {
                     machineMap[machine.name] = Array(dates.length).fill(null);
                 }
                 machineMap[machine.name][dayIndex] = machine.fail_count;
+    
+                // Chuẩn bị dữ liệu drilldown với `hourly_data`
                 let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
-                if (machine.hourly_data && Array.isArray(machine.hourly_data)) {
+                if (Array.isArray(machine.hourly_data)) {
+                    // Sắp xếp theo giờ để đảm bảo đúng thứ tự
+                    machine.hourly_data.sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
+    
                     machine.hourly_data.forEach(hourItem => {
                         fullHourlyData[parseInt(hourItem.hour)][1] = hourItem.fail_count;
                     });
                 }
+    
                 drilldownSeries.push({
-
                     id: `${machine.name}-${day.date}`,
-                    name: `Detail for ${machine.name} day ${day.date}`,
+                    name: `Detail for ${machine.name} on ${day.date}`,
                     data: fullHourlyData,
                     xAxis: 1
                 });
             });
         });
+        
+        // Tạo seriesData và sắp xếp theo tổng `fail_count` giảm dần
         let seriesData = Object.keys(machineMap).map(machineName => ({
             name: machineName,
             data: machineMap[machineName],
             drilldown: machineName,
-            yAxis: 0 
-        }));
+            yAxis: 0
+        })).sort((a, b) => {
+            const totalA = a.data.reduce((sum, val) => sum + (val || 0), 0);
+            const totalB = b.data.reduce((sum, val) => sum + (val || 0), 0);
+            return totalB - totalA;
+        });
         
-        console.log(dates)
-        console.log(seriesData)
-        console.log(drilldownSeries)
         return { dates, seriesData, drilldownSeries };
-    }     
+    }    
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
     
         let chart = Highcharts.chart('container-toperr', {
-            chart: { type: 'column', 
-                backgroundColor: null, 
-                zooming: {
-                type: 'x'
-              },
-              animation: {
-                duration: 600, 
-                easing: 'easeOutExpo'
-            } },
-            
+            chart: { 
+                type: 'column',
+                backgroundColor: null,
+                zooming: { type: 'x' },
+                animation: { duration: 600, easing: 'easeOutExpo' }
+            },
             title: {
-                text: 'Top 5 Machine Fail Per Day',
+                text: 'Top 3 Machine Fail Per Day',
                 align: 'left',
                 style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
             },
@@ -422,7 +426,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 {
                     title: { text: 'Hour', style: { color: '#fff', fontSize: '12px' } },
                     labels: { style: { color: '#fff', fontSize: '12px' } },
-                    categories: Array.from({ length: 24 }, (_, i) => `${i}:00 - ${i+1}:00`),
+                    categories: Array.from({ length: 24 }, (_, i) => `${i}:00 - ${i + 1}:00`),
                     visible: false
                 }
             ],
@@ -464,16 +468,14 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             accessibility: { enabled: false },
             series: seriesData,
-            drilldown: {
-                series: drilldownSeries
-            },
+            drilldown: { series: drilldownSeries },
             credits: { enabled: false },
             legend: {
                 align: 'center',
                 verticalAlign: 'bottom',
                 itemStyle: { color: '#fff' },
                 itemHoverStyle: { color: '#cccccc' }
-            },            
+            },
             exporting: {
                 enabled: true,
                 buttons: {
@@ -494,15 +496,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
         });
+    
         Highcharts.addEvent(chart, 'drillup', function () {
             chart.update({
-                xAxis: [
-                    { visible: true },  
-                    { visible: false }
-                ]
+                xAxis: [{ visible: true }, { visible: false }]
             });
         });
-    }
+    }    
     function drawColumn2Chart(data) {
         try {
             const categories = data.map(item => item.date);
@@ -857,43 +857,44 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("No data available.");
             return { dates: [], seriesData: [], drilldownSeries: [] };
         }
-        const dates = columnData
-            .map(item => item.date)
-            .sort((a, b) => new Date(a) - new Date(b));
-        let machineMap = {};
+        const dates = [...new Set(columnData.map(item => item.date))].sort((a, b) => new Date(a) - new Date(b));
+        
+        let seriesData = [];
         let drilldownSeries = [];
-        columnData.forEach(day => {
-            const dayIndex = dates.indexOf(day.date);
-            if (!day.machines || day.machines.length === 0) {
-                return;
-            }
-            day.machines.forEach(machine => {
-                if (!machineMap[machine.name]) {
-                    machineMap[machine.name] = Array(dates.length).fill(null);
+    
+        dates.forEach(date => {
+            const dayData = columnData.find(item => item.date === date);
+            if (!dayData || !dayData.machines || dayData.machines.length === 0) return;
+    
+            const sortedMachines = [...dayData.machines].sort((a, b) => b.fail_count - a.fail_count);
+            
+            const topMachines = sortedMachines.slice(0, 3);
+    
+            topMachines.forEach(machine => {
+                let existingSeries = seriesData.find(series => series.name === machine.name);
+                if (!existingSeries) {
+                    existingSeries = { name: machine.name, data: Array(dates.length).fill(null), stack: "daily_failures", drilldown: machine.name };
+                    seriesData.push(existingSeries);
                 }
-                machineMap[machine.name][dayIndex] = machine.fail_count;
-                let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
-                if (machine.hourly_data && Array.isArray(machine.hourly_data)) {
+                existingSeries.data[dates.indexOf(date)] = machine.fail_count;
+                let hourlyData = Array.from({ length: 24 }, (_, hour) => [hour, 0]);
+                if (Array.isArray(machine.hourly_data)) {
                     machine.hourly_data.forEach(hourItem => {
-                        fullHourlyData[parseInt(hourItem.hour)][1] = hourItem.fail_count;
+                        const hour = parseInt(hourItem.hour);
+                        hourlyData[hour][1] = hourItem.fail_count;
                     });
                 }
                 drilldownSeries.push({
-                    id: `${machine.name}-${day.date}`,
-                    name: `Detail for ${machine.name} day ${day.date}`,
-                    data: fullHourlyData,
+                    id: `${machine.name}-${date}`,
+                    name: `Detail for ${machine.name} on ${date}`,
+                    data: hourlyData,
                     xAxis: 1
                 });
             });
         });
-        let seriesData = Object.keys(machineMap).map(machineName => ({
-            name: machineName,
-            data: machineMap[machineName],
-            drilldown: machineName,
-            yAxis: 0
-        }));
+    
         return { dates, seriesData, drilldownSeries };
-    }
+    }        
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
     
@@ -1280,6 +1281,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 option.textContent = nameMachine;
                 nameMachineCombobox.appendChild(option);
             });
+
+            modelNamecombobox.innerHTML = '<option value="">All</option>';
+            data.modelNames.forEach(modelName => {
+                const option = document.createElement("option");
+                option.value = modelName;
+                option.textContent = modelName;
+                modelNamecombobox.appendChild(option);
+            });
         })
         .catch(error => {
             console.error("Error fetching lines and states:", error);
@@ -1311,29 +1320,40 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 });
-
+//modal download
 document.addEventListener("DOMContentLoaded", function() {
     const downloadButton = document.getElementById('download-excel');
     const downloadModal = document.getElementById('downloadModal');
     const confirmDownload = document.getElementById('confirmDownload');
     const cancelDownload = document.getElementById('cancelDownload');
-
+    const solutionButton = document.getElementById('solution');
+    const closeModal = document.querySelector(".close-modal");
+    const modal = document.getElementById("solutionModal");
     downloadButton.addEventListener('click', function(event) {
         event.preventDefault();
         downloadModal.style.display = 'flex';
     });
-
+    solutionButton.addEventListener('click', function(event) {
+        event.preventDefault();
+        solutionModal.style.display = 'flex';
+    });
+    closeModal.addEventListener("click", function () {
+        modal.style.display = "none";
+    });
     cancelDownload.addEventListener('click', function() {
         downloadModal.style.display = 'none';
     });
-
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    });
     confirmDownload.addEventListener('click', async function() {
         downloadModal.style.display = 'none';
 
         const formatDatetime = (datetime) => {
             return datetime ? datetime.replace('T', ' ') + ':00' : null;
         };
-
         const payload = {
             line: document.getElementById("line-combobox").value.trim() || null,
             factory: document.getElementById("factory-combobox").value.trim() || null,
