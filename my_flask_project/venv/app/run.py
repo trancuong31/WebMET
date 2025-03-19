@@ -391,26 +391,26 @@ def get_column2_chart_data(start_date=None, end_date=None):
     fpy_chart_data = list(date_dict.values())
     return fpy_chart_data
 # Dashboard
-@app.route('/dashboard', methods=['GET'])
-def dashboard():
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = 10
-        rows = get_paginated_data(page, per_page)
-        total_records = get_total_records()
-        pagination_data = calculate_pagination(page, per_page, total_records)
-        pie_chart_data = get_pie_chart_data()
+# @app.route('/dashboard', methods=['GET'])
+# def dashboard():
+#     try:
+#         page = request.args.get('page', 1, type=int)
+#         per_page = 10
+#         rows = get_paginated_data(page, per_page)
+#         total_records = get_total_records()
+#         pagination_data = calculate_pagination(page, per_page, total_records)
+#         pie_chart_data = get_pie_chart_data()
 
-        return jsonify({
-            "data": rows,
-            "per_page": per_page,
-            "total_records": total_records,
-            **pagination_data, 
-            "pie_chart_data": pie_chart_data
-        })
-    except Exception as e:
-        app.logger.error(f"Error querying data: {str(e)}")
-        return render_template('dashboard.html', error=str(e))
+#         return jsonify({
+#             "data": rows,
+#             "per_page": per_page,
+#             "total_records": total_records,
+#             **pagination_data, 
+#             "pie_chart_data": pie_chart_data
+#         })
+#     except Exception as e:
+#         app.logger.error(f"Error querying data: {str(e)}")
+#         return render_template('dashboard.html', error=str(e))
 
 # get data table
 @app.route('/api/dashboard/table', methods=['GET'])
@@ -740,7 +740,7 @@ def get_lines():
         query = """
             SELECT 'Line', Line FROM SCREW_FORCE_INFO WHERE LINE IS NOT NULL
             UNION
-            SELECT 'State', State FROM SCREW_FORCE_INFO WHERE State IS NOT NULL
+            SELECT 'State', State FROM SCREW_FORCE_INFO WHERE STATE IS NOT NULL
             UNION
             SELECT 'NameMachine', NAME_MACHINE FROM SCREW_FORCE_INFO WHERE NAME_MACHINE IS NOT NULL
             UNION
@@ -822,6 +822,9 @@ def fetch_filtered_data(filters):
         if filters.get('factory'):
             query += " AND UPPER(factory) = UPPER(:factory)"
             params['factory'] = filters['factory']
+        if filters.get('model'):
+            query += " AND UPPER(MODEL_NAME) = UPPER(:model)"
+            params['model'] = filters['model']
         if filters.get('nameMachine'):
             query += " AND UPPER(name_machine) = UPPER(:name_machine)"
             params['name_machine'] = filters['nameMachine']
@@ -898,6 +901,6 @@ def download_excel():
         return redirect(url_for('dashboard_page'))
 
 if __name__=='__main__':
-    app.run(debug=True)
+    app.run(debug=True, threaded = True)
 
 

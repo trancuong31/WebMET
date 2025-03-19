@@ -20,22 +20,13 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Polling stopped");
         }
     }
-    /* function startPolling() {
-    //     if (!isFiltering) {
-    //         fetchPage(currentPage);
-    //         pollingTimer = setInterval(() => {
-    //             fetchPage(currentPage);
-    //         }, POLLING_INTERVAL);
-    //         console.log("Polling started");
-    //     }
-    // } */
-
     // Xử lý sự kiện filter
     document.getElementById('filter').addEventListener('click', function (event) {
         event.preventDefault();
         this.dataset.filtering = 'true'; 
         isFiltering = true;
         stopPolling();    
+        
         fetchFilteredData(1, false);
     });
     function fetchFilteredData(page = 1, isPagination = false) {
@@ -46,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const time_update = document.getElementById('time_update').value.trim();
         const time_end = document.getElementById('time_end').value.trim();
         const state = document.getElementById('state-combobox').value.trim();
-        const nameMachine = document.getElementById('nameMachine-combobox').value.trim();
+        const nameMachine = document.getElementById('nameMachine-combobox').value.trim();        
         const formatDatetime = (datetime) => {
             return datetime ? datetime.replace('T', ' ') + ':00' : null;
         };
@@ -636,7 +627,7 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
     const tableBody = document.getElementById("table-body");
     const paginationDiv = document.getElementById("pagination");
-    const POLLING_INTERVAL = 60000;
+    const POLLING_INTERVAL = 300000;
     let currentPage = 1;
     console.log("Dashboard loaded and polling data :", POLLING_INTERVAL +"ms");
     let chart;
@@ -897,7 +888,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }        
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
-    
+        if (!seriesData || seriesData.length === 0) {
+            console.warn("No data available for top err chart.");
+            document.getElementById('container-toperr').innerHTML = "<p style='color: red; text-align: center; margin-top: 11em'>No data available</p>";
+            return;
+        }
         let chart = Highcharts.chart('container-toperr', {
             chart: { type: 'column', backgroundColor: null },
             title: {
@@ -929,7 +924,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 column: {
                     groupPadding: 0.1,
                     states: { hover: { brightness: 0.2 } },
-                    stacking: 'normal'
+                    stacking: seriesData.length > 0 ? 'normal' : null
                 },
                 series: {
                     cursor: 'pointer',
@@ -1002,10 +997,10 @@ document.addEventListener("DOMContentLoaded", function () {
             const passData = data.map(item => isNaN(item.count_pass) ? 0 : item.count_pass);
             const failData = data.map(item => isNaN(item.count_fail) ? 0 : item.count_fail);
             const fpyData = data.map(item => isNaN(item.fpy) ? 0 : item.fpy);
-            if (passData.every(val => val === 0) && failData.every(val => val === 0) && fpyData.every(val => val === 0)) {
-                console.warn("No valid data to display in the chart.");
-                return;
-            }    
+            // if (passData.every(val => val === 0) && failData.every(val => val === 0) && fpyData.every(val => val === 0)) {
+            //     console.warn("No valid data to display in the chart.");
+            //     return;
+            // }    
             Highcharts.chart('container3', {
                 chart: {
                     zooming: {
@@ -1135,7 +1130,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     startPolling();
 });
-//Loading data 
+//Loading data
 async function fetchData(page) {
     document.getElementById("loading").style.display = "block";
   
@@ -1189,9 +1184,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 failRecords.textContent = "Error";
                 fpyPercentage.textContent = "Error";
             })
-            .finally(() => {
-                setTimeout(fetchContentTop, POLLING_INTERVAL); 
-            });
+            // .finally(() => {
+            //     setTimeout(fetchContentTop, POLLING_INTERVAL); 
+            // });
     }
     fetchContentTop();
     
@@ -1356,15 +1351,14 @@ document.addEventListener("DOMContentLoaded", function() {
         };
         const payload = {
             line: document.getElementById("line-combobox").value.trim() || null,
+            model: document.getElementById("modelNamecombobox").value.trim() || null,
             factory: document.getElementById("factory-combobox").value.trim() || null,
             nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
             time_update: formatDatetime(document.getElementById("time_update").value),
             time_end: formatDatetime(document.getElementById("time_end").value),
             state: document.getElementById("state-combobox").value || null
         };
-
         document.getElementById('loading').style.display = 'block';
-
         try {
             const response = await fetch('/downloadExcel', {
                 method: 'POST',

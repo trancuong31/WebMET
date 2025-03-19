@@ -535,6 +535,7 @@ div#container-toperr {
   figure.highcharts-figure {
     color: blue
   }
+
 #filter{
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(66, 153, 225, 0.2);
@@ -602,9 +603,12 @@ div#container-toperr {
 .solution{
   position: absolute;
   top: 60px;
-
   width: 50px;
   height: 50px;
+  transition: .1s ease-in-out;
+}
+.solution:active{
+  transform: scale(0.9);
 }
 .solution img{
   width: 100%;
@@ -1220,7 +1224,7 @@ z-index: 1000;
 
 /* Modal chính */
 .modal-content {
-background: linear-gradient(to bottom, rgb(204, 193, 193), rgb(248, 222, 222));
+background: linear-gradient(to bottom, rgb(255, 255, 255), rgb(255, 255, 255));
 padding: 20px;
 border-radius: 12px;
 width: 400px;
@@ -1230,15 +1234,14 @@ animation: fadeIn 0.5s ease;
 }
 .modal-content1 {
   position: relative;
-  background-image: 
+  background-image:
   linear-gradient(
-    rgba(54, 54, 54, 0.75),
-    rgba(0, 0, 0, 0.75) 
+    rgba(53, 52, 52, 0.75),
+    rgba(0, 0, 0, 0.75)
   ),
   url('/static/images/cover9.jpg');
-
+  border: 1px solid rgba(21, 226, 253, 0.5);
   padding: 20px;
-  border-radius: 6px;
   width: 1200px;
   margin-left: 2%;
   height: 700px;
@@ -1246,6 +1249,109 @@ animation: fadeIn 0.5s ease;
   animation: fadeIn 0.5s ease;
   transition: transform 0.5s ease;
 }
+tr:hover {
+  background-color: rgba(18, 214, 240, 0.199);
+}
+/* Thêm các góc bo */
+.modal-content1::before,
+.modal-content1::after,
+.corner-tl,
+.corner-tr,
+.corner-bl,
+.corner-br {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: rgba(21, 226, 253, 0.8);
+  border-style: solid;
+  border-width: 0;
+  pointer-events: none;
+}
+
+.corner-tl {
+  top: 0;
+  left: 0;
+  border-top-width: 2px;
+  border-left-width: 2px;
+}
+
+.corner-tr {
+  top: 0;
+  right: 0;
+  border-top-width: 2px;
+  border-right-width: 2px;
+}
+
+.corner-bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+}
+
+.corner-br {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 2px;
+  border-right-width: 2px;
+}
+
+/* Thêm đường viền trên dưới */
+.border-top, .border-bottom {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background-color: rgba(21, 226, 253, 0.5);
+  opacity: 0.7;
+}
+
+.border-top {
+  top: 0;
+}
+
+.border-bottom {
+  bottom: 0;
+}
+
+/* Thêm đường viền trái phải */
+.border-left, .border-right {
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  width: 1px;
+  background-color: rgba(21, 226, 253, 0.5);
+  opacity: 0.7;
+}
+
+.border-left {
+  left: 0;
+}
+
+.border-right {
+  right: 0;
+}
+/* Hiệu ứng Rainbow Gradient */
+.rainbow-text {
+  font-size: 3rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, 
+    #f7efef, #f5caa0, #ffff00, #00ff00, #0000ff, #ccace4, #4af5de);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-align: center;
+  animation: rainbow 8s ease infinite;
+}
+
+@keyframes rainbow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .modal-overlay.hidden {
   opacity: 0;
   visibility: hidden;
@@ -1256,7 +1362,6 @@ animation: fadeIn 0.5s ease;
   color: #fff;
   right: 15px;
   font-size: 36px;
-  font-weight: bold;
   cursor: pointer;
   transition: color 0.3s ease;
 }  
@@ -1287,6 +1392,7 @@ transition: ease-in-out 0.2s;
   border: none;
   cursor: pointer;
   width: 80%;
+  font-size: 12px;
   transition: ease-in-out 0.2s;
   border-radius: 5px;
 }
@@ -1346,4 +1452,40 @@ to {
   width: 40px;
   height: 40px;
   vertical-align: middle;
+}
+#solutionError{
+  text-align: justify;
+  font-size: 12px;
+}
+
+.tableSolution {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.tableSolution thead{
+  background-color:rgba(20, 140, 156, 0.705); ;
+}
+#tbodySolution {
+  display: block;
+  width: 1200px;
+  max-height: 550px; 
+  overflow-y: auto;  
+}
+#newSolution{
+  position: absolute;
+  bottom: 0;
+  border-radius: 5px;
+  color: #fff;
+  background-color: #007bff;
+  left: 50%;
+  margin-bottom: 8px;
+}
+#btnadd {
+  color: #fff;
+  height: 20px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
