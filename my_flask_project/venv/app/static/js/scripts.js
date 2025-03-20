@@ -17,10 +17,34 @@ const Utils = {
       .then((response) => {
         if (!response.ok)
           throw new Error(`HTTP error! status: ${response.status}`);
-        return response.json();
+        return response.json(); // For JSON endpoints
       })
       .catch((error) => {
         console.error(`Error fetching data from ${url}:`, error);
+        throw error;
+      })
+      .finally(
+        () => (document.getElementById("loading").style.display = "none")
+      );
+  },
+
+  fetchBlob(url, options = {}) {
+    document.getElementById("loading").style.display = "block";
+    return fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+        ...options.headers,
+      },
+      ...options,
+    })
+      .then((response) => {
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
+        return response.blob(); // For binary endpoints like file downloads
+      })
+      .catch((error) => {
+        console.error(`Error fetching blob from ${url}:`, error);
         throw error;
       })
       .finally(
@@ -36,23 +60,21 @@ const Utils = {
     tableBody.innerHTML = rows
       .map(
         (row) => `
-        <tr>
-          <td class="stt">${row.stt}</td>
-          <td>${row.factory ?? "N/A"}</td>
-          <td>${row.line ?? "N/A"}</td>
-          <td>${row.name_machine ?? "N/A"}</td>
-          <td>${row.model_name ?? "N/A"}</td>
-          <td>${row.serial_number ?? "N/A"}</td>
-          <td>${row.force_1 ?? "N/A"}</td>
-          <td>${row.force_2 ?? "N/A"}</td>
-          <td>${row.force_3 ?? "N/A"}</td>
-          <td>${row.force_4 ?? "N/A"}</td>
-          <td class="time">${row.time_update ?? "N/A"}</td>
-          <td class="${stateClassMap[row.state] || ""}">${
-          row.state ?? "N/A"
-        }</td>
-        </tr>
-      `
+      <tr>
+        <td class="stt">${row.stt}</td>
+        <td>${row.factory ?? "N/A"}</td>
+        <td>${row.line ?? "N/A"}</td>
+        <td>${row.name_machine ?? "N/A"}</td>
+        <td>${row.model_name ?? "N/A"}</td>
+        <td>${row.serial_number ?? "N/A"}</td>
+        <td>${row.force_1 ?? "N/A"}</td>
+        <td>${row.force_2 ?? "N/A"}</td>
+        <td>${row.force_3 ?? "N/A"}</td>
+        <td>${row.force_4 ?? "N/A"}</td>
+        <td class="time">${row.time_update ?? "N/A"}</td>
+        <td class="${stateClassMap[row.state] || ""}">${row.state ?? "N/A"}</td>
+      </tr>
+    `
       )
       .join("");
   },
@@ -635,11 +657,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("confirmDownload").addEventListener("click", () => {
     downloadModal.style.display = "none";
     const payload = Utils.getFilterPayload();
-    Utils.fetchData("/downloadExcel", {
+    Utils.fetchBlob("/downloadExcel", {
       method: "POST",
       body: JSON.stringify(payload),
     })
-      .then((response) => response.blob())
       .then((blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -652,9 +673,10 @@ document.addEventListener("DOMContentLoaded", () => {
         window.URL.revokeObjectURL(url);
         a.remove();
       })
-      .catch(() =>
-        alert("Failed to download the Excel file. Please try again.")
-      );
+      .catch((error) => {
+        console.error("Download failed:", error);
+        alert("Failed to download the Excel file. Please try again.");
+      });
   });
 
   // Solution Modal
