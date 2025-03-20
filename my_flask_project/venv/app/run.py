@@ -12,7 +12,7 @@ socketio =SocketIO(app)
 DB_CONFIG = {
     "username": "system",
     "password": "123456",
-    "dsn": "localhost:1521/orcl1"
+    "dsn": "localhost:1521/orcl"
 }
 CORS(app)
 #kết nối Oracle
@@ -21,7 +21,7 @@ def get_db_connection():
         connection = oracledb.connect(
             user="system",
             password="123456",
-            dsn="localhost:1521/orcl1"
+            dsn="localhost:1521/orcl"
         )
         return connection
     except oracledb.DatabaseError as e:
