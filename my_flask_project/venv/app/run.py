@@ -449,7 +449,7 @@ def get_charts():
         return jsonify({"error": str(e)}), 500
 
 #get data table by filter
-@app.route('/filter', methods=['POST'])
+@app.route('/api/filter', methods=['POST'])
 def filter_data():
     try:
         data = request.json
@@ -572,7 +572,7 @@ def filter_data():
         }), 500
 
 # Filter pie chart
-@app .route('/filterPieChart', methods=['POST'])
+@app .route('/api/filterPieChart', methods=['POST'])
 def filter_pie_chart():
     try:
         data = request.json
@@ -590,7 +590,7 @@ def filter_pie_chart():
         return jsonify({"success": False, "error": str(e)})
 
 # Filter column chart
-@app .route('/filterColumnChart', methods=['POST'])
+@app .route('/api/filterColumnChart', methods=['POST'])
 def filter_column_chart():
     try:
         data = request.json
@@ -604,7 +604,7 @@ def filter_column_chart():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
-@app .route('/filterColumn2Chart', methods=['POST'])
+@app .route('/api/filterColumn2Chart', methods=['POST'])
 def filter_column2_chart():
     try:
         data = request.json
@@ -734,7 +734,7 @@ def register():
         return render_template('register.html', error=f"An error occurred: {e}")
 
 #get data combobox
-@app.route('/getDataComboboxs', methods=['GET'])
+@app.route('/api/getDataComboboxs', methods=['GET'])
 def get_lines():
     try:
         query = """
@@ -770,7 +770,7 @@ def get_lines():
         return jsonify({"error": "Unable to fetch"}), 500
 
 #get total , output, fpy
-@app.route('/getinfo', methods=['GET'])
+@app.route('/api/getinfo', methods=['GET'])
 def getinfo():
     try:
         query = """
@@ -859,7 +859,7 @@ def fetch_filtered_data(filters):
         raise
 
 #download excel
-@app.route('/downloadExcel', methods=['POST'])
+@app.route('/api/downloadExcel', methods=['POST'])
 def download_excel():
     try:
         filters = request.json
@@ -900,6 +900,82 @@ def download_excel():
         flash("Đã xảy ra lỗi khi tạo file Excel. Vui lòng thử lại sau.", "error")
         return redirect(url_for('dashboard_page'))
 
+@app.route('/api/getDataSolution', methods=['GET'])
+def get_data_solution():
+    try:
+        query = """
+            SELECT * FROM SCREW_FORCE_ERROR ORDER BY ERROR_CODE DESC
+        """ 
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                rows = cursor.fetchall()
+        result = []
+        for row in rows:
+            result.append({
+                "error_code": row[0],
+                "error_name": row[1],
+                "root_cause": row[2],
+                "solution": row[3],
+                "status": row[4]
+            })
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching: {e}")
+        return jsonify({"error": "Unable to fetch"}), 500
+
+@app.route('/api/updateDataSolution/<string:id>', methods=['PUT'])
+def update_data_solution(id):
+    try:
+        data = request.json
+        error_name = data.get('error_name')
+        root_cause = data.get('root_cause')
+        solution = data.get('solution')
+        status = data.get('status')
+
+        if not all([error_name, root_cause, solution]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        query = """
+            UPDATE SCREW_FORCE_ERROR
+            SET ERROR_NAME = :error_name, ROOT_CAUSE = :root_cause, SOLUTION = :solution
+            WHERE ERROR_CODE = :id
+        """
+        params = {
+            'error_name': error_name,
+            'root_cause': root_cause,
+            'solution': solution,
+            'id': id
+        }
+
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, params)
+                connection.commit()
+
+        return jsonify({"message": "Solution updated successfully"}), 200
+
+    except Exception as e:
+        print(f"Error updating: {e}")
+        return jsonify({"error": "Unable to update"}), 500
+
+@app.route('/api/deleteDataSolution/<string:id>', methods=['DELETE'])
+def delete_data_solution(id):
+    try:
+        query = """
+            DELETE FROM SCREW_FORCE_ERROR
+            WHERE ERROR_CODE = :id
+        """
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, {'id': id})
+                connection.commit()
+
+        return jsonify({"message": "Solution updated successfully"}), 200
+
+    except Exception as e:
+        print(f"Error updating: {e}")
+        return jsonify({"error": "Unable to update"}), 500
 if __name__=='__main__':
     app.run(debug=True, threaded = True)
 
