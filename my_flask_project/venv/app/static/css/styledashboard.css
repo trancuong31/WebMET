@@ -194,7 +194,7 @@ select option:hover{
 #navbar {
   top: 0;
   padding: 0;
-  width: 2.5%; 
+  width: 2.5%;  
   z-index: 1;
   height: 100vh;
   position: fixed;
@@ -447,7 +447,7 @@ pointer-events: none;
 background-image: 
   linear-gradient(
     rgba(0, 0, 0, 0.65),
-    rgba(0, 0, 0, 0.65) 
+    rgba(0, 0, 0, 0.65)
   ),
   url('/static/images/cover.jpg');
 }
@@ -467,9 +467,9 @@ position: fixed;
 bottom: 0; 
 right: 20px; 
 padding: 0px 5px; 
-width: 210px;
+width: 220px;
 text-align: center;
-background-color: #ffffff3d;
+background-color: #ffffff6b;
 z-index: 1;
 }
 #coppyright a{
@@ -477,7 +477,6 @@ color: #fff;
 font-size: 0.7em;
 transition: all .3s ease-in-out; 
 line-height: 25px;
-
 }
 
 #coppyright a:hover{
@@ -502,7 +501,6 @@ h1{
   height: 65px;
   color: white;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.466), 0 0 20px rgba(255, 255, 255, 0.5);
-
 }
 .mainContent{
   margin-left: 3%;
@@ -1531,7 +1529,7 @@ to {
 .input-cause{
   background-color: rgba(21, 226, 253, 0.4);
   color: #fff;
-  width: 150px;
+  width: 120px;
   margin-left: 10px;
 }
 .input-solution{
@@ -1542,18 +1540,16 @@ to {
   text-align: justify;
 }
 #searchError{
-  
   position: absolute;
   left: 2%;
   top: 5%;  
-  width: 200px;
-  
+  width: 200px;  
 }
 #searchError input{
   border: 1.5px solid #21afb9;
   color: #ffffff;
   background-color: #ffffff00;
-  border-radius: 3px;
+  border-radius: 10px;
   padding: 6px;
   font-family: Courier, monospace;
   font-weight: 500;
@@ -1573,4 +1569,96 @@ to {
   position:absolute;
   top: -30%;
   right: 5%;
+}
+.high-force {
+  background-color: rgba(146, 146, 146, 0.61);
+  color: white; 
+}
+.low-force{
+  background-color: rgba(0, 255, 106, 0.644);
+  color: white; 
+}
+
+.modalForm {
+  display: none; 
+  position: fixed;
+  z-index: 99999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding-top: 60px;
+}
+
+.modal-content-form {
+  background-color: #fefefe;
+  margin: 10% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 40%;
+  margin-left: 31%;
+  box-sizing: border-box;
+  border-radius: 8px;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  color: #333;
+}
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+}
+
+textarea {
+  resize: vertical;
+  height: 100px;
+  max-height: 100px;
+}
+
+.modalForm.show {
+  display: block;
+}
+.solutionForminput{
+  width: 97%;
+  padding: 10px;
+  border-radius: 4px;
+}
+#btnaddsolution{
+  width:30%;
+  background-color: #007bff;
+  border-radius: 4px;
+  display: flex;
+  margin-left: 35%;
+  justify-content: center;
+  align-items: center;
+}
+#btnaddsolution:hover{
+  background-color: #1f88f8;
+  transform: scale(1.05);
+}
+#btnaddsolution:focus{
+  transform: scale(1);
 }

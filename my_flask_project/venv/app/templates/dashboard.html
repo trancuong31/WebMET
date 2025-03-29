@@ -416,7 +416,7 @@
 </div>
 <div id="solutionModal" class="modal-overlay" style="display: none;">
   <div class="modal-content1">
-    <div id="searchError"><input type="text" placeholder="Search Error"></div>
+    <div id="searchError"><input type="text" placeholder="Search Error" id="searchError"></div>
     <div class="corner-tl"></div>
     <div class="corner-tr"></div>
     <div class="corner-bl"></div>
@@ -430,9 +430,9 @@
     <table class="tableSolution" cellpadding="0" cellspacing="0" border="0">
       <thead>
         <tr style="background-color: transparent !important;">
-            <th style="width: 1.5%;">ERROR CODE</th>
-            <th style="width: 11%;">name</th>
-            <th style="width: 3%;">Root cause</th>
+            <th style="width: 3.5%;">ERROR CODE</th>
+            <th style="width: 10%;">name</th>
+            <th style="width: 7%;">Root cause</th>
             <th style="width: 56%;">solution</th>
             <th style="width: 8%;">action</th>
         </tr>
@@ -443,6 +443,31 @@
     <div id="newSolution">
       <button id="btnadd">New</button>
     </div>
+  </div>
+</div>
+<div id="modalForm" class="modalForm">
+  <div class="modal-content-form">
+    <span class="close" id="closeModalForm">&times;</span>
+    <h2 style="text-transform: uppercase;">Add New Recommend Solution</h2>
+    <form id="solutionForm">
+      <label for="error_code" >
+        Error Code
+        <input class="solutionForminput" type="text" id="error_code" name="error_code" required/>
+      </label>
+      <label for="error_name">
+        Error Name
+        <input class="solutionForminput" type="text" id="error_name" name="error_name" required/>
+      </label>
+      <label for="root_cause">
+        Root Cause
+        <input class="solutionForminput" type="text" id="root_cause" name="root_cause" required/>
+      </label>
+      <label for="solution">
+        Solution
+        <textarea class="solutionForminput" id="solution" name="solution" required></textarea>
+      </label>
+      <button id="btnaddsolution" type="submit">Submit</button>
+    </form>
   </div>
 </div>
   </body>

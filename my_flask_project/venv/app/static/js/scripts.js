@@ -1,10 +1,5 @@
-//scroll data in table
-$(window).on("load resize ", function() {
-  var scrollWidth = $('.tbl-content').width() - $('.tbl-content table').width();
-  $('.tbl-header').css({'padding-right':scrollWidth});
-  }).resize();
 //filter data
-document.addEventListener("DOMContentLoaded", function () {
+function initializeFilter() {
   const tableBody = document.getElementById("table-body");
   const paginationDiv = document.getElementById("pagination");
   let chart;
@@ -92,26 +87,35 @@ document.addEventListener("DOMContentLoaded", function () {
           isFirstLoad = false;
   }
   function updateTable(rows) {
-      tableBody.innerHTML = rows.map(row => {
-          const stateClass = row.state === 'PASS' ? 'state-pass' : 'state-fail';
-          return `
-              <tr>
-                  <td class ="stt">${row.stt}</td>
-                  <td>${row.factory ?? 'N/A'}</td>
-                  <td>${row.line ?? 'N/A'}</td>
-                  <td>${row.name_machine ?? 'N/A'}</td>
-                  <td>${row.model_name ?? 'N/A'}</td>
-                  <td>${row.serial_number ?? 'N/A'}</td>
-                  <td>${row.force_1 ?? 'N/A'}</td>
-                  <td>${row.force_2 ?? 'N/A'}</td>
-                  <td>${row.force_3 ?? 'N/A'}</td>
-                  <td>${row.force_4 ?? 'N/A'}</td>
-                  <td class ="time">${row.time_update ?? 'N/A'}</td>
-                  <td class="${stateClass}">${row.state ?? 'N/A'}</td>
-              </tr>
+      let fragment = document.createDocumentFragment();
+      const checkForceValue = (value) => {
+        if (value < 10 || value > 15) {
+            return "high-force"; 
+        }
+        return "low-force";
+    };
+      rows.forEach(row => {
+          let tr = document.createElement("tr");
+          tr.innerHTML = `
+              <td class ="stt">${row.stt}</td>
+              <td>${row.factory ?? 'N/A'}</td>
+              <td>${row.line ?? 'N/A'}</td>
+              <td>${row.serial_number ?? 'N/A'}</td>
+              <td>${row.model_name ?? 'N/A'}</td>
+              <td>${row.name_machine ?? 'N/A'}</td>
+              <td class="${checkForceValue(row.force_1)}">${row.force_1 ?? 'N/A'}</td>
+              <td class="${checkForceValue(row.force_2)}">${row.force_2 ?? 'N/A'}</td>
+              <td class="${checkForceValue(row.force_3)}">${row.force_3 ?? 'N/A'}</td>
+              <td class="${checkForceValue(row.force_4)}">${row.force_4 ?? 'N/A'}</td>
+              <td class = "time">${row.time_update ?? 'N/A'}</td>
+              <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state ?? 'N/A'}</td>
           `;
-      }).join("");
+          fragment.appendChild(tr);
+      });
+      tableBody.innerHTML = "";
+      tableBody.appendChild(fragment);
   }
+  //pagination table
   function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
       paginationDiv.innerHTML = "";
       if (currentPage > 1) {
@@ -143,6 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
           });
       });
   }
+  //send data filter to server
   function fetchPieChartData(time_update, time_end) {
       const payload = {
           time_update: time_update ? time_update.replace('T', ' ') + ':00' : null,
@@ -167,6 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
           console.error("Error fetching Pie Chart data:", error);
       });
   }
+  //send data filter to server
   function fetchColumnChartData(time_update, time_end) {
       const payload = {
           time_update: time_update ? time_update.replace('T', ' ') + ':00' : null,
@@ -191,6 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
           console.error("Error fetching Pie Chart data:", error);
       });
   }
+  //send data filter to server
   function fetchColumn2ChartData(time_update, time_end) {
       const payload = {
           time_update: time_update ? time_update.replace('T', ' ') + ':00' : null,
@@ -622,9 +629,9 @@ document.addEventListener("DOMContentLoaded", function () {
           console.error('Error generating column chart:', error);
       }
   }
-});
+}
 //load dashboard
-document.addEventListener("DOMContentLoaded", function () {
+function initializeDashboard () {
   const tableBody = document.getElementById("table-body");
   const paginationDiv = document.getElementById("pagination");
   const POLLING_INTERVAL = 300000;
@@ -678,6 +685,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   function updateTable(rows) {
       let fragment = document.createDocumentFragment();
+      const checkForceValue = (value) => {
+        if (value < 10 || value > 15) {
+            return "high-force"; 
+        }
+        return "low-force";
+    };
       rows.forEach(row => {
           let tr = document.createElement("tr");
           tr.innerHTML = `
@@ -687,10 +700,10 @@ document.addEventListener("DOMContentLoaded", function () {
               <td>${row.serial_number ?? 'N/A'}</td>
               <td>${row.model_name ?? 'N/A'}</td>
               <td>${row.name_machine ?? 'N/A'}</td>
-              <td >${row.force_1 ?? 'N/A'}</td>
-              <td>${row.force_2 ?? 'N/A'}</td>
-              <td>${row.force_3 ?? 'N/A'}</td>
-              <td>${row.force_4 ?? 'N/A'}</td>
+              <td class="${checkForceValue(row.force_1)}">${row.force_1 ?? 'N/A'}</td>
+              <td class="${checkForceValue(row.force_2)}">${row.force_2 ?? 'N/A'}</td>
+              <td class="${checkForceValue(row.force_3)}">${row.force_3 ?? 'N/A'}</td>
+              <td class="${checkForceValue(row.force_4)}">${row.force_4 ?? 'N/A'}</td>
               <td class = "time">${row.time_update ?? 'N/A'}</td>
               <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state ?? 'N/A'}</td>
           `;
@@ -1118,7 +1131,7 @@ document.addEventListener("DOMContentLoaded", function () {
       } catch (error) {
           console.error('Error generating column chart:', error);
       }
-  }    
+  }
   function startPolling() {
       fetchPage(currentPage);
       fetchChart();
@@ -1129,24 +1142,9 @@ document.addEventListener("DOMContentLoaded", function () {
       }, POLLING_INTERVAL);
   }
   startPolling();
-});
-//Loading data
-async function fetchData(page) {
-  document.getElementById("loading").style.display = "block";
-
-  try {
-    const response = await fetch(`/data?page=${page}`);
-    const data = await response.json();
-    console.log(data);
-
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  } finally {
-    document.getElementById("loading").style.display = "none";
-  }
 }
 //load info overview
-document.addEventListener("DOMContentLoaded", function () {
+function initializeOverview () {
   const totalRecords = document.getElementById("total-records");
   const outputPass = document.getElementById("pass-records");
   const failRecords = document.getElementById("fail-records");
@@ -1157,6 +1155,390 @@ document.addEventListener("DOMContentLoaded", function () {
   const stateCombobox = document.getElementById("state-combobox");
   const nameMachineCombobox = document.getElementById("nameMachine-combobox");
   const downloadButton = document.getElementById('download-excel');
+  const fullscreenIcon = document.getElementById("fullscreenic");
+  const toggleFullscreen = document.getElementById("toggle_fullscreen");
+  const downloadModal = document.getElementById('downloadModal');
+  const confirmDownload = document.getElementById('confirmDownload');
+  const cancelDownload = document.getElementById('cancelDownload');
+  const solutionButton = document.getElementById('solution');
+  const closeModal = document.querySelector(".close-modal");
+  const modal = document.getElementById("solutionModal");
+  const style = document.createElement('style');
+  const searchInput = document.getElementById('searchError').querySelector('input');
+  const table = document.querySelector('.tableSolution');
+  const tbody = document.getElementById('tbodySolution');
+  const btnAdd = document.getElementById('btnadd');
+  const modal1 = document.getElementById('modalForm');
+  const closeModal1 = document.getElementById('closeModalForm');
+  const solutionForm = document.getElementById('solutionForm');
+  document.head.appendChild(style);
+  const editButtons = document.querySelectorAll('.btn-edit');
+  const deleteButtons = document.querySelectorAll('.btn-delete');
+
+
+  function adjustTableScroll() {
+    const tblContent = document.querySelector(".tbl-content");
+    const table = tblContent.querySelector("table");
+    const scrollWidth = tblContent.offsetWidth - table.offsetWidth;
+    document.querySelector(".tbl-header").style.paddingRight = `${scrollWidth}px`;
+  }
+
+  window.addEventListener("load", adjustTableScroll);
+  window.addEventListener("resize", adjustTableScroll);
+  adjustTableScroll();
+  editButtons.forEach(function(button) {
+    button.addEventListener('click', editRowHandler);
+  });
+  deleteButtons.forEach(function(button) {
+      button.addEventListener('click', deleteRowHandler);
+  });
+
+  btnAdd.addEventListener('click', function() {
+    modal1.style.display = 'block';
+  });
+
+  closeModal1.addEventListener('click', function() {
+      modal1.style.display = 'none'; 
+  });
+
+  window.addEventListener('click', function(event) {
+      if (event.target === modal) {
+          modal1.style.display = 'none'; 
+      }
+  });
+
+  // Xử lý sự kiện submit form
+  solutionForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const formData = new FormData(solutionForm);
+      const data = {
+          error_code: formData.get('error_code'),
+          error_name: formData.get('error_name'),
+          root_cause: formData.get('root_cause'),
+          solution: formData.get('solution')
+      };
+
+      fetch("/api/addDataSolution", {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.error){
+          alert(data.error);
+          return;
+        }
+          console.log('Dữ liệu đã được thêm:', data);
+          modal1.style.display = 'none';
+          fetchDataAndUpdateTable(); 
+      })
+      .catch(error => {
+          console.error('Lỗi khi thêm dữ liệu:', error);
+      });
+  });
+  function fetchDataAndUpdateTable() {
+      fetch("/api/getDataSolution")
+          .then(response => response.json())
+          .then(data => {
+              const tbody = document.getElementById('tbodySolution');
+              tbody.innerHTML = '';
+              data.forEach(item => {
+                  const row = document.createElement('tr');
+                  row.dataset.id = item.error_code;
+                  const formattedSolution = item.solution.replace(/\./g, '.<br>');
+
+                  row.innerHTML = `
+                      <td class="errorID">${item.error_code}</td>
+                      <td class="errorName">${item.error_name}</td>
+                      <td class="errorCause">${item.root_cause}</td>
+                      <td class="solutionError">${formattedSolution}</td>
+                      <td>
+                          <button class="btn btn-edit">Edit</button>
+                          <button class="btn btn-delete">Delete</button>
+                      </td>
+                  `;
+                  tbody.appendChild(row);
+              });
+
+              document.querySelectorAll('.btn-edit').forEach(function(button) {
+                  button.addEventListener('click', editRowHandler);
+              });
+
+              document.querySelectorAll('.btn-delete').forEach(function(button) {
+                  button.addEventListener('click', deleteRowHandler);
+              });
+          })
+          .catch(error => {
+              console.error('Error fetching data:', error);
+          });
+  }
+
+  fetchDataAndUpdateTable();
+
+  function performDynamicSearch() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const rows = tbody.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        const errorCode = row.querySelector('.errorID').textContent.toLowerCase();
+        const errorName = row.querySelector('.errorName').textContent.toLowerCase();
+        const errorCause = row.querySelector('.errorCause').textContent.toLowerCase();
+        const solution = row.querySelector('.solutionError').textContent.toLowerCase();
+
+        const matches = 
+            errorCode.includes(searchTerm) || 
+            errorName.includes(searchTerm) || 
+            errorCause.includes(searchTerm) || 
+            solution.includes(searchTerm);
+
+        // Hiển thị hoặc ẩn dòng
+        row.style.display = matches ? '' : 'none';
+    });
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+    updateSearchResultCount(visibleRows.length, rows.length);
+  }
+  function updateSearchResultCount(visibleCount, totalCount) {
+    console.log(`Tìm thấy ${visibleCount}/${totalCount} kết quả`);
+  }
+
+  // Thêm sự kiện tìm kiếm
+  searchInput.addEventListener('input', performDynamicSearch);
+
+  // Thêm nút xóa tìm kiếm (tùy chọn)
+  function createClearSearchButton() {
+    const clearButton = document.createElement('button');
+    clearButton.innerHTML = '&times;';
+    clearButton.classList.add('clear-search-btn');
+    clearButton.style.display = 'none';
+    clearButton.addEventListener('click', () => {
+        searchInput.value = '';
+        performDynamicSearch();
+        clearButton.style.display = 'none';
+    });
+
+    searchInput.parentNode.appendChild(clearButton);
+    searchInput.addEventListener('input', () => {
+        clearButton.style.display = searchInput.value ? 'inline' : 'none';
+    });
+  }
+
+  createClearSearchButton();
+
+  function highlightSearchTerm() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    if (!searchTerm) return;
+
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td:not(:last-child)');
+        cells.forEach(cell => {
+            const originalText = cell.textContent;
+            const highlightedText = originalText.replace(
+                new RegExp(searchTerm, 'gi'), 
+                match => `<mark>${match}</mark>`
+            );
+            cell.innerHTML = highlightedText;
+        });
+    });
+  }
+
+  // Kết hợp highlight với tìm kiếm
+  searchInput.addEventListener('input', () => {
+    performDynamicSearch();
+    highlightSearchTerm();
+  });
+
+  // Xử lý khi nhấn "Edit"
+  function editRowHandler() {
+      const row = this.closest('tr');
+      const cells = row.querySelectorAll('td:not(:last-child)');
+
+      cells.forEach(function(cell, index) {
+          const text = cell.textContent.trim();
+          let inputClass = 'edit-input';
+          if (index === 0) return;
+          if (index === 1) {
+              inputClass += ' input-name';
+          } else if (index === 2) {
+              inputClass += ' input-cause';
+          } else if (index === 3) {
+              inputClass += ' input-solution';
+              const maxLength = 1000;
+              cell.innerHTML = `<textarea class="${inputClass}" style="width:100%; padding:5px;" maxlength="${maxLength}">${text}</textarea>`;
+              return;
+          }
+          
+          cell.innerHTML = `<input type="text" value="${text}" class="${inputClass}">`;
+      });
+
+      this.textContent = 'Save';
+      this.classList.remove('btn-edit');
+      this.classList.add('btn-save');
+      this.removeEventListener('click', editRowHandler);
+      this.addEventListener('click', saveRowHandler);
+  }
+  function saveRowHandler() {
+    const row = this.closest('tr');
+    const rowId = row.dataset.id;
+
+    if (!rowId) {
+        console.error("ID không hợp lệ!");
+        return;
+    }
+
+    const cells = row.querySelectorAll('td:not(:last-child)');
+    const updatedData = {
+        error_name: cells[1].querySelector('input').value,
+        root_cause: cells[2].querySelector('input').value,
+        solution: cells[3].querySelector('textarea').value
+    };
+
+    fetch(`/api/updateDataSolution/${rowId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Dữ liệu đã được cập nhật', data);
+    })
+    .catch(error => {
+        console.error('Lỗi khi cập nhật dữ liệu:', error);
+    });
+
+    // Cập nhật giao diện
+    cells.forEach(function(cell) {
+        const input = cell.querySelector('input');
+        const textarea = cell.querySelector('textarea');
+        if (input) {
+            cell.textContent = input.value;
+        } else if (textarea) {
+            cell.textContent = textarea.value;
+        }
+    });
+
+    this.textContent = 'Edit';
+    this.classList.remove('btn-save');
+    this.classList.add('btn-edit');
+    this.removeEventListener('click', saveRowHandler);
+    this.addEventListener('click', editRowHandler);
+  }
+  function deleteRowHandler() {
+  const row = this.closest('tr');
+
+  const rowId = row.dataset.id;  
+  console.log("rowId:", rowId);
+  if (!rowId) {
+      console.error("ID không hợp lệ!");
+      return;
+  }
+  if (confirm("Do you want to delete this row ?")) {
+      fetch(`/api/deleteDataSolution/${rowId}`, {
+          method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(data => {
+          console.log('Dữ liệu đã được xóa:', data);
+          row.remove();
+      })
+      .catch(error => {
+          console.error('Lỗi khi xóa dữ liệu:', error);
+      });
+  }
+  }
+
+  downloadButton.addEventListener('click', function(event) {
+    event.preventDefault();
+    downloadModal.style.display = 'flex';
+});
+solutionButton.addEventListener('click', function(event) {
+    event.preventDefault();
+    solutionModal.style.display = 'flex';
+});
+closeModal.addEventListener("click", function () {
+    modal.style.display = "none";
+});
+cancelDownload.addEventListener('click', function() {
+    downloadModal.style.display = 'none';
+});
+modal.addEventListener("click", function (event) {
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+});
+confirmDownload.addEventListener('click', async function() {
+    downloadModal.style.display = 'none';
+
+    const formatDatetime = (datetime) => {
+        return datetime ? datetime.replace('T', ' ') + ':00' : null;
+    };
+    const payload = {
+        line: document.getElementById("line-combobox").value.trim() || null,
+        model: document.getElementById("modelNamecombobox").value.trim() || null,
+        factory: document.getElementById("factory-combobox").value.trim() || null,
+        nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
+        time_update: formatDatetime(document.getElementById("time_update").value),
+        time_end: formatDatetime(document.getElementById("time_end").value),
+        state: document.getElementById("state-combobox").value || null
+    };
+    document.getElementById('loading').style.display = 'block';
+      try {
+          const response = await fetch('/api/downloadExcel', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest'
+              },
+              body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+      } catch (error) {
+          console.error("Error downloading Excel:", error);
+          alert("Failed to download the Excel file. Please try again.");
+      } finally {
+          document.getElementById('loading').style.display = 'none';
+      }
+  });
+
+  document.addEventListener("fullscreenchange", function () {
+    if (document.fullscreenElement) {
+        fullscreenIcon.title = "Exit Fullscreen";
+        fullscreenIcon.src = "/static/images/disfullscreen.png";
+    } else {
+        fullscreenIcon.title = "Fullscreen";
+        fullscreenIcon.src = "/static/images/fullscreen1.png";
+    }
+});
+
+  toggleFullscreen.addEventListener("click", function (e) {
+      e.preventDefault();
+      const container = document.documentElement;
+
+      if (document.fullscreenElement) {
+          document.exitFullscreen();
+      } else {
+          container.requestFullscreen();
+      }
+  });
   function fetchContentTop() {
 
       fetch("/api/getinfo", {
@@ -1240,338 +1622,10 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch(error => {
           console.error("Error fetching lines and states:", error);
       });
-});
-//full screen
-document.addEventListener("DOMContentLoaded", function () {
-  const fullscreenIcon = document.getElementById("fullscreenic");
-  const toggleFullscreen = document.getElementById("toggle_fullscreen");
+}
 
-  document.addEventListener("fullscreenchange", function () {
-      if (document.fullscreenElement) {
-          fullscreenIcon.title = "Exit Fullscreen";
-          fullscreenIcon.src = "/static/images/disfullscreen.png";
-      } else {
-          fullscreenIcon.title = "Fullscreen";
-          fullscreenIcon.src = "/static/images/fullscreen1.png";
-      }
-  });
-
-  toggleFullscreen.addEventListener("click", function (e) {
-      e.preventDefault();
-      const container = document.documentElement;
-
-      if (document.fullscreenElement) {
-          document.exitFullscreen();
-      } else {
-          container.requestFullscreen();
-      }
-  });
-});
-//modal download
-document.addEventListener("DOMContentLoaded", function() {
-  const downloadButton = document.getElementById('download-excel');
-  const downloadModal = document.getElementById('downloadModal');
-  const confirmDownload = document.getElementById('confirmDownload');
-  const cancelDownload = document.getElementById('cancelDownload');
-  const solutionButton = document.getElementById('solution');
-  const closeModal = document.querySelector(".close-modal");
-  const modal = document.getElementById("solutionModal");
-  downloadButton.addEventListener('click', function(event) {
-      event.preventDefault();
-      downloadModal.style.display = 'flex';
-  });
-  solutionButton.addEventListener('click', function(event) {
-      event.preventDefault();
-      solutionModal.style.display = 'flex';
-  });
-  closeModal.addEventListener("click", function () {
-      modal.style.display = "none";
-  });
-  cancelDownload.addEventListener('click', function() {
-      downloadModal.style.display = 'none';
-  });
-  modal.addEventListener("click", function (event) {
-      if (event.target === modal) {
-          modal.style.display = "none";
-      }
-  });
-  confirmDownload.addEventListener('click', async function() {
-      downloadModal.style.display = 'none';
-
-      const formatDatetime = (datetime) => {
-          return datetime ? datetime.replace('T', ' ') + ':00' : null;
-      };
-      const payload = {
-          line: document.getElementById("line-combobox").value.trim() || null,
-          model: document.getElementById("modelNamecombobox").value.trim() || null,
-          factory: document.getElementById("factory-combobox").value.trim() || null,
-          nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
-          time_update: formatDatetime(document.getElementById("time_update").value),
-          time_end: formatDatetime(document.getElementById("time_end").value),
-          state: document.getElementById("state-combobox").value || null
-      };
-      document.getElementById('loading').style.display = 'block';
-      try {
-          const response = await fetch('/api/downloadExcel', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'X-Requested-With': 'XMLHttpRequest'
-              },
-              body: JSON.stringify(payload)
-          });
-
-          if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.style.display = 'none';
-          a.href = url;
-          a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-      } catch (error) {
-          console.error("Error downloading Excel:", error);
-          alert("Failed to download the Excel file. Please try again.");
-      } finally {
-          document.getElementById('loading').style.display = 'none';
-      }
-  });
-});
-
-
-
-
-  document.addEventListener('DOMContentLoaded', function() {
-    const style = document.createElement('style');
-    const searchInput = document.getElementById('searchError').querySelector('input');
-    const table = document.querySelector('.tableSolution');
-    const tbody = document.getElementById('tbodySolution');
-    document.head.appendChild(style);
-    const editButtons = document.querySelectorAll('.btn-edit');
-    const deleteButtons = document.querySelectorAll('.btn-delete');
-    editButtons.forEach(function(button) {
-        button.addEventListener('click', editRowHandler);
-    });
-    deleteButtons.forEach(function(button) {
-        button.addEventListener('click', deleteRowHandler);
-    });
-    function fetchDataAndUpdateTable() {
-        fetch("/api/getDataSolution")
-            .then(response => response.json())
-            .then(data => {
-                const tbody = document.getElementById('tbodySolution');
-                tbody.innerHTML = '';  
-                data.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.dataset.id = item.error_code;
-                    const formattedSolution = item.solution.replace(/\./g, '.<br>');
-                    row.innerHTML = `
-                        <td class="errorID">${item.error_code}</td>
-                        <td class="errorName">${item.error_name}</td>
-                        <td class="errorCause">${item.root_cause}</td>
-                        <td class="solutionError">${formattedSolution}</td>
-                        <td>
-                            <button class="btn btn-edit">Edit</button>
-                            <button class="btn btn-delete">Delete</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-
-                document.querySelectorAll('.btn-edit').forEach(function(button) {
-                    button.addEventListener('click', editRowHandler);
-                });
-
-                document.querySelectorAll('.btn-delete').forEach(function(button) {
-                    button.addEventListener('click', deleteRowHandler);
-                });
-            })
-            .catch(error => {
-                console.error('Error fetching data:', error);
-            });
-    }
-
-    fetchDataAndUpdateTable();
-
-    function performDynamicSearch() {
-      const searchTerm = searchInput.value.toLowerCase().trim();
-      const rows = tbody.querySelectorAll('tr');
-
-      rows.forEach(row => {
-          const errorCode = row.querySelector('.errorID').textContent.toLowerCase();
-          const errorName = row.querySelector('.errorName').textContent.toLowerCase();
-          const errorCause = row.querySelector('.errorCause').textContent.toLowerCase();
-          const solution = row.querySelector('.solutionError').textContent.toLowerCase();
-
-          const matches = 
-              errorCode.includes(searchTerm) || 
-              errorName.includes(searchTerm) || 
-              errorCause.includes(searchTerm) || 
-              solution.includes(searchTerm);
-
-          // Hiển thị hoặc ẩn dòng
-          row.style.display = matches ? '' : 'none';
-      });
-      const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
-      updateSearchResultCount(visibleRows.length, rows.length);
-  }
-  function updateSearchResultCount(visibleCount, totalCount) {
-      console.log(`Tìm thấy ${visibleCount}/${totalCount} kết quả`);
-  }
-
-  // Thêm sự kiện tìm kiếm
-  searchInput.addEventListener('input', performDynamicSearch);
-
-  // Thêm nút xóa tìm kiếm (tùy chọn)
-  function createClearSearchButton() {
-      const clearButton = document.createElement('button');
-      clearButton.innerHTML = '&times;';
-      clearButton.classList.add('clear-search-btn');
-      clearButton.style.display = 'none';
-      clearButton.addEventListener('click', () => {
-          searchInput.value = '';
-          performDynamicSearch();
-          clearButton.style.display = 'none';
-      });
-
-      searchInput.parentNode.appendChild(clearButton);
-
-      // Hiển thị/ẩn nút xóa khi có văn bản
-      searchInput.addEventListener('input', () => {
-          clearButton.style.display = searchInput.value ? 'inline' : 'none';
-      });
-  }
-
-  createClearSearchButton();
-
-  function highlightSearchTerm() {
-      const searchTerm = searchInput.value.toLowerCase().trim();
-      if (!searchTerm) return;
-
-      const rows = tbody.querySelectorAll('tr');
-      rows.forEach(row => {
-          const cells = row.querySelectorAll('td:not(:last-child)');
-          cells.forEach(cell => {
-              const originalText = cell.textContent;
-              const highlightedText = originalText.replace(
-                  new RegExp(searchTerm, 'gi'), 
-                  match => `<mark>${match}</mark>`
-              );
-              cell.innerHTML = highlightedText;
-          });
-      });
-  }
-
-  // Kết hợp highlight với tìm kiếm
-  searchInput.addEventListener('input', () => {
-      performDynamicSearch();
-      highlightSearchTerm();
-  });
-
-    // Xử lý khi nhấn "Edit"
-    function editRowHandler() {
-        const row = this.closest('tr');
-        const cells = row.querySelectorAll('td:not(:last-child)');
-
-        cells.forEach(function(cell, index) {
-            const text = cell.textContent.trim();
-            let inputClass = 'edit-input';
-            if (index === 0) return;
-            if (index === 1) {
-                inputClass += ' input-name';
-            } else if (index === 2) {
-                inputClass += ' input-cause';
-            } else if (index === 3) {
-                inputClass += ' input-solution';
-                const maxLength = 1000;
-                cell.innerHTML = `<textarea class="${inputClass}" style="width:100%; padding:5px;" maxlength="${maxLength}">${text}</textarea>`;
-                return;
-            }
-            
-            cell.innerHTML = `<input type="text" value="${text}" class="${inputClass}">`;
-        });
-
-        this.textContent = 'Save';
-        this.classList.remove('btn-edit');
-        this.classList.add('btn-save');
-        this.removeEventListener('click', editRowHandler);
-        this.addEventListener('click', saveRowHandler);
-    }
-    function saveRowHandler() {
-      const row = this.closest('tr');
-      const rowId = row.dataset.id;
-  
-      if (!rowId) {
-          console.error("ID không hợp lệ!");
-          return;
-      }
-  
-      const cells = row.querySelectorAll('td:not(:last-child)');
-  
-      const updatedData = {
-          error_name: cells[1].querySelector('input').value,
-          root_cause: cells[2].querySelector('input').value,
-          solution: cells[3].querySelector('textarea').value
-      };
-  
-      fetch(`/api/updateDataSolution/${rowId}`, {
-          method: 'PUT',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(updatedData)
-      })
-      .then(response => response.json())
-      .then(data => {
-          console.log('Dữ liệu đã được cập nhật', data);
-      })
-      .catch(error => {
-          console.error('Lỗi khi cập nhật dữ liệu:', error);
-      });
-  
-      // Cập nhật giao diện
-      cells.forEach(function(cell) {
-          const input = cell.querySelector('input');
-          const textarea = cell.querySelector('textarea');
-          if (input) {
-              cell.textContent = input.value;
-          } else if (textarea) {
-              cell.textContent = textarea.value;
-          }
-      });
-  
-      this.textContent = 'Edit';
-      this.classList.remove('btn-save');
-      this.classList.add('btn-edit');
-      this.removeEventListener('click', saveRowHandler);
-      this.addEventListener('click', editRowHandler);
-    }
-    function deleteRowHandler() {
-    const row = this.closest('tr');
-    
-    const rowId = row.dataset.id;  
-    console.log("rowId:", rowId);
-    if (!rowId) {
-        console.error("ID không hợp lệ!");
-        return;
-    }
-    if (confirm("Do you want to delete this row ?")) {
-        fetch(`/api/deleteDataSolution/${rowId}`, {
-            method: 'DELETE'
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Dữ liệu đã được xóa:', data);
-            row.remove();
-        })
-        .catch(error => {
-            console.error('Lỗi khi xóa dữ liệu:', error);
-        });
-    }
-    }
+document.addEventListener('DOMContentLoaded', function() {
+  initializeFilter();
+  initializeDashboard();
+  initializeOverview();
 });

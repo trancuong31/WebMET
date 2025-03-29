@@ -173,6 +173,11 @@ def calculate_pagination(page, per_page, total_records):
 
 # return pie_chart_data
 def get_pie_chart_data(start_date=None, end_date=None):
+    if start_date is None:
+        start_date = datetime.now() - timedelta(days=7)
+    if end_date is None:
+        end_date = datetime.now()
+
     query = """
         WITH FilteredData AS (
             SELECT * FROM SCREW_FORCE_INFO WHERE 1=1
@@ -184,7 +189,6 @@ def get_pie_chart_data(start_date=None, end_date=None):
     if end_date:
         query += " AND TIME_UPDATE <= TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')"
         params["end_date"] = end_date.strftime("%Y-%m-%d %H:%M:%S")
-
     query += """
         ),
         TotalStats AS (
@@ -501,11 +505,11 @@ def filter_data():
             params['NAME_MACHINE'] = nameMachine
         if time_update and time_end:
             base_query += """
-                AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS') 
+                AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')
                                     AND TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')
             """
             count_query += """
-                AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS') 
+                AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')
                                     AND TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')
             """
             params['time_update'] = time_update
@@ -971,11 +975,44 @@ def delete_data_solution(id):
                 cursor.execute(query, {'id': id})
                 connection.commit()
 
-        return jsonify({"message": "Solution updated successfully"}), 200
+        return jsonify({"message": "Solution deleted successfully"}), 200
 
     except Exception as e:
         print(f"Error updating: {e}")
         return jsonify({"error": "Unable to update"}), 500
+
+@app.route('/api/addDataSolution', methods=['POST'])
+def add_data_soulution():
+    try:
+        data = request.json
+        error_code = data.get('error_code')
+        error_name = data.get('error_name')
+        root_cause = data.get('root_cause')
+        solution = data.get('solution')
+
+        if not all([error_name, root_cause, solution]):
+            return jsonify({"error": "Missing required fields"}), 400
+        query = """
+            INSERT INTO SCREW_FORCE_ERROR (ERROR_CODE, ERROR_NAME, ROOT_CAUSE, SOLUTION)
+            VALUES (:error_code,:error_name, :root_cause, :solution)
+        """
+        params = {
+            'error_code': error_code,
+            'error_name': error_name,
+            'root_cause': root_cause,
+            'solution': solution
+        }
+
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, params)
+                connection.commit()
+
+        return jsonify({"message": "Solution added successfully"}), 200
+
+    except Exception as e:
+        print(f"Error updating: {e}")
+        return jsonify({"error": "Error code was existed"}), 500
 if __name__=='__main__':
     app.run(debug=True, threaded = True)
 
