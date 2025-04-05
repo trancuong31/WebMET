@@ -241,7 +241,6 @@ select option:hover{
 .navbar-logo > .navbar-item-inner {
   width: calc(5rem - 8px);
 }
-
 .navbar-logo > .navbar-item-inner:hover {
   background-color: transparent;
 }
@@ -264,16 +263,81 @@ select option:hover{
   color: hsl(var(--quite-gray));
   border-radius: .25em;
   text-decoration: none;
-  transition: all .3s cubic-bezier(var(--transition-main), 1);
+  transition: all .2s cubic-bezier(var(--transition-main), 1);
   display: flex;
   align-items: center;
 }
+.container {
+  width: 100%;
+  height: 100%;
+  --color: rgba(114, 114, 114, 0.3);
+  background-color: #191a1a;
+  background-image: linear-gradient(0deg, transparent 24%, var(--color) 25%, var(--color) 26%, transparent 27%,transparent 74%, var(--color) 75%, var(--color) 76%, transparent 77%,transparent),
+  linear-gradient(90deg, transparent 24%, var(--color) 25%, var(--color) 26%, transparent 27%,transparent 74%, var(--color) 75%, var(--color) 76%, transparent 77%,transparent);
+  background-size: 55px 55px;
+}
+.Btn {
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgb(49, 105, 112);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition-duration: .3s;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.11);
+}
+
+.svgIcon {
+  fill: rgb(178, 240, 255);
+}
+
+.icon2 {
+  width: 18px;
+  height: 5px;
+  border-bottom: 2px solid rgb(178, 240, 255);
+  border-left: 2px solid rgb(178, 240, 255);
+  border-right: 2px solid rgb(178, 240, 255);
+}
+
+.Btn:hover {
+  background-color: rgb(69, 169, 187);
+  transition-duration: .3s;
+}
+
+.Btn:hover .icon2 {
+  border-bottom: 2px solid rgb(235, 235, 235);
+  border-left: 2px solid rgb(235, 235, 235);
+  border-right: 2px solid rgb(235, 235, 235);
+}
+
+.Btn:hover .svgIcon {
+  fill: rgb(255, 255, 255);
+  animation: slide-in-top 0.6s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+}
+
+@keyframes slide-in-top {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
 
 .navbar-item-inner:hover {
   color: hsl(var(--white));
   background: rgba(10, 181, 204, 0.815);
   box-shadow: 0 17px 30px -10px hsla(var(--black), .25);
-  transform: translateY(-5px);
+  transform: translateY(-3px);
 }
 
 .navbar-item-inner:active {
@@ -478,10 +542,8 @@ font-size: 0.7em;
 transition: all .3s ease-in-out; 
 line-height: 25px;
 }
-
 #coppyright a:hover{
 color: #006eff;
-text-shadow: 0 0 10px rgba(0, 38, 255, 0.5), 0 0 20px rgba(0, 47, 255, 0.39);
 }
 .conTBottom {
   position: fixed;
@@ -757,7 +819,7 @@ div#container-toperr {
   right: 0;
 }
 .content-top {
-  top: -3.9em;
+  top: -4.5em;
   right: 0;
   width: 32%;
   display: flex;
@@ -863,9 +925,6 @@ animation: moveUpDown 3s infinite;
   text-align: center;
   cursor: pointer;
   width: 85px;
-}
-#download-excel:hover{
-  transform: translateY(10px);
 }
 .dowfile a {
   color: #fff;
@@ -1392,7 +1451,7 @@ transition: ease-in-out 0.2s;
   width: 80%;
   font-size: 12px;
   transition: ease-in-out 0.2s;
-  border-radius: 5px;
+  border-radius: 3px;
 }
 .btn-edit {
   background-color: #388bf7;
@@ -1495,7 +1554,7 @@ to {
   background-color: #007bff;
   color: white;
   border: 1px solid #007bff;
-  border-radius: 5px;
+  border-radius: 3px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
@@ -1543,13 +1602,13 @@ to {
   position: absolute;
   left: 2%;
   top: 5%;  
-  width: 200px;  
+  width: 150px;  
 }
 #searchError input{
   border: 1.5px solid #21afb9;
   color: #ffffff;
   background-color: #ffffff00;
-  border-radius: 10px;
+  border-radius: 6px;
   padding: 6px;
   font-family: Courier, monospace;
   font-weight: 500;
@@ -1567,13 +1626,15 @@ to {
   color: #12efff;
   display: inline;
   position:absolute;
-  top: -30%;
-  right: 5%;
+  top: -9px;
+  right: -15%;
 }
+
 .high-force {
   background-color: rgba(146, 146, 146, 0.61);
-  color: white; 
+  color: white;
 }
+
 .low-force{
   background-color: rgba(0, 255, 106, 0.644);
   color: white; 

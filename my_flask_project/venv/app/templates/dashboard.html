@@ -18,7 +18,7 @@
       href="{{ url_for('static', filename='css/styledashboard.css')}}"
     />
     <title>Dashboard</title>
-    <link rel="icon" href="{{ url_for('static', filename='images/automation.png') }}" type="image/png">
+    <link rel="icon" href="{{ url_for('static', filename='images/automation.svg') }}" type="image/png">
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
   </head>
   <body>
@@ -176,15 +176,15 @@
         <div  class="overlay-image" alt="overlay"></div>
         <header>
           <h4>DASHBOARD</h4>
-          <h1 style="display: inline;"> Screw machine Infomation</h1>          
+          <h1 style="display: inline;"> Screw machine Information</h1>
         </header>
         <div class="mainContent">
           <h1 style="padding: 10px;"></h1>
-          <div class="solution"><img id="solution" src="{{ url_for('static', filename='images/innovation.png') }}"  alt="Solution"></div>
+          <div class="solution"><img id="solution" src="{{ url_for('static', filename='images/innovation.svg') }}" title="Solution" alt="Solution"></div>
           <div class="content">
             <div class="content-top">
               <div class="info1" >
-                <div class="infor">Total</div>
+                <div class="infor">Total </div>
                 <div class="card" style="color: #fff; " id="total-records">N/A</div>
                 <div class="glow-line"></div>
               </div>
@@ -204,8 +204,13 @@
                 <div class="glow-line"></div>
                 </div>
               <div class="dowfile" title="Dowload Exel">
-                <a id="download-excel"><span><img style="width: 32px; height: 32px; " src="{{ url_for('static', filename='images/download.png') }}"  alt="Expoprt File"></span></a>
-
+                <a id="download-excel">
+                  <button class="Btn">
+                    <svg class="svgIcon" viewBox="0 0 384 512" height="1em" xmlns="http://www.w3.org/2000/svg"><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"></path></svg>
+                    <span class="icon2"></span>
+                 </button>
+                </a>
+                
               </div>
             </div>
             <div class="tbl-header">
@@ -258,7 +263,7 @@
                 alt="Fullscreen Icon"
               />
             </a>
-          </div>        
+          </div>
         <div class="chartAll">
           <div class="chartContent">
             <div class="pagination"  id="pagination">
@@ -266,7 +271,7 @@
             <div class="pieChartInfo">
               <figure class="highcharts-figure">
                 <div id="container-pie"></div>
-              </figure>              
+              </figure>
             </div>
             <div class="chartRight">
               <div>
@@ -289,15 +294,15 @@
               <script>
                 Highcharts.chart('container', {
                   chart: {
-                    type: 'line',
-                    backgroundColor:null
-                  },                  
+                    type: 'spline', // Spline chart for smooth lines
+                    backgroundColor: null
+                  },
                   title: {
                     text: 'Chart CPK',
-                    align:'left',
-                    style:{
-                      color: '#fff', 
-                      fontSize: '16px', 
+                    align: 'left',
+                    style: {
+                      color: '#fff',
+                      fontSize: '16px',
                       fontWeight: 'bold'
                     }
                   },
@@ -305,98 +310,108 @@
                     categories: ['Machine 1', 'Machine 2', 'Machine 3', 'Machine 4', 'Machine 5', 'Machine 6', 'Machine 7', 'Machine 8', 'Machine 9'],
                     labels: {
                       style: {
-                        color: '#ffffff' 
+                        color: '#ffffff'
                       }
                     },
                     title: {
-                      text: 'Machine Name', 
+                      text: 'Machine Name',
                       style: {
                         color: '#fff'
                       }
                     }
                   },
-                  credits:{
-                    enabled:null
-                  },
-                  legend: {
-                      align: 'center',
-                      verticalAlign: 'bottom',
-                      itemStyle:{
-                        color: '#fff'
-                      },
-                      itemHoverStyle: {
-                      color: '#cccccc'
-                    }
-                  },                  
-                  accessibility:{
-                    enabled: false
-                  },
                   yAxis: {
                     title: {
                       text: 'Force Screw',
-                      style:{
-                        color:'#fff'
+                      style: {
+                        color: '#fff'
                       }
                     },
                     labels: {
-                    style: {
-                        color: '#ffffff' 
+                      style: {
+                        color: '#ffffff'
+                      }
                     }
                   },
+                  tooltip: {
+                    crosshairs: true,
+                    shared: true
+                  },
+                  plotOptions: {
+                    spline: {
+                      marker: {
+                        radius: 4,
+                        lineColor: '#666666',
+                        lineWidth: 1,
+                        symbol: 'circle' // Change all markers to circle
+                      }
+                    }
+                  },
+                  credits: {
+                    enabled: null
+                  },
+                  legend: {
+                    align: 'center',
+                    verticalAlign: 'bottom',
+                    itemStyle: {
+                      color: '#fff'
+                    },
+                    itemHoverStyle: {
+                      color: '#cccccc'
+                    }
+                  },
+                  accessibility: {
+                    enabled: false
                   },
                   series: [
                     {
-                      type: 'line',
                       name: 'AVG force 1',
                       data: [7.7, 8, 10, 8.5, 9, 9.5, 8.2, 7.7, 10.6],
-                      zIndex: 1
+                      color: '#FF5733' // Use bright orange for AVG force 1
                     },
                     {
-                      type: 'line',
                       name: 'AVG force 2',
                       data: [9.5, 8.5, 9.1, 7.3, 8.2, 9.8, 8.7, 6.9, 7.1],
-                      zIndex: 1
+                      color: '#33FF57' // Use green for AVG force 2
                     },
                     {
-                      type: 'line',
                       name: 'AVG force 3',
                       data: [11.8, 7.1, 9.2, 9.6, 7.1, 8.3, 8.4, 7.6, 9.3],
-                      zIndex: 1
+                      color: '#33A1FF' // Use blue for AVG force 3
                     },
                     {
-                      type: 'line',
                       name: 'AVG force 4',
-                      data: [7.6, 8.3, 7.5, 6.4,7.9, 8.4, 8.1, 11.5, 10.2],
-                      zIndex: 1
+                      data: [7.6, 8.3, 7.5, 6.4, 7.9, 8.4, 8.1, 11.5, 10.2],
+                      color: '#FFC300' 
                     },
                     {
-                      type: 'line',
                       name: 'UCL',
-                      data: Array(9).fill(11), 
+                      data: Array(9).fill(11),
                       dashStyle: 'Solid',
-                      color: 'red',
-                      zIndex: 2
+                      color: '#FF0000',
+                      lineWidth: 3
                     },
                     {
-                      type: 'line',
                       name: 'LCL',
-                      data: Array(9).fill(7), 
+                      data: Array(9).fill(7),
                       dashStyle: 'Solid',
-                      color: 'blue',
-                      zIndex: 2
+                      color: '#0000FF', 
+                      lineWidth: 3
                     },
                     {
-                      type: 'line',
                       name: 'AVG',
-                      data: Array(9).fill(9), 
+                      data: Array(9).fill(9),
                       dashStyle: 'Dot',
-                      color: 'green',
-                      zIndex: 3
+                      color: '#00FF00', 
+                      lineWidth: 2
                     }
                   ]
                 });
               </script>
             </div>
+            
+            
+            
           </div>
         </div>
           </div>
@@ -450,19 +465,19 @@
     <span class="close" id="closeModalForm">&times;</span>
     <h2 style="text-transform: uppercase;">Add New Recommend Solution</h2>
     <form id="solutionForm">
-      <label for="error_code" >
+      <label>
         Error Code
         <input class="solutionForminput" type="text" id="error_code" name="error_code" required/>
       </label>
-      <label for="error_name">
+      <label>
         Error Name
         <input class="solutionForminput" type="text" id="error_name" name="error_name" required/>
       </label>
-      <label for="root_cause">
+      <label>
         Root Cause
         <input class="solutionForminput" type="text" id="root_cause" name="root_cause" required/>
       </label>
-      <label for="solution">
+      <label>
         Solution
         <textarea class="solutionForminput" id="solution" name="solution" required></textarea>
       </label>

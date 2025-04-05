@@ -453,19 +453,18 @@ def get_charts():
         return jsonify({"error": str(e)}), 500
 
 #get data table by filter
-@app.route('/api/filter', methods=['POST'])
+@app.route('/api/filter', methods=['GET'])
 def filter_data():
     try:
-        data = request.json
-        line = data.get('line') if data.get('line') != "" else None
-        factory = data.get('factory') if data.get('factory') != "" else None
-        nameMachine = data.get('nameMachine') if data.get('nameMachine') != "" else None
-        model = data.get('model') if data.get('model') != "" else None
-        time_update = data.get('time_update') if data.get('time_update') != "" else None
-        time_end = data.get('time_end') if data.get('time_end') != "" else None
-        state = data.get('state') if data.get('state') != "" else None
-        page = data.get('page', 1)
-        per_page = data.get('per_page', 10)
+        line = request.args.get('line') if request.args.get('line') != "null" else None
+        factory = request.args.get('factory') if request.args.get('factory') != "null" else None
+        nameMachine = request.args.get('nameMachine') if request.args.get('nameMachine') != "null" else None
+        model = request.args.get('model') if request.args.get('model') != "null" else None
+        time_update = request.args.get('time_update') if request.args.get('time_update') != "null" else None
+        time_end = request.args.get('time_end') if request.args.get('time_end') != "null" else None
+        state = request.args.get('state') if request.args.get('state') != "null" else None
+        page = int(request.args.get('page', 1))  # Lấy tham số page, mặc định là 1
+        per_page = int(request.args.get('per_page', 10))  # Lấy tham số per_page, mặc định là 10
         offset = (page - 1) * per_page
         connection = get_db_connection()
         cursor = connection.cursor()
@@ -576,12 +575,11 @@ def filter_data():
         }), 500
 
 # Filter pie chart
-@app .route('/api/filterPieChart', methods=['POST'])
+@app .route('/api/filterPieChart', methods=['GET'])
 def filter_pie_chart():
     try:
-        data = request.json
-        time_update = data.get("time_update")
-        time_end = data.get("time_end")
+        time_update = request.args.get("time_update")
+        time_end = request.args.get("time_end")
         if time_update and time_end:
             start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
             end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
@@ -594,12 +592,11 @@ def filter_pie_chart():
         return jsonify({"success": False, "error": str(e)})
 
 # Filter column chart
-@app .route('/api/filterColumnChart', methods=['POST'])
+@app .route('/api/filterColumnChart', methods=['GET'])
 def filter_column_chart():
     try:
-        data = request.json
-        time_update = data.get("time_update")
-        time_end = data.get("time_end")
+        time_update = request.args.get("time_update")
+        time_end = request.args.get("time_end")
         if time_update and time_end:
             start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
             end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
@@ -608,12 +605,11 @@ def filter_column_chart():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
-@app .route('/api/filterColumn2Chart', methods=['POST'])
+@app .route('/api/filterColumn2Chart', methods=['GET'])
 def filter_column2_chart():
     try:
-        data = request.json
-        time_update = data.get("time_update")
-        time_end = data.get("time_end")
+        time_update = request.args.get("time_update")
+        time_end = request.args.get("time_end")
         if time_update and time_end:
             start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
             end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
@@ -662,7 +658,7 @@ def login():
                     'type': 'refresh'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
                 resp = make_response(redirect('/adminDashboard' if role == 'admin' else '/index'))
-                # Thiết lập cookie an toàn
+                # Thiết lập cookie
                 resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60, samesite='Strict')
                 resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60, samesite='Strict')                
                 return resp
@@ -677,7 +673,7 @@ def login():
             if connection:
                 connection.close()
     return render_template('login.html')
-
+#refresh token
 @app.route('/refresh', methods=['POST'])
 def refresh():
     refresh_token = request.cookies.get('refresh_token')
@@ -698,7 +694,7 @@ def refresh():
         return resp
     except jwt.ExpiredSignatureError:
         return jsonify({"error": "Refresh token has expired"}), 401
-    except jwt.invalidTokenError:
+    except jwt.InvalidTokenError:
         return jsonify({"error": "Invalid refresh token"}), 401
 
 #register
@@ -722,8 +718,8 @@ def register():
                 return render_template('register.html', error='User already exists')
             else:
                 insert_query = """
-                    INSERT INTO USERS (USERNAME, PASSWORD, EMAIL)
-                    VALUES (:username, :password, :email)
+                    INSERT INTO USERS (USERNAME, PASSWORD, EMAIL, ROLE)
+                    VALUES (:username, :password, :email, 'user')
                 """
                 cursor.execute(insert_query, {"username": username, "password": password, "email" : email})
                 connection.commit()
@@ -744,8 +740,6 @@ def get_lines():
         query = """
             SELECT 'Line', Line FROM SCREW_FORCE_INFO WHERE LINE IS NOT NULL
             UNION
-            SELECT 'State', State FROM SCREW_FORCE_INFO WHERE STATE IS NOT NULL
-            UNION
             SELECT 'NameMachine', NAME_MACHINE FROM SCREW_FORCE_INFO WHERE NAME_MACHINE IS NOT NULL
             UNION
             SELECT 'Factory', FACTORY FROM SCREW_FORCE_INFO WHERE FACTORY IS NOT NULL
@@ -756,12 +750,10 @@ def get_lines():
             with connection.cursor() as cursor:
                 cursor.execute(query)
                 rows = cursor.fetchall()
-        result = {"lines": [], "states": [], "nameMachines": [], "factories": [], "modelNames": []}
+        result = {"lines": [], "states": ['PASS', 'FAIL'], "nameMachines": [], "factories": [], "modelNames": []}
         for category, value in rows:
             if category == 'Line':
                 result["lines"].append(value)
-            elif category == 'State':
-                result["states"].append(value)
             elif category == 'NameMachine':
                 result["nameMachines"].append(value)
             elif category == 'Factory':
@@ -908,7 +900,7 @@ def download_excel():
 def get_data_solution():
     try:
         query = """
-            SELECT * FROM SCREW_FORCE_ERROR ORDER BY ERROR_CODE DESC
+            SELECT * FROM SCREW_FORCE_ERROR WHERE STATUS = 1 ORDER BY ERROR_CODE DESC
         """ 
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
@@ -935,7 +927,6 @@ def update_data_solution(id):
         error_name = data.get('error_name')
         root_cause = data.get('root_cause')
         solution = data.get('solution')
-        status = data.get('status')
 
         if not all([error_name, root_cause, solution]):
             return jsonify({"error": "Missing required fields"}), 400
@@ -1014,6 +1005,6 @@ def add_data_soulution():
         print(f"Error updating: {e}")
         return jsonify({"error": "Error code was existed"}), 500
 if __name__=='__main__':
-    app.run(debug=True, threaded = True)
+    app.run( host='0.0.0.0', debug=True, threaded = True)
 
 

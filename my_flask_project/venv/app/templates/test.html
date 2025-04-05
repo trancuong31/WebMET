@@ -1,236 +1,462 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tải lên và xem trước hình ảnh</title>
+    <meta charset="utf-8">
+    <title>Biểu đồ lực vít cho từng máy</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/10.3.3/highcharts.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 600px;
+        #container {
+            width: 800px;
+            height: 500px;
             margin: 0 auto;
         }
-        
-        .upload-area {
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            margin-bottom: 20px;
-            min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .upload-area:hover {
-            border-color: #999;
-        }
-        
-        .upload-icon {
-            font-size: 48px;
-            color: #999;
-            margin-bottom: 10px;
-        }
-        
-        .upload-text {
-            color: #666;
-            margin-bottom: 10px;
-        }
-        
-        .file-input {
-            display: none;
-        }
-        
-        .preview-container {
-            margin-top: 20px;
-            text-align: center;
-        }
-        
-        .preview-image {
-            max-width: 100%;
-            max-height: 300px;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-        
-        .preview-image:hover {
-            opacity: 0.8;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .modal-content {
-            position: relative;
-            max-width: 90%;
-            max-height: 90vh;
-        }
-        
-        .enlarged-image {
-            max-width: 100%;
-            max-height: 90vh;
-            object-fit: contain;
-        }
-        
-        .close-button {
-            position: absolute;
-            top: -40px;
-            right: -40px;
-            background-color: white;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border: none;
-            font-size: 20px;
-        }
-        
-        .close-button:hover {
-            background-color: #f0f0f0;
-        }
-        
-        .hidden {
-            display: none;
+        body {
+            font-family: Arial, sans-serif;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="upload-area" id="uploadArea">
-            <div id="uploadIcon" class="upload-icon">📁</div>
-            <p class="upload-text" id="uploadText">Nhấp để tải lên hoặc kéo thả hình ảnh vào đây</p>
-            <p class="upload-text" style="font-size: 0.8em; color: #999;">PNG, JPG, GIF hỗ trợ</p>
-            <input type="file" id="fileInput" class="file-input" accept="image/*">
-            <div id="previewContainer" class="preview-container hidden">
-                <img id="previewImage" class="preview-image" src="" alt="Ảnh xem trước">
-            </div>
-        </div>
-    </div>
-
-    <div id="imageModal" class="modal hidden">
-        <div class="modal-content">
-            <img id="enlargedImage" class="enlarged-image" src="" alt="Ảnh phóng to">
-            <button id="closeModal" class="close-button">✖</button>
-        </div>
-    </div>
-
+    <div id="container"></div>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('fileInput');
-            const previewContainer = document.getElementById('previewContainer');
-            const previewImage = document.getElementById('previewImage');
-            const uploadIcon = document.getElementById('uploadIcon');
-            const uploadText = document.getElementById('uploadText');
-            const imageModal = document.getElementById('imageModal');
-            const enlargedImage = document.getElementById('enlargedImage');
-            const closeModal = document.getElementById('closeModal');
-            
-            // Mở hộp thoại chọn file khi nhấp vào vùng tải lên
-            uploadArea.addEventListener('click', function() {
-                fileInput.click();
-            });
-            
-            // Xử lý khi chọn file
-            fileInput.addEventListener('change', handleFileSelect);
-            
-            // Xử lý kéo thả
-            uploadArea.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.style.borderColor = '#666';
-            });
-            
-            uploadArea.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.style.borderColor = '#ccc';
-            });
-            
-            uploadArea.addEventListener('drop', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.style.borderColor = '#ccc';
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    handleFiles(files[0]);
-                }
-            });
-            
-            // Hiển thị modal khi nhấp vào ảnh xem trước
-            previewImage.addEventListener('click', function(e) {
-                e.stopPropagation(); // Ngăn không cho sự kiện truyền lên uploadArea
-                enlargedImage.src = previewImage.src;
-                imageModal.classList.remove('hidden');
-            });
-            
-            // Đóng modal
-            closeModal.addEventListener('click', function() {
-                imageModal.classList.add('hidden');
-            });
-            
-            imageModal.addEventListener('click', function(e) {
-                if (e.target === imageModal) {
-                    imageModal.classList.add('hidden');
-                }
-            });
-            
-            // Hàm xử lý file được chọn từ input
-            function handleFileSelect(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    handleFiles(file);
-                }
+        // Định nghĩa 4 loại lực vít cho mỗi máy
+        const screwForceTypes = ['Lực vít 1', 'Lực vít 2', 'Lực vít 3', 'Lực vít 4'];
+        
+        // Định nghĩa giá trị min và max cho từng loại lực vít trên mỗi máy
+        const machines = [
+            { 
+                name: 'Máy 1', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            },
+            { 
+                name: 'Máy 2', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            },
+            { 
+                name: 'Máy 3', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            },
+            { 
+                name: 'Máy 4', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            },
+            { 
+                name: 'Máy 5', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
             }
+            ,
+            { 
+                name: 'Máy 6 ', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 7', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 8', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 9', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 10', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 11', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 12', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 13', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 14', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 15', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 16', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 17', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 18', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 19', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 20', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 21', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 22', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 23', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 24', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 25', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 26', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 27', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 28', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 29', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+            ,
+            { 
+                name: 'Máy 40', 
+                forces: [
+                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+                ]
+            }
+        ];
+        const getTestData = (machineIndex, forceType, minForce, maxForce) => {
+            const midPoint = (minForce + maxForce) / 2;
+            const variance = (maxForce - minForce) * 0.7;
+            // Shift x position slightly based on force type to separate them visually
+            const xOffset = (screwForceTypes.indexOf(forceType) - 1.5) * 0.1;
             
-            // Hàm xử lý file và hiển thị xem trước
-            function handleFiles(file) {
-                if (!file.type.match('image.*')) {
-                    alert('Vui lòng chọn một file hình ảnh!');
-                    return;
-                }
-                
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    previewImage.src = e.target.result;
-                    previewContainer.classList.remove('hidden');
-                    uploadIcon.classList.add('hidden');
-                    uploadText.textContent = 'Nhấp vào ảnh để phóng to hoặc kéo thả ảnh khác';
+            return new Array(20).fill(1).map(() => [
+                machineIndex + xOffset,
+                midPoint + (Math.random() - 0.5) * variance
+            ]);
+        };
+
+        // Make all the colors semi-transparent so we can see overlapping dots
+        const baseColors = Highcharts.getOptions().colors;
+        
+        // Create scatter series for each force type
+        const scatterSeries = [];
+        const minLineSeries = [];
+        const maxLineSeries = [];
+        
+        // Create data for each force type
+        screwForceTypes.forEach((forceType, typeIndex) => {
+            // Create scatter series for this force type
+            const forceColor = Highcharts.color(baseColors[typeIndex]).setOpacity(0.5).get();
+            
+            const scatterData = machines.map((machine, machineIndex) => {
+                const forceData = machine.forces.find(f => f.type === forceType);
+                return {
+                    name: `${machine.name} - ${forceType}`,
+                    type: 'scatter',
+                    color: forceColor,
+                    data: getTestData(machineIndex, forceType, forceData.min, forceData.max),
+                    marker: {
+                        radius: 3,
+                        symbol: 'circle'
+                    },
+                    showInLegend: machineIndex === 0, // Only show in legend for first machine to avoid clutter
+                    legendIndex: typeIndex,
+                    tooltip: {
+                        pointFormat: 'Máy: {series.name}<br/>Lực vít: {point.y:.3f}'
+                    }
                 };
-                
-                reader.readAsDataURL(file);
-            }
+            });
+            
+            scatterSeries.push(...scatterData);
+            
+            // Create min line series for this force type
+            const minData = machines.map((machine, index) => {
+                const forceData = machine.forces.find(f => f.type === forceType);
+                return [index, forceData.min];
+            });
+            
+            minLineSeries.push({
+                name: `Min - ${forceType}`,
+                type: 'line',
+                color: Highcharts.color(baseColors[typeIndex]).setOpacity(0.8).get(),
+                dashStyle: 'ShortDash',
+                data: minData,
+                marker: {
+                    enabled: true,
+                    symbol: 'diamond',
+                    radius: 4
+                },
+                lineWidth: 2,
+                showInLegend: true,
+                legendIndex: screwForceTypes.length + typeIndex,
+                tooltip: {
+                    pointFormat: `${forceType} - Lực vít tối thiểu: {point.y:.3f}`
+                }
+            });
+            
+            // Create max line series for this force type
+            const maxData = machines.map((machine, index) => {
+                const forceData = machine.forces.find(f => f.type === forceType);
+                return [index, forceData.max];
+            });
+            
+            maxLineSeries.push({
+                name: `Max - ${forceType}`,
+                type: 'line',
+                color: Highcharts.color(baseColors[typeIndex]).brighten(0.3).get(),
+                dashStyle: 'Solid',
+                data: maxData,
+                marker: {
+                    enabled: true,
+                    symbol: 'diamond',
+                    radius: 4
+                },
+                lineWidth: 2,
+                showInLegend: true,
+                legendIndex: screwForceTypes.length * 2 + typeIndex,
+                tooltip: {
+                    pointFormat: `${forceType} - Lực vít tối đa: {point.y:.3f}`
+                }
+            });
+        });
+
+        // Kết hợp tất cả series
+        const allSeries = [...scatterSeries, ...minLineSeries, ...maxLineSeries];
+
+        Highcharts.chart('container', {
+            chart: {
+                type: 'scatter',
+                zoomType: 'xy'
+            },
+            title: {
+                text: 'Biểu đồ lực vít cho từng máy'
+            },
+            subtitle: {
+                text: 'Kết hợp 4 loại lực vít với đường min/max'
+            },
+            xAxis: {
+                categories: machines.map(machine => machine.name),
+                title: {
+                    text: 'Máy'
+                }
+            },
+            yAxis: {
+                title: {
+                    text: 'Lực vít'
+                }
+            },
+            legend: {
+                enabled: true,
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle',
+                borderWidth: 1
+            },
+            plotOptions: {
+                scatter: {
+                    jitter: {
+                        x: 0.12,
+                        y: 0
+                    }
+                }
+            },
+            series: allSeries
         });
     </script>
 </body>
