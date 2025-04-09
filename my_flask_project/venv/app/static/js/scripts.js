@@ -106,9 +106,9 @@ function initializeFilter() {
                 <td class ="stt">${row.stt}</td>
                 <td>${row.factory ?? 'N/A'}</td>
                 <td>${row.line ?? 'N/A'}</td>
-                <td>${row.serial_number ?? 'N/A'}</td>
-                <td>${row.model_name ?? 'N/A'}</td>
                 <td>${row.name_machine ?? 'N/A'}</td>
+                <td>${row.model_name ?? 'N/A'}</td>
+                <td>${row.serial_number ?? 'N/A'}</td>
                 <td class="${checkForceValue(row.force_1)}">${row.force_1 ?? 'N/A'}</td>
                 <td class="${checkForceValue(row.force_2)}">${row.force_2 ?? 'N/A'}</td>
                 <td class="${checkForceValue(row.force_3)}">${row.force_3 ?? 'N/A'}</td>
@@ -581,7 +581,7 @@ function initializeFilter() {
                 xAxis: [{ visible: true }, { visible: false }]
             });
         });
-    } 
+    }
     //setup column2 chart screw force trend
     function drawColumn2Chart(data, targetValue) {
         try {
@@ -756,7 +756,7 @@ function initializeFilter() {
                     animation: { duration: 600, easing: 'easeOutExpo' },
                 },
                 title: {
-                    text: `Force Chart For Machine ${machineName}`,
+                    text: `Scatter Plot With Screw Force Variation Of ${machineName}`,
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
@@ -793,7 +793,6 @@ function initializeFilter() {
             console.error('Error force chart:', error);
         }
     }
-
 }
 
 //load dashboard
@@ -868,9 +867,9 @@ function initializeDashboard () {
                 <td class ="stt">${row.stt}</td>
                 <td>${row.factory ?? 'N/A'}</td>
                 <td>${row.line ?? 'N/A'}</td>
-                <td>${row.serial_number ?? 'N/A'}</td>
-                <td>${row.model_name ?? 'N/A'}</td>
                 <td>${row.name_machine ?? 'N/A'}</td>
+                <td>${row.model_name ?? 'N/A'}</td>
+                <td>${row.serial_number ?? 'N/A'}</td>
                 <td class="${checkForceValue(row.force_1)}">${row.force_1 ?? 'N/A'}</td>
                 <td class="${checkForceValue(row.force_2)}">${row.force_2 ?? 'N/A'}</td>
                 <td class="${checkForceValue(row.force_3)}">${row.force_3 ?? 'N/A'}</td>
@@ -1337,8 +1336,10 @@ function initializeDashboard () {
                 color: Highcharts.getOptions().colors[index],
                 showInLegend: true,
                 tooltip: {
-                    pointFormat: 'Type: {series.name}<br/>Force: {point.y:.2f}'
+                    pointFormat: 'Type: {series.name}<br/>Force: {point.y:.2f}',
+                    
                 }
+                
             }));
     
             const minLineData = [[0, 10], [1, 10], [2, 10], [3, 10]];
@@ -1388,7 +1389,7 @@ function initializeDashboard () {
                     animation: { duration: 600, easing: 'easeOutExpo' },
                 },
                 title: {
-                    text: `Force Chart For Machine ${machineName}`,
+                    text: `Scatter Plot With Screw Force Variation Of ${machineName}`,
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
@@ -1399,9 +1400,9 @@ function initializeDashboard () {
                 },
                 yAxis: {
                     title: {
-                        text: 'Force', style: { color: '#fff', fontSize: '12px' }
+                        text: 'Force( kgf.cm )', style: { color: '#fff', fontSize: '12px' }
                     },
-                    labels: { style: { color: '#fff', fontSize: '12px' } }
+                    labels: {format: '{value}kgf.cm', style: { color: '#fff', fontSize: '12px' } }
                 },
                 legend: {
                     align: 'center',
@@ -1530,8 +1531,11 @@ function modalSolution() {
                 data.forEach(item => {
                     const row = document.createElement('tr');
                     row.dataset.id = item.error_code;
-                    const formattedSolution = item.solution.replace(/\./g, '.<br>');
-
+                    const formattedSolution = item.solution
+                    .replace(/\./g, '.<br>')                   
+                    .split('<br>')                             
+                    .map(line => line.trim() ? `- ${line}` : '')
+                    .join('<br>');
                     row.innerHTML = `
                         <td class="errorID">${item.error_code}</td>
                         <td class="errorName">${item.error_name}</td>
