@@ -291,127 +291,126 @@
               <figure class="highcharts-figure">
                 <div id="container"></div>
               </figure>
-              <script>
+              <!-- <script>
+                const screwForceTypes = ['Force 1', 'Force 2', 'Force 3', 'Force 4'];
+                const machineData = {
+                    name: 'Máy 1',
+                    forces: [
+                        { type: 'Force 1', min: 0.2, max: 0.6 },
+                        { type: 'Force 2', min: 0.2, max: 0.6 },
+                        { type: 'Force 3', min: 0.2, max: 0.6 },
+                        { type: 'Force 4', min: 0.2, max: 0.6 }
+                    ]
+                };
+                const getTestData = (forceIndex, minForce, maxForce) => {
+                    const midPoint = (minForce + maxForce) / 2;
+                    const variance = (maxForce - minForce) * 0.7;
+                    
+                    return new Array(30).fill(1).map(() => [
+                        forceIndex,
+                        midPoint + (Math.random() - 0.5) * variance
+                    ]);
+                };
+      
+                const minLineData = machineData.forces.map((force, index) => [index, force.min]);
+                const maxLineData = machineData.forces.map((force, index) => [index, force.max]);
+                const scatterSeries = machineData.forces.map((force, index) => ({
+                    name: force.type,
+                    type: 'scatter',
+                    data: getTestData(index, force.min, force.max),
+                    marker: {
+                        radius: 3,
+                        symbol: 'circle'
+                    },
+                    color: Highcharts.getOptions().colors[index],
+                    showInLegend: true,
+                    tooltip: {
+                        pointFormat: 'Loại: {series.name}<br/>Lực vít: {point.y:.3f}'
+                    }
+                }));
+                const lineSeries = [
+                    {
+                        name: 'Lực vít tối thiểu',
+                        type: 'line',
+                        data: minLineData,
+                        color: '#FF0000',
+                        marker: {
+                            enabled: true,
+                            symbol: 'diamond',
+                            radius: 5
+                        },
+                        lineWidth: 2,
+                        tooltip: {
+                            pointFormat: 'Lực vít tối thiểu: {point.y:.3f}'
+                        }
+                    },
+                    {
+                        name: 'Lực vít tối đa',
+                        type: 'line',
+                        data: maxLineData,
+                        color: '#00AA00',
+                        marker: {
+                            enabled: true,
+                            symbol: 'diamond',
+                            radius: 5
+                        },
+                        lineWidth: 2,
+                        tooltip: {
+                            pointFormat: 'Lực vít tối đa: {point.y:.3f}'
+                        }
+                    }
+                ];
+        
+                // Kết hợp tất cả series
+                const allSeries = [...scatterSeries, ...lineSeries];
+        
                 Highcharts.chart('container', {
-                  chart: {
-                    type: 'spline', // Spline chart for smooth lines
-                    backgroundColor: null
-                  },
-                  title: {
-                    text: 'Chart CPK',
-                    align: 'left',
-                    style: {
-                      color: '#fff',
-                      fontSize: '16px',
-                      fontWeight: 'bold'
-                    }
-                  },
-                  xAxis: {
-                    categories: ['Machine 1', 'Machine 2', 'Machine 3', 'Machine 4', 'Machine 5', 'Machine 6', 'Machine 7', 'Machine 8', 'Machine 9'],
-                    labels: {
-                      style: {
-                        color: '#ffffff'
-                      }
+                    chart: {
+                        type: 'scatter',
+                        zoomType: 'xy',
+                        backgroundColor: null,
                     },
                     title: {
-                      text: 'Machine Name',
-                      style: {
-                        color: '#fff'
-                      }
-                    }
-                  },
-                  yAxis: {
-                    title: {
-                      text: 'Force Screw',
-                      style: {
-                        color: '#fff'
-                      }
+                        text: `Biểu đồ lực vít cho ${machineData.name}`,
+                        align: 'left',
+                        style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                     },
-                    labels: {
-                      style: {
-                        color: '#ffffff'
-                      }
-                    }
-                  },
-                  tooltip: {
-                    crosshairs: true,
-                    shared: true
-                  },
-                  plotOptions: {
-                    spline: {
-                      marker: {
-                        radius: 4,
-                        lineColor: '#666666',
-                        lineWidth: 1,
-                        symbol: 'circle' // Change all markers to circle
-                      }
-                    }
-                  },
-                  credits: {
-                    enabled: null
-                  },
-                  legend: {
+                    xAxis: {
+                        categories: screwForceTypes,
+                        labels: { style: { color: '#fff', fontSize: '12px' } },
+                        title: { text: 'Loại lực vít', style: { color: '#fff', fontSize: '12px' } }
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Lực vít', style: { color: '#fff', fontSize: '12px' }
+                        },
+                        labels: { style: { color: '#fff', fontSize: '12px' } }
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    accessibility: { enabled: false },
+                    legend: {
                     align: 'center',
                     verticalAlign: 'bottom',
-                    itemStyle: {
-                      color: '#fff'
+                    itemStyle: { color: '#fff' },
+                    itemHoverStyle: { color: '#cccccc' }
+                },
+                    plotOptions: {
+                        scatter: {
+                            jitter: {
+                                x: 0.15,
+                                y: 0
+                            }
+                        }
                     },
-                    itemHoverStyle: {
-                      color: '#cccccc'
-                    }
-                  },
-                  accessibility: {
-                    enabled: false
-                  },
-                  series: [
-                    {
-                      name: 'AVG force 1',
-                      data: [7.7, 8, 10, 8.5, 9, 9.5, 8.2, 7.7, 10.6],
-                      color: '#FF5733' // Use bright orange for AVG force 1
-                    },
-                    {
-                      name: 'AVG force 2',
-                      data: [9.5, 8.5, 9.1, 7.3, 8.2, 9.8, 8.7, 6.9, 7.1],
-                      color: '#33FF57' // Use green for AVG force 2
-                    },
-                    {
-                      name: 'AVG force 3',
-                      data: [11.8, 7.1, 9.2, 9.6, 7.1, 8.3, 8.4, 7.6, 9.3],
-                      color: '#33A1FF' // Use blue for AVG force 3
-                    },
-                    {
-                      name: 'AVG force 4',
-                      data: [7.6, 8.3, 7.5, 6.4, 7.9, 8.4, 8.1, 11.5, 10.2],
-                      color: '#FFC300' 
-                    },
-                    {
-                      name: 'UCL',
-                      data: Array(9).fill(11),
-                      dashStyle: 'Solid',
-                      color: '#FF0000',
-                      lineWidth: 3
-                    },
-                    {
-                      name: 'LCL',
-                      data: Array(9).fill(7),
-                      dashStyle: 'Solid',
-                      color: '#0000FF', 
-                      lineWidth: 3
-                    },
-                    {
-                      name: 'AVG',
-                      data: Array(9).fill(9),
-                      dashStyle: 'Dot',
-                      color: '#00FF00', 
-                      lineWidth: 2
-                    }
-                  ]
+                    series: allSeries
                 });
-              </script>
+            </script> -->
             </div>
-            
-            
-            
           </div>
         </div>
           </div>
@@ -432,6 +431,15 @@
 <div id="solutionModal" class="modal-overlay" style="display: none;">
   <div class="modal-content1">
     <div id="searchError"><input type="text" placeholder="Search Error" id="searchError"></div>
+    <div class="custom-tooltip-container">
+      <button class="custom-tooltip-btn"><i class="fa fa-question-circle"></i></button>
+      <div class="custom-tooltip-content">
+        <span class="custom-tooltip-arrow"></span>
+        <p class="custom-tooltip-text">
+          Warning: Each solution is separated by a dot. <br> eg: "Solution 1. Solution 2.".
+        </p>
+      </div>
+    </div>
     <div class="corner-tl"></div>
     <div class="corner-tr"></div>
     <div class="corner-bl"></div>
@@ -440,7 +448,7 @@
     <div class="border-bottom"></div>
     <div class="border-left"></div>
     <div class="border-right"></div>
-    <span class="close-modal">&times;</span>
+    <span class="close-modal" title="Exit">&times;</span>
     <div id="text-effect" class="rainbow-text">Recommend Solution</div>
     <table class="tableSolution" cellpadding="0" cellspacing="0" border="0">
       <thead>
@@ -467,19 +475,19 @@
     <form id="solutionForm">
       <label>
         Error Code
-        <input class="solutionForminput" type="text" id="error_code" name="error_code" required/>
+        <input class="solutionForminput" type="text" id="error_code" name="error_code" autocomplete="off" required/>
       </label>
       <label>
         Error Name
-        <input class="solutionForminput" type="text" id="error_name" name="error_name" required/>
+        <input class="solutionForminput" type="text" id="error_name" name="error_name" autocomplete="off" required/>
       </label>
       <label>
         Root Cause
-        <input class="solutionForminput" type="text" id="root_cause" name="root_cause" required/>
+        <input class="solutionForminput" type="text" id="root_cause" name="root_cause" autocomplete="off" required/>
       </label>
       <label>
         Solution
-        <textarea class="solutionForminput" id="solution" name="solution" required></textarea>
+        <textarea class="solutionForminput" id="solution" name="solution" autocomplete="off" required></textarea>
       </label>
       <button id="btnaddsolution" type="submit">Submit</button>
     </form>

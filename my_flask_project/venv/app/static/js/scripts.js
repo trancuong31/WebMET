@@ -7,6 +7,7 @@ function initializeFilter() {
     let currentDrilldownId = null;
     let column2Chart = null;
     let columnChart = null;
+    let forceChart = null;
     function stopPolling() {
         if (pollingTimer) {
             clearInterval(pollingTimer);
@@ -23,68 +24,6 @@ function initializeFilter() {
         
         fetchFilteredData(1, false);
     });
-    // function fetchFilteredData(page = 1, isPagination = false) {
-    //     // Lấy giá trị từ các input
-    //     const line = document.getElementById('line-combobox').value.trim();
-    //     const factory = document.getElementById('factory-combobox').value.trim();
-    //     const model = document.getElementById('modelNamecombobox').value.trim();
-    //     const time_update = document.getElementById('time_update').value.trim();
-    //     const time_end = document.getElementById('time_end').value.trim();
-    //     const state = document.getElementById('state-combobox').value.trim();
-    //     const nameMachine = document.getElementById('nameMachine-combobox').value.trim();        
-    //     const formatDatetime = (datetime) => {
-    //         return datetime ? datetime.replace('T', ' ') + ':00' : null;
-    //     };
-    //     const payload = {
-    //         line: line || null,
-    //         factory: factory || null,
-    //         model: model || null,
-    //         nameMachine: nameMachine||null,
-    //         time_update: formatDatetime(time_update),
-    //         time_end: formatDatetime(time_end),
-    //         state: state || null,
-    //         page: page,
-    //         per_page: 10
-    //     };
-    //     document.getElementById('loading').style.display = 'block';
-    //     fetch('/api/filter', {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json'                
-    //         },
-    //         body: JSON.stringify(payload)
-    //     })
-    //         .then(response => response.json())
-    //         .then(data => {
-    //             document.getElementById('loading').style.display = 'none';
-    //             if (data.success) {                    
-    //                 document.getElementById('count').textContent = data.message ||""
-    //                 updateTable(data.data);
-    //                 updatePagination(data.current_page, data.total_pages, data.group_start, data.group_end);
-    //                 if (data.total_records == 0){
-    //                     tableBody.innerHTML = `<tr><td class="no-data" colspan="12">No data found.</td></tr>`;
-    //                     paginationDiv.innerHTML = '';
-    //                 }
-    //                 if (!isPagination) {
-    //                     fetchPieChartData(time_update, time_end);
-    //                     fetchColumnChartData(time_update, time_end);
-    //                     fetchColumn2ChartData(time_update, time_end);
-    //                 }
-    //             } else {
-    //                 tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
-    //                 paginationDiv.innerHTML = '';
-    //             }
-    //         })
-
-    //         .catch(error => {
-    //             console.error("Error fetching filtered data:", error);
-    //             alert("Error fetching filtered data");
-    //             tableBody.innerHTML = `<tr><td colspan="12">An error occurred while loading data.</td></tr>`;
-    //             paginationDiv.innerHTML = '';
-    //             document.getElementById('loading').style.display = 'none';
-    //         });
-    //         isFirstLoad = false;
-    // }
     
     async function fetchFilteredData(page = 1, isPagination = false) {
         const line = document.getElementById('line-combobox').value.trim();
@@ -139,6 +78,7 @@ function initializeFilter() {
                     fetchPieChartData(time_update, time_end);
                     fetchColumnChartData(time_update, time_end);
                     fetchColumn2ChartData(time_update, time_end);
+                    fetchForceChartData(nameMachine);
                 }
             } else {
                 tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
@@ -213,32 +153,6 @@ function initializeFilter() {
             });
         });
     }
-    //send data filter to server
-    // function fetchPieChartData(time_update, time_end) {
-    //     const payload = {
-    //         time_update: time_update ? time_update.replace('T', ' ') + ':00' : null,
-    //         time_end: time_end ? time_end.replace('T', ' ') + ':00' : null
-    //     };
-    //     fetch('/api/filterPieChart', {
-    //         method: 'GET',
-    //         headers: {
-    //             'Content-Type': 'application/json'
-    //         },
-    //         body: JSON.stringify(payload)
-    //     })
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         if (data.success) {
-    //             updatePieChart(data.pie_chart_date); 
-    //         } else {
-    //             return
-    //         }
-    //     })
-    //     .catch(error => {
-    //         console.error("Error fetching Pie Chart data:", error);
-    //     });
-    // }
-
     function fetchPieChartData(time_update, time_end) {
         const formattedTimeUpdate = time_update ? time_update.replace('T', ' ') + ':00' : null;
         const formattedTimeEnd = time_end ? time_end.replace('T', ' ') + ':00' : null;
@@ -270,32 +184,6 @@ function initializeFilter() {
             console.error("Error fetching Pie Chart data:", error);
         });
     }
-    
-    //send data filter to server
-    // function fetchColumnChartData(time_update, time_end) {
-    //     const payload = {
-    //         time_update: time_update ? time_update.replace('T', ' ') + ':00' : null,
-    //         time_end: time_end ? time_end.replace('T', ' ') + ':00' : null
-    //     };
-    //     fetch('/api/filterColumnChart', {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json'
-    //         },
-    //         body: JSON.stringify(payload)
-    //     })    
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         if (data.success) {
-    //             drawColumnChart(data.column_chart_date); 
-    //         } else {
-    //             return
-    //         }
-    //     })
-    //     .catch(error => {
-    //         console.error("Error fetching Pie Chart data:", error);
-    //     });
-    // }
 
     function fetchColumnChartData(time_update, time_end) {
         // Xử lý tham số thời gian (nếu có)
@@ -336,38 +224,9 @@ function initializeFilter() {
         });
     }
     
-    //send data filter to server
-    // function fetchColumn2ChartData(time_update, time_end) {
-    //     const payload = {
-    //         time_update: time_update ? time_update.replace('T', ' ') + ':00' : null,
-    //         time_end: time_end ? time_end.replace('T', ' ') + ':00' : null
-    //     };
-    //     fetch('/api/filterColumn2Chart', {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json'
-    //         },
-    //         body: JSON.stringify(payload)
-    //     })    
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         if (data.success) {
-    //             drawColumn2Chart(data.column2_chart_date); 
-    //         } else {
-    //             return
-    //         }
-    //     })
-    //     .catch(error => {
-    //         console.error("Error fetching Screw Trend Chart data:", error);
-    //     });
-    // }
-
     function fetchColumn2ChartData(time_update, time_end) {
-        // Xử lý tham số thời gian (nếu có)
         const formattedTimeUpdate = time_update ? time_update.replace('T', ' ') + ':00' : null;
         const formattedTimeEnd = time_end ? time_end.replace('T', ' ') + ':00' : null;
-    
-        // Tạo URL với tham số query string
         let url = '/api/filterColumn2Chart?';
         if (formattedTimeUpdate) {
             url += `time_update=${encodeURIComponent(formattedTimeUpdate)}&`;
@@ -398,6 +257,33 @@ function initializeFilter() {
         });
     }
     
+    function fetchForceChartData(machine_name) {
+        let url = '/api/filterForceChart?';
+        if (machine_name) {
+            url += `nameMachine=${encodeURIComponent(machine_name)}&`;
+        }
+        if (url.endsWith('&')) {
+            url = url.slice(0, -1);
+        }
+        // Gửi yêu cầu GET
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json' 
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                drawForceChart(data.force_chart_data); 
+            } else {
+                console.log("No data found for Force chart");
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching Force Chart data:", error);
+        });
+    }
     //setup pie chart
     function updatePieChart(pieData) {
         if (!pieData || !pieData.details) {
@@ -717,10 +603,11 @@ function initializeFilter() {
                 column2Chart.series[3].setData(Array(categories.length).fill(targetValue), false);
                 column2Chart.redraw();
                 return;
-            }    
+            }
             column2Chart = Highcharts.chart('container3', {
                 chart: {
                     zooming: { type: 'x' },
+                    animation: { duration: 600, easing: 'easeOutExpo' },
                     backgroundColor: null,
                     plotBackgroundColor: null
                 },
@@ -797,7 +684,118 @@ function initializeFilter() {
             console.error('Error generating column2 chart:', error);
         }
     }
+
+    function drawForceChart(data) {
+        const screwForceTypes = data.categories;
+        const machineName = data.machine_name || 'không xác định';
+    
+        try {
+            if (forceChart) {
+                forceChart.destroy();
+            }
+    
+            const scatterSeries = data.series.map((s, index) => ({
+                name: s.name,
+                type: 'scatter',
+                data: s.data.map(([x, y]) => [x, parseFloat(y.toFixed(2))]), 
+                marker: {
+                    radius: 3,
+                    symbol: 'circle'
+                },
+                color: Highcharts.getOptions().colors[index],
+                showInLegend: true,
+                tooltip: {
+                    pointFormat: 'Type: {series.name}<br/>Force: {point.y:.2f}'
+                }
+            }));
+    
+            const minLineData = [[0, 10], [1, 10], [2, 10], [3, 10]];
+            const maxLineData = [[0, 15], [1, 15], [2, 15], [3, 15]];
+    
+            const lineSeries = [
+                {
+                    name: 'Min Force',
+                    type: 'line',
+                    data: minLineData,
+                    color: '#03fc3d',
+                    marker: {
+                        enabled: true,
+                        symbol: 'cycle',
+                        radius: 5
+                    },
+                    lineWidth: 2,
+                    tooltip: {
+                        pointFormat: 'Min Force: {point.y:.2f}'
+                    }
+                },
+                {
+                    name: 'Max Force',
+                    type: 'line',
+                    data: maxLineData,
+                    color: '#fc0362',
+                    marker: {
+                        enabled: true,
+                        symbol: 'cycle',
+                        radius: 5
+                    },
+                    lineWidth: 2,
+                    tooltip: {
+                        pointFormat: 'Max Force: {point.y:.2f}'
+                    }
+                }
+            ];
+    
+            const allSeries = [...scatterSeries, ...lineSeries];
+    
+            forceChart = Highcharts.chart('container', {
+                chart: {
+                    type: 'scatter',
+                    zoomType: 'xy',
+                    backgroundColor: null,
+                    plotBackgroundColor: null,
+                    animation: { duration: 600, easing: 'easeOutExpo' },
+                },
+                title: {
+                    text: `Force Chart For Machine ${machineName}`,
+                    align: 'left',
+                    style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+                },
+                xAxis: {
+                    categories: screwForceTypes,
+                    labels: { style: { color: '#fff', fontSize: '12px' } },
+                    title: { text: 'Type Force', style: { color: '#fff', fontSize: '12px' } }
+                },
+                yAxis: {
+                    title: {
+                        text: 'Force', style: { color: '#fff', fontSize: '12px' }
+                    },
+                    labels: { style: { color: '#fff', fontSize: '12px' } }
+                },
+                legend: {
+                    align: 'center',
+                    verticalAlign: 'bottom',
+                    itemStyle: { color: '#fff' },
+                    itemHoverStyle: { color: '#cccccc' }
+                },
+                credits: { enabled: false },
+                accessibility: { enabled: false },
+                plotOptions: {
+                    scatter: {
+                        jitter: {
+                            x: 0.15,
+                            y: 0
+                        }
+                    }
+                },
+                series: allSeries
+            });
+        } catch (error) {
+            console.error('Error force chart:', error);
+        }
+    }
+
 }
+
 //load dashboard
 function initializeDashboard () {
     const tableBody = document.getElementById("table-body");
@@ -810,6 +808,8 @@ function initializeDashboard () {
     let currentDrilldownId = null;
     let column2Chart = null;
     let columnChart = null;
+    let forceChart = null;
+
     function fetchPage(page = 1) {
         document.getElementById('loading').style.display = 'block';
         fetch(`/api/dashboard/table?page=${page}`, {
@@ -840,10 +840,11 @@ function initializeDashboard () {
         .then(response => response.json())
         .then(data => {
             // console.log("Charts data:", data);
-            if (data.pie_chart_data || data.column_chart_data || data.column2_chart_data) {
+            if (data.pie_chart_data || data.column_chart_data || data.column2_chart_data || data.data_force_chart) {
                 updatePieChart(data.pie_chart_data);
                 drawColumnChart(data.column_chart_data);
                 drawColumn2Chart(data.column2_chart_data, 98);
+                drawForceChart(data.data_force_chart);
             } else {
                 console.error("Charts data not available.");
             }
@@ -1316,6 +1317,116 @@ function initializeDashboard () {
         }
     }
     
+    function drawForceChart(data) {
+        const screwForceTypes = data.categories;
+        const machineName = data.machine_name || 'Máy không xác định';
+    
+        try {
+            if (forceChart) {
+                forceChart.destroy();
+            }
+    
+            const scatterSeries = data.series.map((s, index) => ({
+                name: s.name,
+                type: 'scatter',
+                data: s.data.map(([x, y]) => [x, parseFloat(y.toFixed(2))]), 
+                marker: {
+                    radius: 3,
+                    symbol: 'circle'
+                },
+                color: Highcharts.getOptions().colors[index],
+                showInLegend: true,
+                tooltip: {
+                    pointFormat: 'Type: {series.name}<br/>Force: {point.y:.2f}'
+                }
+            }));
+    
+            const minLineData = [[0, 10], [1, 10], [2, 10], [3, 10]];
+            const maxLineData = [[0, 15], [1, 15], [2, 15], [3, 15]];
+    
+            const lineSeries = [
+                {
+                    name: 'Min Force',
+                    type: 'line',
+                    data: minLineData,
+                    color: '#03fc3d',
+                    marker: {
+                        enabled: true,
+                        symbol: 'cycle',
+                        radius: 5
+                    },
+                    lineWidth: 2,
+                    tooltip: {
+                        pointFormat: 'Min Force: {point.y:.2f}'
+                    }
+                },
+                {
+                    name: 'Max Force',
+                    type: 'line',
+                    data: maxLineData,
+                    color: '#fc0362',
+                    marker: {
+                        enabled: true,
+                        symbol: 'cycle',
+                        radius: 5
+                    },
+                    lineWidth: 2,
+                    tooltip: {
+                        pointFormat: 'Max Force: {point.y:.2f}'
+                    }
+                }
+            ];
+    
+            const allSeries = [...scatterSeries, ...lineSeries];
+    
+            forceChart = Highcharts.chart('container', {
+                chart: {
+                    type: 'scatter',
+                    zoomType: 'xy',
+                    backgroundColor: null,
+                    plotBackgroundColor: null,
+                    animation: { duration: 600, easing: 'easeOutExpo' },
+                },
+                title: {
+                    text: `Force Chart For Machine ${machineName}`,
+                    align: 'left',
+                    style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+                },
+                xAxis: {
+                    categories: screwForceTypes,
+                    labels: { style: { color: '#fff', fontSize: '12px' } },
+                    title: { text: 'Type Force', style: { color: '#fff', fontSize: '12px' } }
+                },
+                yAxis: {
+                    title: {
+                        text: 'Force', style: { color: '#fff', fontSize: '12px' }
+                    },
+                    labels: { style: { color: '#fff', fontSize: '12px' } }
+                },
+                legend: {
+                    align: 'center',
+                    verticalAlign: 'bottom',
+                    itemStyle: { color: '#fff' },
+                    itemHoverStyle: { color: '#cccccc' }
+                },
+                credits: { enabled: false },
+                accessibility: { enabled: false },
+                plotOptions: {
+                    scatter: {
+                        jitter: {
+                            x: 0.15,
+                            y: 0
+                        }
+                    }
+                },
+                series: allSeries
+            });
+        } catch (error) {
+            console.error('Error force chart:', error);
+        }
+    }
+    
+
     function startPolling() {
         fetchPage(currentPage);
         fetchChart();
@@ -1327,6 +1438,7 @@ function initializeDashboard () {
     }
     startPolling();
 }
+
 //show list solution 
 function modalSolution() {
     const downloadButton = document.getElementById('download-excel');
@@ -1401,15 +1513,16 @@ function modalSolution() {
             return;
         }
             console.log('Dữ liệu đã được thêm:', data);
-            modal1.style.display = 'none';
             fetchDataAndUpdateTable(); 
+            modal1.style.display = 'none';
+            
         })
         .catch(error => {
             console.error('Lỗi khi thêm dữ liệu:', error);
         });
     });
     function fetchDataAndUpdateTable() {
-        fetch("/api/getDataSolution")
+        fetch(`/api/getDataSolution?t=${Date.now()}`)
             .then(response => response.json())
             .then(data => {
                 const tbody = document.getElementById('tbodySolution');
@@ -1640,6 +1753,7 @@ function modalSolution() {
     }
     });
 }
+
 //download excel
 function downloadExcel() {
     const downloadModal = document.getElementById('downloadModal');
@@ -1749,6 +1863,7 @@ function modeScreen(){
         }
     });
 }
+
 //show list combobox
 function showCBB(){
     const lineCombobox = document.getElementById("line-combobox");
@@ -1812,6 +1927,7 @@ function initializeOverview () {
     showCBB();
     fetchContentTop();
 }
+//Dom all
 document.addEventListener('DOMContentLoaded', function() {
     initializeFilter();
     initializeDashboard();

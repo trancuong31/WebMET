@@ -6,9 +6,12 @@ from flask_socketio import SocketIO
 import io
 from datetime import datetime, timezone, timedelta
 import pandas as pd
+from flask_caching import Cache
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abc'
 socketio =SocketIO(app)
+cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 300})
+cache.init_app(app)
 DB_CONFIG = {
     "username": "system",
     "password": "123456",
@@ -394,6 +397,46 @@ def get_column2_chart_data(start_date=None, end_date=None):
         }
     fpy_chart_data = list(date_dict.values())
     return fpy_chart_data
+
+def get_data_force_chart(machine_name = None):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    if machine_name is None:
+        query= """select name_machine, force_1, force_2, force_3, force_4 
+        from screw_force_info 
+        where name_machine = 'Machine_6' order by time_update desc
+        FETCH FIRST 50 ROWS ONLY"""
+        cursor.execute(query)
+    else:
+        query = """select name_machine, force_1, force_2, force_3, force_4 
+            from screw_force_info 
+            where name_machine = :machine_name order by time_update desc
+            FETCH FIRST 50 ROWS ONLY"""
+        cursor.execute(query, {"machine_name": machine_name})
+    raw_data = cursor.fetchall()
+    # Đóng kết nối
+    cursor.close()
+    connection.close()
+
+    series = [
+        {"name": "Force 1", "data": []},
+        {"name": "Force 2", "data": []},
+        {"name": "Force 3", "data": []},
+        {"name": "Force 4", "data": []}
+    ]
+    name_machine = raw_data[0][0] if raw_data else None
+    for row in raw_data:
+        series[0]["data"].append([0, row[1]])  # force_1
+        series[1]["data"].append([1, row[2]])  # force_2
+        series[2]["data"].append([2, row[3]])  # force_3
+        series[3]["data"].append([3, row[4]])  # force_4
+
+    return {
+        "machine_name": name_machine,
+        "categories": ["Force 1", "Force 2", "Force 3", "Force 4"],
+        "series": series
+    }
+
 # Dashboard
 # @app.route('/dashboard', methods=['GET'])
 # def dashboard():
@@ -443,14 +486,17 @@ def get_charts():
         pie_chart_data = get_pie_chart_data()
         column_chart_data = get_column_chart_data()
         column2_chart_data = get_column2_chart_data()
+        data_force_chart = get_data_force_chart()
         return jsonify({
             "pie_chart_data": pie_chart_data,
             "column_chart_data": column_chart_data,
-            "column2_chart_data": column2_chart_data
+            "column2_chart_data": column2_chart_data,
+            "data_force_chart": data_force_chart
         })
     except Exception as e:
         app.logger.error(f"Error querying chart data: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 #get data table by filter
 @app.route('/api/filter', methods=['GET'])
@@ -463,8 +509,8 @@ def filter_data():
         time_update = request.args.get('time_update') if request.args.get('time_update') != "null" else None
         time_end = request.args.get('time_end') if request.args.get('time_end') != "null" else None
         state = request.args.get('state') if request.args.get('state') != "null" else None
-        page = int(request.args.get('page', 1))  # Lấy tham số page, mặc định là 1
-        per_page = int(request.args.get('per_page', 10))  # Lấy tham số per_page, mặc định là 10
+        page = int(request.args.get('page', 1)) 
+        per_page = int(request.args.get('per_page', 10))
         offset = (page - 1) * per_page
         connection = get_db_connection()
         cursor = connection.cursor()
@@ -618,6 +664,16 @@ def filter_column2_chart():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+@app.route('/api/filterForceChart', methods=['GET'])
+def filter_force_chart():
+    try:
+        machine_name = request.args.get("nameMachine")
+        if machine_name:
+            force_chart_data = get_data_force_chart(machine_name)
+        return jsonify({"success": True, "force_chart_data":force_chart_data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
 #logout
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -735,6 +791,7 @@ def register():
 
 #get data combobox
 @app.route('/api/getDataComboboxs', methods=['GET'])
+@cache.cached(timeout=300)
 def get_lines():
     try:
         query = """
@@ -984,8 +1041,8 @@ def add_data_soulution():
         if not all([error_name, root_cause, solution]):
             return jsonify({"error": "Missing required fields"}), 400
         query = """
-            INSERT INTO SCREW_FORCE_ERROR (ERROR_CODE, ERROR_NAME, ROOT_CAUSE, SOLUTION)
-            VALUES (:error_code,:error_name, :root_cause, :solution)
+            INSERT INTO SCREW_FORCE_ERROR (ERROR_CODE, ERROR_NAME, ROOT_CAUSE, SOLUTION, STATUS)
+            VALUES (:error_code,:error_name, :root_cause, :solution, 1)
         """
         params = {
             'error_code': error_code,

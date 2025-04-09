@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Biểu đồ lực vít cho từng máy</title>
+    <title>Biểu đồ lực vít cho một máy</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/10.3.3/highcharts.js"></script>
     <style>
         #container {
@@ -18,406 +18,85 @@
 <body>
     <div id="container"></div>
     <script>
-        // Định nghĩa 4 loại lực vít cho mỗi máy
+        // Định nghĩa 4 loại lực vít
         const screwForceTypes = ['Lực vít 1', 'Lực vít 2', 'Lực vít 3', 'Lực vít 4'];
-        
-        // Định nghĩa giá trị min và max cho từng loại lực vít trên mỗi máy
-        const machines = [
-            { 
-                name: 'Máy 1', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            },
-            { 
-                name: 'Máy 2', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            },
-            { 
-                name: 'Máy 3', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            },
-            { 
-                name: 'Máy 4', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            },
-            { 
-                name: 'Máy 5', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 6 ', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 7', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 8', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 9', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 10', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 11', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 12', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 13', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 14', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 15', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 16', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 17', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 18', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 19', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 20', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 21', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 22', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 23', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 24', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 25', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 26', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 27', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 28', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 29', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-            ,
-            { 
-                name: 'Máy 40', 
-                forces: [
-                    { type: 'Lực vít 1', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 2', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 3', min: 0.2, max: 0.6 },
-                    { type: 'Lực vít 4', min: 0.2, max: 0.6 }
-                ]
-            }
-        ];
-        const getTestData = (machineIndex, forceType, minForce, maxForce) => {
+        const machineData = {
+            name: 'Máy 1',
+            forces: [
+                { type: 'Lực vít 1', min: 0.2, max: 0.6 },
+                { type: 'Lực vít 2', min: 0.2, max: 0.6 },
+                { type: 'Lực vít 3', min: 0.2, max: 0.6 },
+                { type: 'Lực vít 4', min: 0.2, max: 0.6 }
+            ]
+        };
+
+        // Generate test data for each force type
+        const getTestData = (forceIndex, minForce, maxForce) => {
             const midPoint = (minForce + maxForce) / 2;
             const variance = (maxForce - minForce) * 0.7;
-            // Shift x position slightly based on force type to separate them visually
-            const xOffset = (screwForceTypes.indexOf(forceType) - 1.5) * 0.1;
             
-            return new Array(20).fill(1).map(() => [
-                machineIndex + xOffset,
+            return new Array(30).fill(1).map(() => [
+                forceIndex,
                 midPoint + (Math.random() - 0.5) * variance
             ]);
         };
 
-        // Make all the colors semi-transparent so we can see overlapping dots
-        const baseColors = Highcharts.getOptions().colors;
-        
-        // Create scatter series for each force type
-        const scatterSeries = [];
-        const minLineSeries = [];
-        const maxLineSeries = [];
-        
-        // Create data for each force type
-        screwForceTypes.forEach((forceType, typeIndex) => {
-            // Create scatter series for this force type
-            const forceColor = Highcharts.color(baseColors[typeIndex]).setOpacity(0.5).get();
-            
-            const scatterData = machines.map((machine, machineIndex) => {
-                const forceData = machine.forces.find(f => f.type === forceType);
-                return {
-                    name: `${machine.name} - ${forceType}`,
-                    type: 'scatter',
-                    color: forceColor,
-                    data: getTestData(machineIndex, forceType, forceData.min, forceData.max),
-                    marker: {
-                        radius: 3,
-                        symbol: 'circle'
-                    },
-                    showInLegend: machineIndex === 0, // Only show in legend for first machine to avoid clutter
-                    legendIndex: typeIndex,
-                    tooltip: {
-                        pointFormat: 'Máy: {series.name}<br/>Lực vít: {point.y:.3f}'
-                    }
-                };
-            });
-            
-            scatterSeries.push(...scatterData);
-            
-            // Create min line series for this force type
-            const minData = machines.map((machine, index) => {
-                const forceData = machine.forces.find(f => f.type === forceType);
-                return [index, forceData.min];
-            });
-            
-            minLineSeries.push({
-                name: `Min - ${forceType}`,
+        // Tạo dữ liệu cho các đường min và max
+        const minLineData = machineData.forces.map((force, index) => [index, force.min]);
+        const maxLineData = machineData.forces.map((force, index) => [index, force.max]);
+
+        // Tạo dữ liệu scatter cho từng loại lực vít
+        const scatterSeries = machineData.forces.map((force, index) => ({
+            name: force.type,
+            type: 'scatter',
+            data: getTestData(index, force.min, force.max),
+            marker: {
+                radius: 3,
+                symbol: 'circle'
+            },
+            color: Highcharts.getOptions().colors[index],
+            showInLegend: true,
+            tooltip: {
+                pointFormat: 'Loại: {series.name}<br/>Lực vít: {point.y:.3f}'
+            }
+        }));
+
+        // Thêm series cho đường min và max
+        const lineSeries = [
+            {
+                name: 'Lực vít tối thiểu',
                 type: 'line',
-                color: Highcharts.color(baseColors[typeIndex]).setOpacity(0.8).get(),
-                dashStyle: 'ShortDash',
-                data: minData,
+                data: minLineData,
+                color: '#FF0000',
                 marker: {
                     enabled: true,
                     symbol: 'diamond',
-                    radius: 4
+                    radius: 5
                 },
                 lineWidth: 2,
-                showInLegend: true,
-                legendIndex: screwForceTypes.length + typeIndex,
                 tooltip: {
-                    pointFormat: `${forceType} - Lực vít tối thiểu: {point.y:.3f}`
+                    pointFormat: 'Lực vít tối thiểu: {point.y:.3f}'
                 }
-            });
-            
-            // Create max line series for this force type
-            const maxData = machines.map((machine, index) => {
-                const forceData = machine.forces.find(f => f.type === forceType);
-                return [index, forceData.max];
-            });
-            
-            maxLineSeries.push({
-                name: `Max - ${forceType}`,
+            },
+            {
+                name: 'Lực vít tối đa',
                 type: 'line',
-                color: Highcharts.color(baseColors[typeIndex]).brighten(0.3).get(),
-                dashStyle: 'Solid',
-                data: maxData,
+                data: maxLineData,
+                color: '#00AA00',
                 marker: {
                     enabled: true,
                     symbol: 'diamond',
-                    radius: 4
+                    radius: 5
                 },
                 lineWidth: 2,
-                showInLegend: true,
-                legendIndex: screwForceTypes.length * 2 + typeIndex,
                 tooltip: {
-                    pointFormat: `${forceType} - Lực vít tối đa: {point.y:.3f}`
+                    pointFormat: 'Lực vít tối đa: {point.y:.3f}'
                 }
-            });
-        });
+            }
+        ];
 
         // Kết hợp tất cả series
-        const allSeries = [...scatterSeries, ...minLineSeries, ...maxLineSeries];
+        const allSeries = [...scatterSeries, ...lineSeries];
 
         Highcharts.chart('container', {
             chart: {
@@ -425,15 +104,15 @@
                 zoomType: 'xy'
             },
             title: {
-                text: 'Biểu đồ lực vít cho từng máy'
+                text: `Biểu đồ lực vít cho ${machineData.name}`
             },
             subtitle: {
-                text: 'Kết hợp 4 loại lực vít với đường min/max'
+                text: 'Dữ liệu lực vít với ngưỡng min/max'
             },
             xAxis: {
-                categories: machines.map(machine => machine.name),
+                categories: screwForceTypes,
                 title: {
-                    text: 'Máy'
+                    text: 'Loại lực vít'
                 }
             },
             yAxis: {
@@ -442,16 +121,12 @@
                 }
             },
             legend: {
-                enabled: true,
-                layout: 'vertical',
-                align: 'right',
-                verticalAlign: 'middle',
-                borderWidth: 1
+                enabled: true
             },
             plotOptions: {
                 scatter: {
                     jitter: {
-                        x: 0.12,
+                        x: 0.15,
                         y: 0
                     }
                 }
