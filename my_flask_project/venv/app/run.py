@@ -398,42 +398,88 @@ def get_column2_chart_data(start_date=None, end_date=None):
     fpy_chart_data = list(date_dict.values())
     return fpy_chart_data
 
-def get_data_force_chart(machine_name = None):
+# def get_data_force_chart(machine_name = None):
+#     connection = get_db_connection()
+#     cursor = connection.cursor()
+#     if machine_name is None:
+#         query= """select name_machine, force_1, force_2, force_3, force_4 
+#         from screw_force_info 
+#         where name_machine = 'Machine_6' order by time_update desc
+#         FETCH FIRST 50 ROWS ONLY"""
+#         cursor.execute(query)
+#     else:
+#         query = """select name_machine, force_1, force_2, force_3, force_4 
+#             from screw_force_info 
+#             where name_machine = :machine_name order by time_update desc
+#             FETCH FIRST 50 ROWS ONLY"""
+#         cursor.execute(query, {"machine_name": machine_name})
+#     raw_data = cursor.fetchall()
+#     # Đóng kết nối
+#     cursor.close()
+#     connection.close()
+
+#     series = [
+#         {"name": "Force 1", "data": []},
+#         {"name": "Force 2", "data": []},
+#         {"name": "Force 3", "data": []},
+#         {"name": "Force 4", "data": []}
+#     ]
+#     name_machine = raw_data[0][0] if raw_data else None
+#     for row in raw_data:
+#         series[0]["data"].append([0, row[1]])  # force_1
+#         series[1]["data"].append([1, row[2]])  # force_2
+#         series[2]["data"].append([2, row[3]])  # force_3
+#         series[3]["data"].append([3, row[4]])  # force_4
+
+#     return {
+#         "machine_name": name_machine,
+#         "categories": ["Force 1", "Force 2", "Force 3", "Force 4"],
+#         "series": series
+#     }
+
+def get_data_force_chart(machine_name=None):
     connection = get_db_connection()
     cursor = connection.cursor()
+
     if machine_name is None:
-        query= """select name_machine, force_1, force_2, force_3, force_4 
-        from screw_force_info 
-        where name_machine = 'Machine_6' order by time_update desc
-        FETCH FIRST 50 ROWS ONLY"""
+        query = """
+            SELECT name_machine, force_1, force_2, force_3, force_4, time_update
+            FROM screw_force_info
+            WHERE name_machine = 'Machine_6'
+            ORDER BY time_update DESC
+            FETCH FIRST 30 ROWS ONLY
+        """
         cursor.execute(query)
     else:
-        query = """select name_machine, force_1, force_2, force_3, force_4 
-            from screw_force_info 
-            where name_machine = :machine_name order by time_update desc
-            FETCH FIRST 50 ROWS ONLY"""
+        query = """
+            SELECT name_machine, force_1, force_2, force_3, force_4, time_update
+            FROM screw_force_info
+            WHERE name_machine = :machine_name
+            ORDER BY time_update DESC
+            FETCH FIRST 30 ROWS ONLY
+        """
         cursor.execute(query, {"machine_name": machine_name})
+
     raw_data = cursor.fetchall()
-    # Đóng kết nối
     cursor.close()
     connection.close()
 
+    # Đảo ngược để từ cũ → mới
+    raw_data = raw_data[::-1]
+
+    # Lấy chuỗi thời gian cho trục X
+    time_labels = [row[5].strftime("%H:%M:%S") for row in raw_data]  # "%H:%M", hoặc "%Y-%m-%d %H:%M"
+
     series = [
-        {"name": "Force 1", "data": []},
-        {"name": "Force 2", "data": []},
-        {"name": "Force 3", "data": []},
-        {"name": "Force 4", "data": []}
+        {"name": "Force 1", "data": [row[1] for row in raw_data]},
+        {"name": "Force 2", "data": [row[2] for row in raw_data]},
+        {"name": "Force 3", "data": [row[3] for row in raw_data]},
+        {"name": "Force 4", "data": [row[4] for row in raw_data]},
     ]
-    name_machine = raw_data[0][0] if raw_data else None
-    for row in raw_data:
-        series[0]["data"].append([0, row[1]])  # force_1
-        series[1]["data"].append([1, row[2]])  # force_2
-        series[2]["data"].append([2, row[3]])  # force_3
-        series[3]["data"].append([3, row[4]])  # force_4
 
     return {
-        "machine_name": name_machine,
-        "categories": ["Force 1", "Force 2", "Force 3", "Force 4"],
+        "machine_name": raw_data[0][0] if raw_data else None,
+        "categories": time_labels,
         "series": series
     }
 

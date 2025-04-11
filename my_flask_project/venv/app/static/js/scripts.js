@@ -675,6 +675,23 @@ function initializeFilter() {
                         dashStyle: 'shortdash', 
                         marker: {
                             enabled: false 
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            formatter: function() {
+                              if (this.point.index === this.series.data.length - 1) {
+                                return  'Target';
+                              }
+                              return null;
+                            },
+                            align: 'left',
+                            verticalAlign: 'top',
+                            y: -15,
+                            style: {
+                                fontSize: '16px',
+                                fontWeight: 'bold',
+                                color: '#FFD700' 
+                              }
                         }
                     },
                 ]
@@ -685,91 +702,195 @@ function initializeFilter() {
         }
     }
 
+    // function drawForceChart(data) {
+    //     const screwForceTypes = data.categories;
+    //     const machineName = data.machine_name || 'không xác định';
+    
+    //     try {
+    //         if (forceChart) {
+    //             forceChart.destroy();
+    //         }
+    
+    //         const scatterSeries = data.series.map((s, index) => ({
+    //             name: s.name,
+    //             type: 'scatter',
+    //             data: s.data.map(([x, y]) => [x, parseFloat(y.toFixed(2))]), 
+    //             marker: {
+    //                 radius: 3,
+    //                 symbol: 'circle'
+    //             },
+    //             color: Highcharts.getOptions().colors[index],
+    //             showInLegend: true,
+    //             tooltip: {
+    //                 pointFormat: 'Type: {series.name}<br/>Force: {point.y:.2f}'
+    //             }
+    //         }));
+    
+    //         const minLineData = [[0, 10], [1, 10], [2, 10], [3, 10]];
+    //         const maxLineData = [[0, 15], [1, 15], [2, 15], [3, 15]];
+    
+    //         const lineSeries = [
+    //             {
+    //                 name: 'Min Force',
+    //                 type: 'line',
+    //                 data: minLineData,
+    //                 color: '#03fc3d',
+    //                 marker: {
+    //                     enabled: true,
+    //                     symbol: 'cycle',
+    //                     radius: 5
+    //                 },
+    //                 lineWidth: 2,
+    //                 tooltip: {
+    //                     pointFormat: 'Min Force: {point.y:.2f}'
+    //                 }
+    //             },
+    //             {
+    //                 name: 'Max Force',
+    //                 type: 'line',
+    //                 data: maxLineData,
+    //                 color: '#fc0362',
+    //                 marker: {
+    //                     enabled: true,
+    //                     symbol: 'cycle',
+    //                     radius: 5
+    //                 },
+    //                 lineWidth: 2,
+    //                 tooltip: {
+    //                     pointFormat: 'Max Force: {point.y:.2f}'
+    //                 }
+    //             }
+    //         ];
+    
+    //         const allSeries = [...scatterSeries, ...lineSeries];
+    
+    //         forceChart = Highcharts.chart('container', {
+    //             chart: {
+    //                 type: 'scatter',
+    //                 zoomType: 'xy',
+    //                 backgroundColor: null,
+    //                 plotBackgroundColor: null,
+    //                 animation: { duration: 600, easing: 'easeOutExpo' },
+    //             },
+    //             title: {
+    //                 text: `Scatter Plot With Screw Force Variation Of ${machineName}`,
+    //                 align: 'left',
+    //                 style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+    //             },
+    //             xAxis: {
+    //                 categories: screwForceTypes,
+    //                 labels: { style: { color: '#fff', fontSize: '12px' } },
+    //                 title: { text: 'Type Force', style: { color: '#fff', fontSize: '12px' } }
+    //             },
+    //             yAxis: {
+    //                 title: {
+    //                     text: 'Force', style: { color: '#fff', fontSize: '12px' }
+    //                 },
+    //                 labels: { style: { color: '#fff', fontSize: '12px' } }
+    //             },
+    //             legend: {
+    //                 align: 'center',
+    //                 verticalAlign: 'bottom',
+    //                 itemStyle: { color: '#fff' },
+    //                 itemHoverStyle: { color: '#cccccc' }
+    //             },
+    //             credits: { enabled: false },
+    //             accessibility: { enabled: false },
+    //             plotOptions: {
+    //                 scatter: {
+    //                     jitter: {
+    //                         x: 0.15,
+    //                         y: 0
+    //                     }
+    //                 }
+    //             },
+    //             series: allSeries
+    //         });
+    //     } catch (error) {
+    //         console.error('Error force chart:', error);
+    //     }
+    // }
+
     function drawForceChart(data) {
-        const screwForceTypes = data.categories;
+        const categories = data.categories;
         const machineName = data.machine_name || 'không xác định';
     
         try {
             if (forceChart) {
                 forceChart.destroy();
             }
-    
-            const scatterSeries = data.series.map((s, index) => ({
+            const lineSeries = data.series.map((s, index) => ({
                 name: s.name,
-                type: 'scatter',
-                data: s.data.map(([x, y]) => [x, parseFloat(y.toFixed(2))]), 
+                type: 'spline',
+                data: s.data.map(val => parseFloat(val.toFixed(2))),
                 marker: {
+                    enabled: true,
                     radius: 3,
                     symbol: 'circle'
                 },
                 color: Highcharts.getOptions().colors[index],
-                showInLegend: true,
                 tooltip: {
-                    pointFormat: 'Type: {series.name}<br/>Force: {point.y:.2f}'
+                    pointFormat: '{series.name}: {point.y:.2f}'
                 }
             }));
     
-            const minLineData = [[0, 10], [1, 10], [2, 10], [3, 10]];
-            const maxLineData = [[0, 15], [1, 15], [2, 15], [3, 15]];
+            // Tạo đường Min/Max force
+            const minLine = {
+                name: 'Min Force',
+                type: 'line',
+                data: new Array(categories.length).fill(10),
+                color: '#03fc3d',
+                dashStyle: 'ShortDash',
+                lineWidth: 2,
+                marker: { enabled: false },
+                tooltip: { pointFormat: 'Min Force: {point.y:.2f}' },
+                enableMouseTracking: false
+            };
     
-            const lineSeries = [
-                {
-                    name: 'Min Force',
-                    type: 'line',
-                    data: minLineData,
-                    color: '#03fc3d',
-                    marker: {
-                        enabled: true,
-                        symbol: 'cycle',
-                        radius: 5
-                    },
-                    lineWidth: 2,
-                    tooltip: {
-                        pointFormat: 'Min Force: {point.y:.2f}'
-                    }
-                },
-                {
-                    name: 'Max Force',
-                    type: 'line',
-                    data: maxLineData,
-                    color: '#fc0362',
-                    marker: {
-                        enabled: true,
-                        symbol: 'cycle',
-                        radius: 5
-                    },
-                    lineWidth: 2,
-                    tooltip: {
-                        pointFormat: 'Max Force: {point.y:.2f}'
-                    }
-                }
-            ];
+            const maxLine = {
+                name: 'Max Force',
+                type: 'line',
+                data: new Array(categories.length).fill(15),
+                color: '#fc0362',
+                dashStyle: 'ShortDash',
+                lineWidth: 2,
+                marker: { enabled: false },
+                tooltip: { pointFormat: 'Max Force: {point.y:.2f}' },
+                enableMouseTracking: false
+            };
     
-            const allSeries = [...scatterSeries, ...lineSeries];
+            const allSeries = [...lineSeries, minLine, maxLine];
     
             forceChart = Highcharts.chart('container', {
                 chart: {
-                    type: 'scatter',
-                    zoomType: 'xy',
+                    type: 'line',
+                    zoomType: 'x',
                     backgroundColor: null,
                     plotBackgroundColor: null,
                     animation: { duration: 600, easing: 'easeOutExpo' },
                 },
                 title: {
-                    text: `Scatter Plot With Screw Force Variation Of ${machineName}`,
+                    text: `Chart CPK Screw Force of ${machineName}`,
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
                 xAxis: {
-                    categories: screwForceTypes,
-                    labels: { style: { color: '#fff', fontSize: '12px' } },
-                    title: { text: 'Type Force', style: { color: '#fff', fontSize: '12px' } }
+                    categories: categories,
+                    title: {
+                        text: 'Thời gian',
+                        style: { color: '#fff', fontSize: '12px' }
+                    },
+                    labels: { style: { color: '#fff', fontSize: '12px' } }
                 },
                 yAxis: {
                     title: {
-                        text: 'Force', style: { color: '#fff', fontSize: '12px' }
+                        text: 'Force (kgf.cm)',
+                        style: { color: '#fff', fontSize: '12px' }
                     },
-                    labels: { style: { color: '#fff', fontSize: '12px' } }
+                    labels: {
+                        format: '{value} kgf.cm',
+                        style: { color: '#fff', fontSize: '12px' }
+                    }
                 },
                 legend: {
                     align: 'center',
@@ -779,20 +900,13 @@ function initializeFilter() {
                 },
                 credits: { enabled: false },
                 accessibility: { enabled: false },
-                plotOptions: {
-                    scatter: {
-                        jitter: {
-                            x: 0.15,
-                            y: 0
-                        }
-                    }
-                },
                 series: allSeries
             });
         } catch (error) {
             console.error('Error force chart:', error);
         }
     }
+    
 }
 
 //load dashboard
@@ -1296,14 +1410,21 @@ function initializeDashboard () {
                         },
                         dataLabels: {
                             enabled: true,
-                            color: '#ffcc00',
-                            style: {
-                                fontSize: '12px',
-                                fontWeight: 'bold'
-                            },
                             formatter: function() {
-                                return targetValue + '%';
-                            }
+                              if (this.point.index === this.series.data.length - 1) {
+                                return  'Target';
+                              }
+                              return null;
+                            },
+                            align: 'left',
+                            verticalAlign: 'top',
+                            y: -25,
+                            x:20,
+                            style: {
+                                fontSize: '16px',
+                                fontWeight: 'bold',
+                                color: '#FFD700'
+                              }
                         }
                     },
                     
@@ -1316,8 +1437,118 @@ function initializeDashboard () {
         }
     }
     
+    // function drawForceChart(data) {
+    //     const screwForceTypes = data.categories;
+    //     const machineName = data.machine_name || 'Máy không xác định';    
+    //     try {
+    //         if (forceChart) {
+    //             forceChart.destroy();
+    //         }
+    
+    //         const scatterSeries = data.series.map((s, index) => ({
+    //             name: s.name,
+    //             type: 'scatter',
+    //             data: s.data.map(([x, y]) => [x, parseFloat(y.toFixed(2))]), 
+    //             marker: {
+    //                 radius: 3,
+    //                 symbol: 'circle'
+    //             },
+    //             color: Highcharts.getOptions().colors[index],
+    //             showInLegend: true,
+    //             tooltip: {
+    //                 pointFormat: 'Type: {series.name}<br/>Force: {point.y:.2f}',
+                    
+    //             }
+                
+    //         }));
+    
+    //         const minLineData = [[0, 10], [1, 10], [2, 10], [3, 10]];
+    //         const maxLineData = [[0, 15], [1, 15], [2, 15], [3, 15]];
+    
+    //         const lineSeries = [
+    //             {
+    //                 name: 'Min Force',
+    //                 type: 'line',
+    //                 data: minLineData,
+    //                 color: '#03fc3d',
+    //                 marker: {
+    //                     enabled: true,
+    //                     symbol: 'cycle',
+    //                     radius: 5
+    //                 },
+    //                 lineWidth: 2,
+    //                 tooltip: {
+    //                     pointFormat: 'Min Force: {point.y:.2f}'
+    //                 }
+    //             },
+    //             {
+    //                 name: 'Max Force',
+    //                 type: 'line',
+    //                 data: maxLineData,
+    //                 color: '#fc0362',
+    //                 marker: {
+    //                     enabled: true,
+    //                     symbol: 'cycle',
+    //                     radius: 5
+    //                 },
+    //                 lineWidth: 2,
+    //                 tooltip: {
+    //                     pointFormat: 'Max Force: {point.y:.2f}'
+    //                 }
+    //             }
+    //         ];
+    
+    //         const allSeries = [...scatterSeries, ...lineSeries];
+    
+    //         forceChart = Highcharts.chart('container', {
+    //             chart: {
+    //                 type: 'scatter',
+    //                 zoomType: 'xy',
+    //                 backgroundColor: null,
+    //                 plotBackgroundColor: null,
+    //                 animation: { duration: 600, easing: 'easeOutExpo' },
+    //             },
+    //             title: {
+    //                 text: `Scatter Plot With Screw Force Variation Of ${machineName}`,
+    //                 align: 'left',
+    //                 style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+    //             },
+    //             xAxis: {
+    //                 categories: screwForceTypes,
+    //                 labels: { style: { color: '#fff', fontSize: '12px' } },
+    //                 title: { text: 'Type Force', style: { color: '#fff', fontSize: '12px' } }
+    //             },
+    //             yAxis: {
+    //                 title: {
+    //                     text: 'Force( kgf.cm )', style: { color: '#fff', fontSize: '12px' }
+    //                 },
+    //                 labels: {format: '{value}kgf.cm', style: { color: '#fff', fontSize: '12px' } }
+    //             },
+    //             legend: {
+    //                 align: 'center',
+    //                 verticalAlign: 'bottom',
+    //                 itemStyle: { color: '#fff' },
+    //                 itemHoverStyle: { color: '#cccccc' }
+    //             },
+    //             credits: { enabled: false },
+    //             accessibility: { enabled: false },
+    //             plotOptions: {
+    //                 scatter: {
+    //                     jitter: {
+    //                         x: 0.15,
+    //                         y: 0
+    //                     }
+    //                 }
+    //             },
+    //             series: allSeries
+    //         });
+    //     } catch (error) {
+    //         console.error('Error force chart:', error);
+    //     }
+    // }
+    
     function drawForceChart(data) {
-        const screwForceTypes = data.categories;
+        const categories = data.categories;
         const machineName = data.machine_name || 'Máy không xác định';
     
         try {
@@ -1325,105 +1556,115 @@ function initializeDashboard () {
                 forceChart.destroy();
             }
     
-            const scatterSeries = data.series.map((s, index) => ({
+            const lineSeries = data.series.map((s, index) => ({
                 name: s.name,
-                type: 'scatter',
-                data: s.data.map(([x, y]) => [x, parseFloat(y.toFixed(2))]), 
+                type: 'spline',
+                data: s.data.map(value => parseFloat(value.toFixed(2))),
+                color: Highcharts.getOptions().colors[index],
                 marker: {
+                    enabled: true,
                     radius: 3,
                     symbol: 'circle'
                 },
-                color: Highcharts.getOptions().colors[index],
-                showInLegend: true,
                 tooltip: {
-                    pointFormat: 'Type: {series.name}<br/>Force: {point.y:.2f}',
-                    
+                    pointFormat: 'Force: {point.y:.2f}',
                 }
-                
             }));
     
-            const minLineData = [[0, 10], [1, 10], [2, 10], [3, 10]];
-            const maxLineData = [[0, 15], [1, 15], [2, 15], [3, 15]];
-    
-            const lineSeries = [
-                {
-                    name: 'Min Force',
-                    type: 'line',
-                    data: minLineData,
-                    color: '#03fc3d',
-                    marker: {
-                        enabled: true,
-                        symbol: 'cycle',
-                        radius: 5
+            const minLine = {
+                name: 'Min Force',
+                type: 'line',
+                data: new Array(categories.length).fill(10),
+                color: '#fc0335',
+                dashStyle: 'ShortDash',
+                lineWidth: 2,
+                marker: { enabled: false },
+                enableMouseTracking: false,
+                dataLabels: {
+                    enabled: true,
+                    formatter: function() {
+                      if (this.point.index === this.series.data.length - 1) {
+                        return 'LCL';
+                      }
+                      return null;
                     },
-                    lineWidth: 2,
-                    tooltip: {
-                        pointFormat: 'Min Force: {point.y:.2f}'
-                    }
-                },
-                {
-                    name: 'Max Force',
-                    type: 'line',
-                    data: maxLineData,
-                    color: '#fc0362',
-                    marker: {
-                        enabled: true,
-                        symbol: 'cycle',
-                        radius: 5
-                    },
-                    lineWidth: 2,
-                    tooltip: {
-                        pointFormat: 'Max Force: {point.y:.2f}'
-                    }
-                }
-            ];
+                    align: 'left',
+                    verticalAlign: 'top'
+                  }
+            };
     
-            const allSeries = [...scatterSeries, ...lineSeries];
+            const maxLine = {
+                name: 'Max Force',
+                type: 'line',
+                data: new Array(categories.length).fill(15),
+                color: '#fc0335',
+                dashStyle: 'ShortDash',
+                lineWidth: 2,
+                marker: { enabled: false },
+                enableMouseTracking: false,
+                dataLabels: {
+                    enabled: true,
+                    formatter: function() {
+                      if (this.point.index === this.series.data.length - 1) {
+                        return 'UCL';
+                      }
+                      return null;
+                    },
+                    align: 'left',
+                    verticalAlign: 'top'
+                  }
+            };
+    
+            const allSeries = [...lineSeries, minLine, maxLine];
     
             forceChart = Highcharts.chart('container', {
                 chart: {
-                    type: 'scatter',
-                    zoomType: 'xy',
+                    type: 'spline',
+                    zoomType: 'x',
                     backgroundColor: null,
                     plotBackgroundColor: null,
                     animation: { duration: 600, easing: 'easeOutExpo' },
                 },
+
                 title: {
-                    text: `Scatter Plot With Screw Force Variation Of ${machineName}`,
+                    text: `Chart CPK Screw Force of ${machineName}`,
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
                 xAxis: {
-                    categories: screwForceTypes,
-                    labels: { style: { color: '#fff', fontSize: '12px' } },
-                    title: { text: 'Type Force', style: { color: '#fff', fontSize: '12px' } }
+                    categories: categories,
+                    title: { text: 'Time', style: { color: '#fff', fontSize: '12px' } },
+                    labels: { style: { color: '#fff', fontSize: '12px' } }
                 },
                 yAxis: {
                     title: {
-                        text: 'Force( kgf.cm )', style: { color: '#fff', fontSize: '12px' }
+                        text: 'Force (kgf.cm)',
+                        style: { color: '#fff', fontSize: '12px' }
                     },
-                    labels: {format: '{value}kgf.cm', style: { color: '#fff', fontSize: '12px' } }
+                    labels: {
+                        format: '{value} kgf.cm',
+                        style: { color: '#fff', fontSize: '12px' }
+                    }
                 },
                 legend: {
                     align: 'center',
                     verticalAlign: 'bottom',
                     itemStyle: { color: '#fff' },
-                    itemHoverStyle: { color: '#cccccc' }
+                    itemHoverStyle: { color: '#ccc' }
                 },
                 credits: { enabled: false },
                 accessibility: { enabled: false },
                 plotOptions: {
-                    scatter: {
-                        jitter: {
-                            x: 0.15,
-                            y: 0
-                        }
+                    line: {
+                        dataLabels: { enabled: false },
+                        enableMouseTracking: true
                     }
                 },
                 series: allSeries
             });
+    
         } catch (error) {
-            console.error('Error force chart:', error);
+            console.error('Error rendering force chart:', error);
         }
     }
     
