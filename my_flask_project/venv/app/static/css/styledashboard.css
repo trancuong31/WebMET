@@ -610,7 +610,6 @@ div#container-toperr {
 }
 
 #filter:hover{
-  transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(66, 153, 225, 0.3);
   background-color: #6fddff;
   color: #000000;
@@ -618,7 +617,6 @@ div#container-toperr {
 }
 #filter:active{
   transform: scale(0.9);
-  transform: translateY(-1px);
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 .filter input, select{

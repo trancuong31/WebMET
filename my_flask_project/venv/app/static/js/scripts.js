@@ -8,22 +8,36 @@ function initializeFilter() {
     let column2Chart = null;
     let columnChart = null;
     let forceChart = null;
+    let forceLimits = {};
     function stopPolling() {
         if (pollingTimer) {
             clearInterval(pollingTimer);
             pollingTimer = null;
             console.log("Polling stopped");
         }
+    }   
+    function debounce(func, delay) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), delay);
+        };
     }
     // Xử lý sự kiện filter
-    document.getElementById('filter').addEventListener('click', function (event) {
+    document.getElementById('filter').addEventListener('click', debounce(async function (event) {
         event.preventDefault();
+        const button = this;
+        button.disabled = true;
+
         this.dataset.filtering = 'true'; 
         isFiltering = true;
         stopPolling();
-        
-        fetchFilteredData(1, false);
-    });
+        await fetchFilteredData(1, false);
+
+        setTimeout(() => {
+            button.disabled = false;
+        }, 1000);
+    }, 600));
     
     async function fetchFilteredData(page = 1, isPagination = false) {
         const line = document.getElementById('line-combobox').value.trim();
@@ -54,7 +68,6 @@ function initializeFilter() {
         const url = `/api/filter?${params.toString()}`;
         const loadingEl = document.getElementById('loading');
         loadingEl.style.display = 'block';
-    
         try {
             // Gửi yêu cầu GET
             const response = await fetch(url, {
@@ -75,10 +88,7 @@ function initializeFilter() {
                     paginationDiv.innerHTML = '';
                 }
                 if (!isPagination) {
-                    fetchPieChartData(time_update, time_end);
-                    fetchColumnChartData(time_update, time_end);
-                    fetchColumn2ChartData(time_update, time_end);
-                    fetchForceChartData(nameMachine);
+                    fetchAllChartData(time_update, time_end, nameMachine, line);
                 }
             } else {
                 tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
@@ -92,14 +102,27 @@ function initializeFilter() {
             loadingEl.style.display = 'none';
         }
     }
+    function initForceLimitsAndLoad() {
+        fetch('/api/dashboard/getDefaultForce')
+            .then(res => res.json())
+            .then(data => {
+                forceLimits = data; 
+            })
+            .catch(err => {
+                console.error("Lỗi khi lấy ngưỡng lực:", err);
+            });
+    }
+    function checkForceValue(line, machine, value) {
+        const key = `${line},${machine}`;
+        const limits = forceLimits[key];
+    
+        if (!limits) return "high-force"; // nếu không tìm thấy ngưỡng
+    
+        const { min, max } = limits;
+        return (value >= min && value <= max) ? "low-force" : "high-force";
+    }
     function updateTable(rows) {
         let fragment = document.createDocumentFragment();
-        const checkForceValue = (value) => {
-            if (value < 10 || value > 15) {
-                return "high-force"; 
-            }
-            return "low-force";
-        };
         rows.forEach(row => {
             let tr = document.createElement("tr");
             tr.innerHTML = `
@@ -109,10 +132,10 @@ function initializeFilter() {
                 <td>${row.name_machine ?? 'N/A'}</td>
                 <td>${row.model_name ?? 'N/A'}</td>
                 <td>${row.serial_number ?? 'N/A'}</td>
-                <td class="${checkForceValue(row.force_1)}">${row.force_1 ?? 'N/A'}</td>
-                <td class="${checkForceValue(row.force_2)}">${row.force_2 ?? 'N/A'}</td>
-                <td class="${checkForceValue(row.force_3)}">${row.force_3 ?? 'N/A'}</td>
-                <td class="${checkForceValue(row.force_4)}">${row.force_4 ?? 'N/A'}</td>
+                <td class="${checkForceValue(row.line, row.name_machine,row.force_1)}">${row.force_1 ?? 'N/A'}</td>
+                <td class="${checkForceValue(row.line, row.name_machine,row.force_2)}">${row.force_2 ?? 'N/A'}</td>
+                <td class="${checkForceValue(row.line, row.name_machine,row.force_3)}">${row.force_3 ?? 'N/A'}</td>
+                <td class="${checkForceValue(row.line, row.name_machine,row.force_4)}">${row.force_4 ?? 'N/A'}</td>
                 <td class = "time">${row.time_update ?? 'N/A'}</td>
                 <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state ?? 'N/A'}</td>
             `;
@@ -153,138 +176,57 @@ function initializeFilter() {
             });
         });
     }
-    function fetchPieChartData(time_update, time_end) {
+    function fetchAllChartData(time_update, time_end, machine_name, line) {
         const formattedTimeUpdate = time_update ? time_update.replace('T', ' ') + ':00' : null;
         const formattedTimeEnd = time_end ? time_end.replace('T', ' ') + ':00' : null;
-        let url = '/api/filterPieChart?';
+    
+        let url = '/api/dashboard/filterCharts?';
         if (formattedTimeUpdate) {
             url += `time_update=${encodeURIComponent(formattedTimeUpdate)}&`;
         }
         if (formattedTimeEnd) {
-            url += `time_end=${encodeURIComponent(formattedTimeEnd)}`;
+            url += `time_end=${encodeURIComponent(formattedTimeEnd)}&`;
         }
-        if (url.endsWith('&')) {
-            url = url.slice(0, -1);
-        }
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json' 
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                updatePieChart(data.pie_chart_date); 
-            } else {
-                console.log("No data found for pie chart");
-            }
-        })
-        .catch(error => {
-            console.error("Error fetching Pie Chart data:", error);
-        });
-    }
-
-    function fetchColumnChartData(time_update, time_end) {
-        // Xử lý tham số thời gian (nếu có)
-        const formattedTimeUpdate = time_update ? time_update.replace('T', ' ') + ':00' : null;
-        const formattedTimeEnd = time_end ? time_end.replace('T', ' ') + ':00' : null;
-    
-        // Tạo URL với tham số query string
-        let url = '/api/filterColumnChart?';
-        if (formattedTimeUpdate) {
-            url += `time_update=${encodeURIComponent(formattedTimeUpdate)}&`;
-        }
-        if (formattedTimeEnd) {
-            url += `time_end=${encodeURIComponent(formattedTimeEnd)}`;
-        }
-    
-        // Nếu URL đã có dấu '&' dư, loại bỏ nó
-        if (url.endsWith('&')) {
-            url = url.slice(0, -1);
-        }
-    
-        // Gửi yêu cầu GET
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json' // Mặc dù không cần thiết cho GET, nhưng có thể giữ lại nếu API yêu cầu
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                drawColumnChart(data.column_chart_date); // Cập nhật biểu đồ
-            } else {
-                console.log("No data found for column chart");
-            }
-        })
-        .catch(error => {
-            console.error("Error fetching Column Chart data:", error);
-        });
-    }
-    
-    function fetchColumn2ChartData(time_update, time_end) {
-        const formattedTimeUpdate = time_update ? time_update.replace('T', ' ') + ':00' : null;
-        const formattedTimeEnd = time_end ? time_end.replace('T', ' ') + ':00' : null;
-        let url = '/api/filterColumn2Chart?';
-        if (formattedTimeUpdate) {
-            url += `time_update=${encodeURIComponent(formattedTimeUpdate)}&`;
-        }
-        if (formattedTimeEnd) {
-            url += `time_end=${encodeURIComponent(formattedTimeEnd)}`;
-        }
-        if (url.endsWith('&')) {
-            url = url.slice(0, -1);
-        }
-        // Gửi yêu cầu GET
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json' 
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                drawColumn2Chart(data.column2_chart_date, 98); 
-            } else {
-                console.log("No data found for Column 2 chart");
-            }
-        })
-        .catch(error => {
-            console.error("Error fetching Column 2 Chart data:", error);
-        });
-    }
-    
-    function fetchForceChartData(machine_name) {
-        let url = '/api/filterForceChart?';
         if (machine_name) {
             url += `nameMachine=${encodeURIComponent(machine_name)}&`;
         }
+        if (line) {
+            url += `line=${encodeURIComponent(line)}&`;
+        }
         if (url.endsWith('&')) {
             url = url.slice(0, -1);
         }
-        // Gửi yêu cầu GET
+    
+        // Gọi API tổng hợp
         fetch(url, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json' 
+                'Content-Type': 'application/json'
             }
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                drawForceChart(data.force_chart_data); 
+                if (data.pie_chart_data) {
+                    updatePieChart(data.pie_chart_data);
+                }
+                if (data.column_chart_data) {
+                    drawColumnChart(data.column_chart_data);
+                }
+                if (data.column2_chart_data) {
+                    drawColumn2Chart(data.column2_chart_data, 98);
+                }
+                if (data.force_chart_data) {
+                    drawForceChart(data.force_chart_data);
+                }
             } else {
-                console.log("No data found for Force chart");
+                console.error("Lỗi dữ liệu biểu đồ:", data.error);
             }
         })
         .catch(error => {
-            console.error("Error fetching Force Chart data:", error);
+            console.error("Lỗi gọi API biểu đồ:", error);
         });
     }
-    //setup pie chart
     function updatePieChart(pieData) {
         if (!pieData || !pieData.details) {
             console.error("Dữ liệu biểu đồ tròn không hợp lệ:", pieData);
@@ -411,7 +353,7 @@ function initializeFilter() {
         } else {
             chart = Highcharts.chart("container-pie", chartOptions);
         }
-    }
+    }    
     function processDataColumnChart(columnData) {
         if (!columnData || columnData.length === 0) {
             console.error("No data available.");
@@ -466,7 +408,7 @@ function initializeFilter() {
         });
         
         return { dates, seriesData, drilldownSeries };
-    }   
+    }
     //setup column chart top machine fail per day 
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
@@ -686,7 +628,7 @@ function initializeFilter() {
                             },
                             align: 'left',
                             verticalAlign: 'top',
-                            y: -15,
+                            y: -25,
                             style: {
                                 fontSize: '16px',
                                 fontWeight: 'bold',
@@ -701,120 +643,12 @@ function initializeFilter() {
             console.error('Error generating column2 chart:', error);
         }
     }
-
-    // function drawForceChart(data) {
-    //     const screwForceTypes = data.categories;
-    //     const machineName = data.machine_name || 'không xác định';
-    
-    //     try {
-    //         if (forceChart) {
-    //             forceChart.destroy();
-    //         }
-    
-    //         const scatterSeries = data.series.map((s, index) => ({
-    //             name: s.name,
-    //             type: 'scatter',
-    //             data: s.data.map(([x, y]) => [x, parseFloat(y.toFixed(2))]), 
-    //             marker: {
-    //                 radius: 3,
-    //                 symbol: 'circle'
-    //             },
-    //             color: Highcharts.getOptions().colors[index],
-    //             showInLegend: true,
-    //             tooltip: {
-    //                 pointFormat: 'Type: {series.name}<br/>Force: {point.y:.2f}'
-    //             }
-    //         }));
-    
-    //         const minLineData = [[0, 10], [1, 10], [2, 10], [3, 10]];
-    //         const maxLineData = [[0, 15], [1, 15], [2, 15], [3, 15]];
-    
-    //         const lineSeries = [
-    //             {
-    //                 name: 'Min Force',
-    //                 type: 'line',
-    //                 data: minLineData,
-    //                 color: '#03fc3d',
-    //                 marker: {
-    //                     enabled: true,
-    //                     symbol: 'cycle',
-    //                     radius: 5
-    //                 },
-    //                 lineWidth: 2,
-    //                 tooltip: {
-    //                     pointFormat: 'Min Force: {point.y:.2f}'
-    //                 }
-    //             },
-    //             {
-    //                 name: 'Max Force',
-    //                 type: 'line',
-    //                 data: maxLineData,
-    //                 color: '#fc0362',
-    //                 marker: {
-    //                     enabled: true,
-    //                     symbol: 'cycle',
-    //                     radius: 5
-    //                 },
-    //                 lineWidth: 2,
-    //                 tooltip: {
-    //                     pointFormat: 'Max Force: {point.y:.2f}'
-    //                 }
-    //             }
-    //         ];
-    
-    //         const allSeries = [...scatterSeries, ...lineSeries];
-    
-    //         forceChart = Highcharts.chart('container', {
-    //             chart: {
-    //                 type: 'scatter',
-    //                 zoomType: 'xy',
-    //                 backgroundColor: null,
-    //                 plotBackgroundColor: null,
-    //                 animation: { duration: 600, easing: 'easeOutExpo' },
-    //             },
-    //             title: {
-    //                 text: `Scatter Plot With Screw Force Variation Of ${machineName}`,
-    //                 align: 'left',
-    //                 style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
-    //             },
-    //             xAxis: {
-    //                 categories: screwForceTypes,
-    //                 labels: { style: { color: '#fff', fontSize: '12px' } },
-    //                 title: { text: 'Type Force', style: { color: '#fff', fontSize: '12px' } }
-    //             },
-    //             yAxis: {
-    //                 title: {
-    //                     text: 'Force', style: { color: '#fff', fontSize: '12px' }
-    //                 },
-    //                 labels: { style: { color: '#fff', fontSize: '12px' } }
-    //             },
-    //             legend: {
-    //                 align: 'center',
-    //                 verticalAlign: 'bottom',
-    //                 itemStyle: { color: '#fff' },
-    //                 itemHoverStyle: { color: '#cccccc' }
-    //             },
-    //             credits: { enabled: false },
-    //             accessibility: { enabled: false },
-    //             plotOptions: {
-    //                 scatter: {
-    //                     jitter: {
-    //                         x: 0.15,
-    //                         y: 0
-    //                     }
-    //                 }
-    //             },
-    //             series: allSeries
-    //         });
-    //     } catch (error) {
-    //         console.error('Error force chart:', error);
-    //     }
-    // }
-
+    //setup force chart
     function drawForceChart(data) {
         const categories = data.categories;
         const machineName = data.machine_name || 'không xác định';
-    
+        const minForce = data.min_force || 0;
+        const maxForce = data.max_force || 0;
         try {
             if (forceChart) {
                 forceChart.destroy();
@@ -838,7 +672,7 @@ function initializeFilter() {
             const minLine = {
                 name: 'Min Force',
                 type: 'line',
-                data: new Array(categories.length).fill(10),
+                data: Array(categories.length).fill(minForce),
                 color: '#03fc3d',
                 dashStyle: 'ShortDash',
                 lineWidth: 2,
@@ -850,15 +684,14 @@ function initializeFilter() {
             const maxLine = {
                 name: 'Max Force',
                 type: 'line',
-                data: new Array(categories.length).fill(15),
+                data: Array(categories.length).fill(maxForce),
                 color: '#fc0362',
                 dashStyle: 'ShortDash',
                 lineWidth: 2,
                 marker: { enabled: false },
                 tooltip: { pointFormat: 'Max Force: {point.y:.2f}' },
                 enableMouseTracking: false
-            };
-    
+            };    
             const allSeries = [...lineSeries, minLine, maxLine];
     
             forceChart = Highcharts.chart('container', {
@@ -877,14 +710,14 @@ function initializeFilter() {
                 xAxis: {
                     categories: categories,
                     title: {
-                        text: 'Thời gian',
+                        text: 'Time',
                         style: { color: '#fff', fontSize: '12px' }
                     },
                     labels: { style: { color: '#fff', fontSize: '12px' } }
                 },
                 yAxis: {
                     title: {
-                        text: 'Force (kgf.cm)',
+                        text: 'Force Screw',
                         style: { color: '#fff', fontSize: '12px' }
                     },
                     labels: {
@@ -922,7 +755,19 @@ function initializeDashboard () {
     let column2Chart = null;
     let columnChart = null;
     let forceChart = null;
-
+    let forceLimits = {};
+    function initForceLimitsAndLoad() {
+        fetch('/api/dashboard/getDefaultForce')
+            .then(res => res.json())
+            .then(data => {
+                forceLimits = data;
+                fetchPage(1);
+            })
+            .catch(err => {
+                console.error("Lỗi khi lấy ngưỡng lực:", err);
+                fetchPage(1);
+            });
+    }
     function fetchPage(page = 1) {
         document.getElementById('loading').style.display = 'block';
         fetch(`/api/dashboard/table?page=${page}`, {
@@ -967,14 +812,23 @@ function initializeDashboard () {
             // alert("Error fetch data charts:", error)            
         });
     }
+    function checkForceValue(line, machine, value) {
+        const key = `${line},${machine}`;
+        const limits = forceLimits[key];
+    
+        if (!limits) return "high-force";
+    
+        const { min, max } = limits;
+        return (value >= min && value <= max) ? "low-force" : "high-force";
+    }    
     function updateTable(rows) {
-        let fragment = document.createDocumentFragment();
-        const checkForceValue = (value) => {
-            if (value < 10 || value > 15) {
-                return "high-force"; 
-            }
-            return "low-force";
-        };
+        let fragment = document.createDocumentFragment();        
+        // const checkForceValue = (value) => {
+        //     if (value < 10 || value > 15) {
+        //         return "high-force"; 
+        //     }
+        //     return "low-force";
+        // };
         rows.forEach(row => {
             let tr = document.createElement("tr");
             tr.innerHTML = `
@@ -984,10 +838,10 @@ function initializeDashboard () {
                 <td>${row.name_machine ?? 'N/A'}</td>
                 <td>${row.model_name ?? 'N/A'}</td>
                 <td>${row.serial_number ?? 'N/A'}</td>
-                <td class="${checkForceValue(row.force_1)}">${row.force_1 ?? 'N/A'}</td>
-                <td class="${checkForceValue(row.force_2)}">${row.force_2 ?? 'N/A'}</td>
-                <td class="${checkForceValue(row.force_3)}">${row.force_3 ?? 'N/A'}</td>
-                <td class="${checkForceValue(row.force_4)}">${row.force_4 ?? 'N/A'}</td>
+                <td class="${checkForceValue(row.line, row.name_machine,row.force_1)}">${row.force_1 ?? 'N/A'}</td>
+                <td class="${checkForceValue(row.line, row.name_machine,row.force_2)}">${row.force_2 ?? 'N/A'}</td>
+                <td class="${checkForceValue(row.line, row.name_machine,row.force_3)}">${row.force_3 ?? 'N/A'}</td>
+                <td class="${checkForceValue(row.line, row.name_machine,row.force_4)}">${row.force_4 ?? 'N/A'}</td>
                 <td class = "time">${row.time_update ?? 'N/A'}</td>
                 <td class="${row.state === 'PASS' ? 'state-pass' : 'state-fail'}">${row.state ?? 'N/A'}</td>
             `;
@@ -1435,122 +1289,12 @@ function initializeDashboard () {
         } catch (error) {
             console.error('Error generating column2 chart:', error);
         }
-    }
-    
-    // function drawForceChart(data) {
-    //     const screwForceTypes = data.categories;
-    //     const machineName = data.machine_name || 'Máy không xác định';    
-    //     try {
-    //         if (forceChart) {
-    //             forceChart.destroy();
-    //         }
-    
-    //         const scatterSeries = data.series.map((s, index) => ({
-    //             name: s.name,
-    //             type: 'scatter',
-    //             data: s.data.map(([x, y]) => [x, parseFloat(y.toFixed(2))]), 
-    //             marker: {
-    //                 radius: 3,
-    //                 symbol: 'circle'
-    //             },
-    //             color: Highcharts.getOptions().colors[index],
-    //             showInLegend: true,
-    //             tooltip: {
-    //                 pointFormat: 'Type: {series.name}<br/>Force: {point.y:.2f}',
-                    
-    //             }
-                
-    //         }));
-    
-    //         const minLineData = [[0, 10], [1, 10], [2, 10], [3, 10]];
-    //         const maxLineData = [[0, 15], [1, 15], [2, 15], [3, 15]];
-    
-    //         const lineSeries = [
-    //             {
-    //                 name: 'Min Force',
-    //                 type: 'line',
-    //                 data: minLineData,
-    //                 color: '#03fc3d',
-    //                 marker: {
-    //                     enabled: true,
-    //                     symbol: 'cycle',
-    //                     radius: 5
-    //                 },
-    //                 lineWidth: 2,
-    //                 tooltip: {
-    //                     pointFormat: 'Min Force: {point.y:.2f}'
-    //                 }
-    //             },
-    //             {
-    //                 name: 'Max Force',
-    //                 type: 'line',
-    //                 data: maxLineData,
-    //                 color: '#fc0362',
-    //                 marker: {
-    //                     enabled: true,
-    //                     symbol: 'cycle',
-    //                     radius: 5
-    //                 },
-    //                 lineWidth: 2,
-    //                 tooltip: {
-    //                     pointFormat: 'Max Force: {point.y:.2f}'
-    //                 }
-    //             }
-    //         ];
-    
-    //         const allSeries = [...scatterSeries, ...lineSeries];
-    
-    //         forceChart = Highcharts.chart('container', {
-    //             chart: {
-    //                 type: 'scatter',
-    //                 zoomType: 'xy',
-    //                 backgroundColor: null,
-    //                 plotBackgroundColor: null,
-    //                 animation: { duration: 600, easing: 'easeOutExpo' },
-    //             },
-    //             title: {
-    //                 text: `Scatter Plot With Screw Force Variation Of ${machineName}`,
-    //                 align: 'left',
-    //                 style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
-    //             },
-    //             xAxis: {
-    //                 categories: screwForceTypes,
-    //                 labels: { style: { color: '#fff', fontSize: '12px' } },
-    //                 title: { text: 'Type Force', style: { color: '#fff', fontSize: '12px' } }
-    //             },
-    //             yAxis: {
-    //                 title: {
-    //                     text: 'Force( kgf.cm )', style: { color: '#fff', fontSize: '12px' }
-    //                 },
-    //                 labels: {format: '{value}kgf.cm', style: { color: '#fff', fontSize: '12px' } }
-    //             },
-    //             legend: {
-    //                 align: 'center',
-    //                 verticalAlign: 'bottom',
-    //                 itemStyle: { color: '#fff' },
-    //                 itemHoverStyle: { color: '#cccccc' }
-    //             },
-    //             credits: { enabled: false },
-    //             accessibility: { enabled: false },
-    //             plotOptions: {
-    //                 scatter: {
-    //                     jitter: {
-    //                         x: 0.15,
-    //                         y: 0
-    //                     }
-    //                 }
-    //             },
-    //             series: allSeries
-    //         });
-    //     } catch (error) {
-    //         console.error('Error force chart:', error);
-    //     }
-    // }
-    
+    }  
     function drawForceChart(data) {
         const categories = data.categories;
         const machineName = data.machine_name || 'Máy không xác định';
-    
+        const minForce = data.min_force || 0;
+        const maxForce = data.max_force || 0;
         try {
             if (forceChart) {
                 forceChart.destroy();
@@ -1574,7 +1318,7 @@ function initializeDashboard () {
             const minLine = {
                 name: 'Min Force',
                 type: 'line',
-                data: new Array(categories.length).fill(10),
+                data: Array(categories.length).fill(minForce),
                 color: '#fc0335',
                 dashStyle: 'ShortDash',
                 lineWidth: 2,
@@ -1596,7 +1340,7 @@ function initializeDashboard () {
             const maxLine = {
                 name: 'Max Force',
                 type: 'line',
-                data: new Array(categories.length).fill(15),
+                data: Array(categories.length).fill(maxForce),
                 color: '#fc0335',
                 dashStyle: 'ShortDash',
                 lineWidth: 2,
@@ -1638,7 +1382,7 @@ function initializeDashboard () {
                 },
                 yAxis: {
                     title: {
-                        text: 'Force (kgf.cm)',
+                        text: 'Force Screw',
                         style: { color: '#fff', fontSize: '12px' }
                     },
                     labels: {
@@ -1667,18 +1411,18 @@ function initializeDashboard () {
             console.error('Error rendering force chart:', error);
         }
     }
-    
-
     function startPolling() {
-        fetchPage(currentPage);
+        initForceLimitsAndLoad();
         fetchChart();
 
         pollingTimer = setInterval(() => {
-            fetchPage(currentPage);
+            // initForceLimitsAndLoad();
             fetchChart();
+            fetchPage(page = 1)
         }, POLLING_INTERVAL);
     }
     startPolling();
+    
 }
 
 //show list solution 
@@ -1764,7 +1508,7 @@ function modalSolution() {
         });
     });
     function fetchDataAndUpdateTable() {
-        fetch(`/api/getDataSolution?t=${Date.now()}`)
+        fetch(`/api/getDataSolution`)
             .then(response => response.json())
             .then(data => {
                 const tbody = document.getElementById('tbodySolution');
@@ -1775,7 +1519,7 @@ function modalSolution() {
                     const formattedSolution = item.solution
                     .replace(/\./g, '.<br>')                   
                     .split('<br>')                             
-                    .map(line => line.trim() ? `- ${line}` : '')
+                    .map(line => line.trim() ? `👉 ${line}` : '')
                     .join('<br>');
                     row.innerHTML = `
                         <td class="errorID">${item.error_code}</td>
@@ -2081,9 +1825,9 @@ function fetchContentTop() {
             failRecords.textContent = "Error";
             fpyPercentage.textContent = "Error";
         })
-        .finally(() => {
-            setTimeout(fetchContentTop, POLLING_INTERVAL);
-        });
+        // .finally(() => {
+        //     setTimeout(fetchContentTop, POLLING_INTERVAL);
+        // });
 }
 function modeScreen(){
     const fullscreenIcon = document.getElementById("fullscreenic");
@@ -2115,6 +1859,44 @@ function showCBB(){
     const factoryCombobox = document.getElementById("factory-combobox");
     const stateCombobox = document.getElementById("state-combobox");
     const nameMachineCombobox = document.getElementById("nameMachine-combobox");
+
+    document.getElementById("factory-combobox").addEventListener("change", function () {
+        const factory = this.value;
+        resetCombobox("modelNamecombobox");
+        resetCombobox("line-combobox");
+        resetCombobox("nameMachine-combobox");
+    
+        if (factory) {
+            fetch(`/api/getCascadingOptions?factory=${factory}`)
+                .then(res => res.json())
+                .then(models => populateCombobox("modelNamecombobox", models));
+        }
+    });
+    
+    document.getElementById("modelNamecombobox").addEventListener("change", function () {
+        const factory = document.getElementById("factory-combobox").value;
+        const model = this.value;
+        resetCombobox("line-combobox");
+        resetCombobox("nameMachine-combobox");
+    
+        if (factory && model) {
+            fetch(`/api/getCascadingOptions?factory=${factory}&model_name=${model}`)
+                .then(res => res.json())
+                .then(lines => populateCombobox("line-combobox", lines));
+        }
+    });
+    
+    document.getElementById("line-combobox").addEventListener("change",function () {
+        const factory = document.getElementById("factory-combobox").value;
+        const model = document.getElementById("modelNamecombobox").value;
+        const line = this.value;
+        resetCombobox("nameMachine-combobox");    
+        if (factory && model && line) {
+            fetch(`/api/getCascadingOptions?factory=${factory}&model_name=${model}&line=${line}`)
+                .then(res => res.json())
+                .then(machines => populateCombobox("nameMachine-combobox", machines));
+        }
+    });
     fetch("/api/getDataComboboxs")
     .then(response => {
         if (!response.ok) {
@@ -2164,6 +1946,22 @@ function showCBB(){
         console.error("Error fetching lines and states:", error);
     });
 }
+
+function resetCombobox(id) {
+    const cbb = document.getElementById(id);
+    cbb.innerHTML = '<option value="">All</option>';
+}
+
+function populateCombobox(id, data) {
+    const cbb = document.getElementById(id);
+    data.forEach(item => {
+        const option = document.createElement("option");
+        option.value = item;
+        option.textContent = item;
+        cbb.appendChild(option);
+    });
+}
+
 //load info overview
 function initializeOverview () {
     modalSolution();
@@ -2172,6 +1970,7 @@ function initializeOverview () {
     showCBB();
     fetchContentTop();
 }
+
 //Dom all
 document.addEventListener('DOMContentLoaded', function() {
     initializeFilter();

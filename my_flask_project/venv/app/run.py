@@ -436,38 +436,55 @@ def get_column2_chart_data(start_date=None, end_date=None):
 #         "categories": ["Force 1", "Force 2", "Force 3", "Force 4"],
 #         "series": series
 #     }
+def get_min_max_force(line, machine_name):
+    try:
+        query = """
+            SELECT MIN_FORCE, MAX_FORCE 
+            FROM SCREW_FORCE_DEFAULT
+            WHERE LINE = :line AND NAME_MACHINE = :machine_name
+        """
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, {'line': line, 'machine_name': machine_name})
+                result = cursor.fetchone()
+                if result:
+                    return {"min_force": result[0], "max_force": result[1]}
+                else:
+                    return {"min_force": None, "max_force": None}
+    except Exception as e:
+        print(f"Error fetching min/max force: {e}")
+        return {"min_force": None, "max_force": None}
 
-def get_data_force_chart(machine_name=None):
+def get_data_force_chart(machine_name=None, line= None):
     connection = get_db_connection()
     cursor = connection.cursor()
-
-    if machine_name is None:
+    
+    if machine_name is None and line is None:
+        minmax= get_min_max_force(line='Line_6', machine_name='Machine_6')
         query = """
             SELECT name_machine, force_1, force_2, force_3, force_4, time_update
-            FROM screw_force_info
-            WHERE name_machine = 'Machine_6'
+            FROM screw_force_info 
+            WHERE name_machine = 'Machine_6' and line = 'Line_6'
             ORDER BY time_update DESC
             FETCH FIRST 30 ROWS ONLY
         """
         cursor.execute(query)
     else:
+        minmax= get_min_max_force(line, machine_name)
         query = """
             SELECT name_machine, force_1, force_2, force_3, force_4, time_update
             FROM screw_force_info
-            WHERE name_machine = :machine_name
+            WHERE name_machine = :machine_name and line = :line
             ORDER BY time_update DESC
             FETCH FIRST 30 ROWS ONLY
         """
-        cursor.execute(query, {"machine_name": machine_name})
+        cursor.execute(query, {"machine_name": machine_name, "line": line})
 
     raw_data = cursor.fetchall()
     cursor.close()
     connection.close()
-
-    # Đảo ngược để từ cũ → mới
     raw_data = raw_data[::-1]
 
-    # Lấy chuỗi thời gian cho trục X
     time_labels = [row[5].strftime("%H:%M:%S") for row in raw_data]  # "%H:%M", hoặc "%Y-%m-%d %H:%M"
 
     series = [
@@ -480,31 +497,10 @@ def get_data_force_chart(machine_name=None):
     return {
         "machine_name": raw_data[0][0] if raw_data else None,
         "categories": time_labels,
-        "series": series
+        "series": series,
+         "min_force": minmax["min_force"],
+        "max_force": minmax["max_force"]
     }
-
-# Dashboard
-# @app.route('/dashboard', methods=['GET'])
-# def dashboard():
-#     try:
-#         page = request.args.get('page', 1, type=int)
-#         per_page = 10
-#         rows = get_paginated_data(page, per_page)
-#         total_records = get_total_records()
-#         pagination_data = calculate_pagination(page, per_page, total_records)
-#         pie_chart_data = get_pie_chart_data()
-
-#         return jsonify({
-#             "data": rows,
-#             "per_page": per_page,
-#             "total_records": total_records,
-#             **pagination_data, 
-#             "pie_chart_data": pie_chart_data
-#         })
-#     except Exception as e:
-#         app.logger.error(f"Error querying data: {str(e)}")
-#         return render_template('dashboard.html', error=str(e))
-
 # get data table
 @app.route('/api/dashboard/table', methods=['GET'])
 def get_table():
@@ -525,6 +521,32 @@ def get_table():
         app.logger.error(f"Error querying table data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/dashboard/getDefaultForce', methods=['GET'])
+def get_default_force():
+    try:
+        query = """
+            SELECT LINE, NAME_MACHINE, MIN_FORCE, MAX_FORCE FROM SCREW_FORCE_DEFAULT
+        """
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                columns = [col[0] for col in cursor.description]
+                data = [dict(zip(columns, row)) for row in rows]
+
+                result = {}
+                for row in data:
+                    key = f"{row['LINE']},{row['NAME_MACHINE']}"
+                    result[key] = {
+                        "min": row['MIN_FORCE'],
+                        "max": row['MAX_FORCE']
+                    }
+
+                return jsonify(result)
+
+    except Exception as e:
+        print(f"Error fetching: {e}")
+        return jsonify({"error": "Unable to fetch"}), 500
 #get data All charts
 @app.route('/api/dashboard/charts', methods=['GET'])
 def get_charts():
@@ -542,7 +564,6 @@ def get_charts():
     except Exception as e:
         app.logger.error(f"Error querying chart data: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
 
 #get data table by filter
 @app.route('/api/filter', methods=['GET'])
@@ -666,57 +687,33 @@ def filter_data():
             "message": str(e)
         }), 500
 
-# Filter pie chart
-@app .route('/api/filterPieChart', methods=['GET'])
-def filter_pie_chart():
+@app.route('/api/dashboard/filterCharts', methods=['GET'])
+def filter_charts():
     try:
         time_update = request.args.get("time_update")
         time_end = request.args.get("time_end")
+        machine_name = request.args.get("nameMachine")
+        line = request.args.get("line")
         if time_update and time_end:
             start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
             end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
         else:
-            end_date = datetime.datetime.now()
-            start_date = end_date - datetime.timedelta(days=7)
-        pie_chart_date = get_pie_chart_data(start_date, end_date)
-        return jsonify({"success": True, "pie_chart_date":pie_chart_date})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=7)
 
-# Filter column chart
-@app .route('/api/filterColumnChart', methods=['GET'])
-def filter_column_chart():
-    try:
-        time_update = request.args.get("time_update")
-        time_end = request.args.get("time_end")
-        if time_update and time_end:
-            start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
-            end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
-        column_chart_date = get_column_chart_data(start_date, end_date)
-        return jsonify({"success": True, "column_chart_date":column_chart_date})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
+        # Gọi các hàm xử lý dữ liệu
+        pie_chart_data = get_pie_chart_data(start_date, end_date)
+        column_chart_data = get_column_chart_data(start_date, end_date)
+        column2_chart_data = get_column2_chart_data(start_date, end_date)
+        force_chart_data = get_data_force_chart(machine_name, line) if machine_name else None
 
-@app .route('/api/filterColumn2Chart', methods=['GET'])
-def filter_column2_chart():
-    try:
-        time_update = request.args.get("time_update")
-        time_end = request.args.get("time_end")
-        if time_update and time_end:
-            start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
-            end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
-        column2_chart_date = get_column2_chart_data(start_date, end_date)
-        return jsonify({"success": True, "column2_chart_date":column2_chart_date})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)})
-
-@app.route('/api/filterForceChart', methods=['GET'])
-def filter_force_chart():
-    try:
-        machine_name = request.args.get("nameMachine")
-        if machine_name:
-            force_chart_data = get_data_force_chart(machine_name)
-        return jsonify({"success": True, "force_chart_data":force_chart_data})
+        return jsonify({
+            "success": True,
+            "pie_chart_data": pie_chart_data,
+            "column_chart_data": column_chart_data,
+            "column2_chart_data": column2_chart_data,
+            "force_chart_data": force_chart_data
+        })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
@@ -857,6 +854,7 @@ def get_lines():
         for category, value in rows:
             if category == 'Line':
                 result["lines"].append(value)
+
             elif category == 'NameMachine':
                 result["nameMachines"].append(value)
             elif category == 'Factory':
@@ -867,6 +865,36 @@ def get_lines():
     except Exception as e:
         print(f"Error fetching: {e}")
         return jsonify({"error": "Unable to fetch"}), 500
+
+@app.route('/api/getCascadingOptions', methods=['GET'])
+def get_cascading_options():
+    factory = request.args.get('factory')
+    model = request.args.get('model_name')
+    line = request.args.get('line')
+
+    query = ""
+    params = {}
+
+    if factory and not model:
+        query = "SELECT DISTINCT MODEL_NAME FROM SCREW_FORCE_INFO WHERE FACTORY = :factory"
+        params = {'factory': factory}
+    elif factory and model and not line:
+        query = "SELECT DISTINCT LINE FROM SCREW_FORCE_INFO WHERE FACTORY = :factory AND MODEL_NAME = :model"
+        params = {'factory': factory, 'model': model}
+    elif factory and model and line:
+        query = "SELECT DISTINCT NAME_MACHINE FROM SCREW_FORCE_INFO WHERE FACTORY = :factory AND MODEL_NAME = :model AND LINE = :line"
+        params = {'factory': factory, 'model': model, 'line': line}
+    else:
+        return jsonify({"error": "Insufficient parameters"}), 400
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+        values = [r[0] for r in rows]
+        return jsonify(values)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 #get total , output, fpy
 @app.route('/api/getinfo', methods=['GET'])

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script>
+    <!-- <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script> -->
     <script src="{{ url_for('static', filename='js/highcharts.js') }}"></script>
     <script src="{{ url_for('static', filename='js/accessibility.js') }}"></script>
     <script src="{{ url_for('static', filename='js/exporting.js') }}"></script>
@@ -27,12 +27,12 @@
     </div>
     
     <div class="wrapper">
-      <div id="aiautomation1">
+      <!-- <div id="aiautomation1">
         <img id="aiautomation" src="{{ url_for('static', filename='images/Animation - 1744353683902.gif') }}"/>
-      </div>
+      </div> -->
       <div id="coppyright">
         <a href="{{ url_for('index1') }}">©<span id="year"></span> Copyright MET-Automation | IOT</a>
-    </div>    
+    </div>
     <script>
         document.getElementById("year").textContent = new Date().getFullYear();
     </script>
@@ -247,10 +247,11 @@
             <div class="filter">
             Factory: <select id="factory-combobox" style="cursor: pointer;">
             </select>
+            Model: <select id="modelNamecombobox" style="width: 70px; cursor: pointer;"></select>
             Line: <select id="line-combobox" style="cursor: pointer;">
             </select>
             Name machine: <select id="nameMachine-combobox" style="width: 80px; cursor: pointer;"></select>
-            Model: <select id="modelNamecombobox" style="width: 70px; cursor: pointer;"></select>
+            
             Time: <input style="width: 180px; border-radius: 2px; "  type="datetime-local" name="time_update" id="time_update">
             To: <input style="width: 180px; border-radius: 2px;"  type="datetime-local" name="time_end" id="time_end">
             State: <select id="state-combobox" style="cursor: pointer;" >
@@ -420,7 +421,7 @@
           </div>
         </div>
       </div>
-    </div>    
+    </div>
 </div>
 <div id="downloadModal" class="modal-overlay" style="display: none;">
   <div class="modal-content">
@@ -497,7 +498,6 @@
     </form>
   </div>
 </div>
-
 
   </body>
 </html>
