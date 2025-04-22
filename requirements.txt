@@ -1,0 +1,12 @@
+Flask==3.0.3
+Flask-Caching==2.3.1
+Flask-Cors==5.0.0
+Flask-SocketIO==5.5.1
+python-socketio==5.12.1
+python-engineio==4.11.2
+oracledb==3.0.0
+pandas==2.2.3
+openpyxl==3.1.5
+PyJWT==2.10.1
+waitress==3.0.0
+XlsxWriter==3.2.0

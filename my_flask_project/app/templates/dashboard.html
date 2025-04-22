@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- <script src="{{ url_for('static', filename='js/jquery-3.6.0.min.js') }}"></script> -->
+    <script src="{{ url_for('static', filename='js/highcharts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/accessibility.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/exporting.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/export-data.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/drilldown.js') }}"></script>    
+    <link
+      rel="stylesheet" type="text/css"
+      href="{{ url_for('static', filename='css/all.min.css')}}"
+    />    
+    <link
+      rel="stylesheet" type="text/css"
+      href="{{ url_for('static', filename='css/styledashboard.css')}}"
+    />
+    <title>Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/automation.svg') }}" type="image/png">
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+  </head>
+  <body>
+    <div id="loading" class="loading-overlay hidden" >
+      <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading..."/>
+    </div>
+    
+    <div class="wrapper">
+      <!-- <div id="aiautomation1">
+        <img id="aiautomation" src="{{ url_for('static', filename='images/Animation - 1744353683902.gif') }}"/>
+      </div> -->
+      <div id="coppyright">
+        <a href="{{ url_for('index1') }}">©<span id="year"></span> Copyright MET-Automation | IOT</a>
+    </div>
+    <script>
+        document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+      <nav id="navbar">
+        <ul class="navbar-items flexbox-col">
+          <li class="navbar-logo flexbox-left">
+            <a title="Home" class="navbar-item-inner flexbox" href="{{ url_for('index1') }}">
+              <span class="logo"></span>
+            </a>
+          </li>
+          <!-- <hr style="width: 16em; border: 1px solid rgb(255, 255, 255)"> -->
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left" style="color: #fff;"  href="{{ url_for('dashboard_page') }}" >
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div  class="link-text">
+                <span class="nav-text">Dashboard Screw Force</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-search" ></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục B</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục C</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-edit"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục D</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-cog"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục E</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-save"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục F</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-upload"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục G</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-home"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục H</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fab fa-linkedin"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục J</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục K</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-shopping-cart"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục L</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="link-text">
+                <span  class="nav-text">Mục M</span>
+              </div>
+            </a>
+          </li>
+          <li class="navbar-item flexbox-left">
+            <a class="navbar-item-inner flexbox-left" href="{{ url_for('logout') }}">
+              <div class="navbar-item-inner-icon-wrapper flexbox">
+                <i class="fas fa-sign-out-alt"></i>
+              </div>
+              <div style="color: #fff;" class="link-text">
+                <span  class="nav-text">Logout</span>
+              </div>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="container">
+        <div  class="overlay-image" alt="overlay"></div>
+        <header>
+          <h4>DASHBOARD</h4>
+          <h1 style="display: inline;"> Screw machine Information</h1>
+        </header>
+        <div class="mainContent">
+          <h1 style="padding: 10px;"></h1>
+          <div class="solution"><img id="solution" src="{{ url_for('static', filename='images/innovation.svg') }}" title="Solution" alt="Solution"></div>
+          <div class="content">
+            <div class="content-top">
+              <div class="info1" >
+                <div class="infor">Total </div>
+                <div class="card" style="color: #fff; " id="total-records">N/A</div>
+                <div class="glow-line"></div>
+              </div>
+              <div class="info1" >
+                <div class="infor">Pass</div>
+                <div class="card" style="color: rgb(2, 255, 158); " id="pass-records">N/A</div>
+                <div class="glow-line"></div>
+              </div>
+              <div class="info1" >
+                <div class="infor">Fail</div>
+                <div class="card" style="color: rgb(247, 68, 68); " id="fail-records">N/A</div>
+                <div class="glow-line"></div>
+                </div>
+              <div class="info1" >
+                <div class="infor" >FPY</div>
+                <div class="card" style="color: #fff;" id="fpy-percentage">N/A</div>
+                <div class="glow-line"></div>
+                </div>
+              <div class="dowfile" title="Dowload Exel">
+                <a id="download-excel">
+                  <button class="Btn">
+                    <svg class="svgIcon" viewBox="0 0 384 512" height="1em" xmlns="http://www.w3.org/2000/svg"><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"></path></svg>
+                    <span class="icon2"></span>
+                 </button>
+                </a>
+                
+              </div>
+            </div>
+            <div class="tbl-header">
+              <table  cellpadding="0" cellspacing="0" border="0">
+                <thead>
+                  <tr style="background-color: transparent !important;">
+                    <th class="stt">STT</th>
+                    <th>FACTORY</th>
+                    <th>LINE</th>
+                    <th>MACHINE NAME</th>
+                    <th>MODEL NAME</th>
+                    <th>SERIAL NUMBER</th>
+                    <th >FORCE 1</th>
+                    <th>FORCE 2</th>
+                    <th>FORCE 3</th>
+                    <th>FORCE 4</th>
+                    <th class="time">TIME</th>
+                    <th>STATE</th>
+                  </tr>
+                </thead>
+              </table>
+            </div>
+            <div class="tbl-content">
+              <table id="result-table" cellpadding="0" cellspacing="0" border="0">
+                <tbody id="table-body">
+                </tbody>
+              </table>
+            </div>
+            <!-- filter -->
+            <div class="filter">
+            Factory: <select id="factory-combobox" style="cursor: pointer;">
+            </select>
+            Model: <select id="modelNamecombobox" style="width: 70px; cursor: pointer;"></select>
+            Line: <select id="line-combobox" style="cursor: pointer;">
+            </select>
+            Name machine: <select id="nameMachine-combobox" style="width: 80px; cursor: pointer;"></select>
+            
+            Time: <input style="width: 180px; border-radius: 2px; "  type="datetime-local" name="time_update" id="time_update">
+            To: <input style="width: 180px; border-radius: 2px;"  type="datetime-local" name="time_end" id="time_end">
+            State: <select id="state-combobox" style="cursor: pointer;" >
+            </select>
+              <input style=" transition: all .3s ease-in-out; padding: 0.5em; width: 5em; " type="submit" title="Query data" value="Search" id="filter">
+            </div>
+            <div id="count"></div>
+          </div>
+          <div class="modeFullScreen">
+            <a href="#" id="toggle_fullscreen">
+              <img
+                id="fullscreenic"
+                src="/static/images/fullscreen1.png"
+                alt="Fullscreen Icon"
+              />
+            </a>
+          </div>
+        <div class="chartAll">
+          <div class="chartContent">
+            <div class="pagination"  id="pagination">
+            </div>
+            <div class="pieChartInfo">
+              <figure class="highcharts-figure">
+                <div id="container-pie"></div>
+              </figure>
+            </div>
+            <div class="chartRight">
+              <div>
+                  <figure class="highcharts-figure">
+                      <div id="container-toperr"></div>
+                  </figure>
+              </div>
+          </div>
+          </div>
+          <div class="chartCotent1">
+            <div class="chartColumn">
+                <figure class="highcharts-figure">
+                  <div id="container3"></div>
+                </figure>                
+            </div>
+            <div class="chartColumn2">
+              <figure class="highcharts-figure">
+                <div id="container"></div>
+              </figure>
+              <!-- <script>
+                const screwForceTypes = ['Force 1', 'Force 2', 'Force 3', 'Force 4'];
+                const machineData = {
+                    name: 'Máy 1',
+                    forces: [
+                        { type: 'Force 1', min: 0.2, max: 0.6 },
+                        { type: 'Force 2', min: 0.2, max: 0.6 },
+                        { type: 'Force 3', min: 0.2, max: 0.6 },
+                        { type: 'Force 4', min: 0.2, max: 0.6 }
+                    ]
+                };
+                const getTestData = (forceIndex, minForce, maxForce) => {
+                    const midPoint = (minForce + maxForce) / 2;
+                    const variance = (maxForce - minForce) * 0.7;
+                    
+                    return new Array(30).fill(1).map(() => [
+                        forceIndex,
+                        midPoint + (Math.random() - 0.5) * variance
+                    ]);
+                };
+      
+                const minLineData = machineData.forces.map((force, index) => [index, force.min]);
+                const maxLineData = machineData.forces.map((force, index) => [index, force.max]);
+                const scatterSeries = machineData.forces.map((force, index) => ({
+                    name: force.type,
+                    type: 'scatter',
+                    data: getTestData(index, force.min, force.max),
+                    marker: {
+                        radius: 3,
+                        symbol: 'circle'
+                    },
+                    color: Highcharts.getOptions().colors[index],
+                    showInLegend: true,
+                    tooltip: {
+                        pointFormat: 'Loại: {series.name}<br/>Lực vít: {point.y:.3f}'
+                    }
+                }));
+                const lineSeries = [
+                    {
+                        name: 'Lực vít tối thiểu',
+                        type: 'line',
+                        data: minLineData,
+                        color: '#FF0000',
+                        marker: {
+                            enabled: true,
+                            symbol: 'diamond',
+                            radius: 5
+                        },
+                        lineWidth: 2,
+                        tooltip: {
+                            pointFormat: 'Lực vít tối thiểu: {point.y:.3f}'
+                        }
+                    },
+                    {
+                        name: 'Lực vít tối đa',
+                        type: 'line',
+                        data: maxLineData,
+                        color: '#00AA00',
+                        marker: {
+                            enabled: true,
+                            symbol: 'diamond',
+                            radius: 5
+                        },
+                        lineWidth: 2,
+                        tooltip: {
+                            pointFormat: 'Lực vít tối đa: {point.y:.3f}'
+                        }
+                    }
+                ];
+        
+                // Kết hợp tất cả series
+                const allSeries = [...scatterSeries, ...lineSeries];
+        
+                Highcharts.chart('container', {
+                    chart: {
+                        type: 'scatter',
+                        zoomType: 'xy',
+                        backgroundColor: null,
+                    },
+                    title: {
+                        text: `Biểu đồ lực vít cho ${machineData.name}`,
+                        align: 'left',
+                        style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+                    },
+                    xAxis: {
+                        categories: screwForceTypes,
+                        labels: { style: { color: '#fff', fontSize: '12px' } },
+                        title: { text: 'Loại lực vít', style: { color: '#fff', fontSize: '12px' } }
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Lực vít', style: { color: '#fff', fontSize: '12px' }
+                        },
+                        labels: { style: { color: '#fff', fontSize: '12px' } }
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    accessibility: { enabled: false },
+                    legend: {
+                    align: 'center',
+                    verticalAlign: 'bottom',
+                    itemStyle: { color: '#fff' },
+                    itemHoverStyle: { color: '#cccccc' }
+                },
+                    plotOptions: {
+                        scatter: {
+                            jitter: {
+                                x: 0.15,
+                                y: 0
+                            }
+                        }
+                    },
+                    series: allSeries
+                });
+            </script> -->
+            </div>
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+<div id="downloadModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+      <h6 style="color: #000; text-transform: capitalize;"> <span> <img src="/static/images/warning.png" id="imgwarning" alt=""></span>Confirm download</h6>
+      <p style="color: #f74141; font-family:'Lucida Sans', Arial, sans-serif">Large data may slow down the download. Check the filter before downloading. Continue?</p>
+      <div class="modal-buttons">
+          <button id="cancelDownload" class="cancel">Cancel</button>
+          <button id="confirmDownload" class="confirm">Continute</button>
+      </div>
+  </div>
+</div>
+<div id="solutionModal" class="modal-overlay" style="display: none;">
+  <div class="modal-content1">
+    <div id="searchError"><input type="text" placeholder="Search Error" id="searchError"></div>
+    <div class="custom-tooltip-container">
+      <button class="custom-tooltip-btn"><i class="fa fa-question-circle"></i></button>
+      <div class="custom-tooltip-content">
+        <span class="custom-tooltip-arrow"></span>
+        <p class="custom-tooltip-text">
+          Warning: Each solution is separated by a dot. <br> eg: "Solution 1. Solution 2.".
+        </p>
+      </div>
+    </div>
+    <div class="corner-tl"></div>
+    <div class="corner-tr"></div>
+    <div class="corner-bl"></div>
+    <div class="corner-br"></div>
+    <div class="border-top"></div>
+    <div class="border-bottom"></div>
+    <div class="border-left"></div>
+    <div class="border-right"></div>
+    <span class="close-modal" title="Exit">&times;</span>
+    <div id="text-effect" class="rainbow-text">Recommend Solution</div>
+    <table class="tableSolution" cellpadding="0" cellspacing="0" border="0">
+      <thead>
+        <tr style="background-color: transparent !important;">
+            <th style="width: 3.5%;">ERROR CODE</th>
+            <th style="width: 10%;">name</th>
+            <th style="width: 7%;">Root cause</th>
+            <th style="width: 56%;">solution</th>
+            <th style="width: 8%;">action</th>
+        </tr>
+    </thead>
+    <tbody id="tbodySolution">
+    </tbody>
+    </table>
+    <div id="newSolution">
+      <button id="btnadd">New</button>
+    </div>
+  </div>
+</div>
+<div id="modalForm" class="modalForm">
+  <div class="modal-content-form">
+    <span class="close" id="closeModalForm">&times;</span>
+    <h2 style="text-transform: uppercase;">Add New Recommend Solution</h2>
+    <form id="solutionForm">
+      <label>
+        Error Code
+        <input class="solutionForminput" type="text" id="error_code" name="error_code" autocomplete="off" required/>
+      </label>
+      <label>
+        Error Name
+        <input class="solutionForminput" type="text" id="error_name" name="error_name" autocomplete="off" required/>
+      </label>
+      <label>
+        Root Cause
+        <input class="solutionForminput" type="text" id="root_cause" name="root_cause" autocomplete="off" required/>
+      </label>
+      <label>
+        Solution
+        <textarea class="solutionForminput" id="solution" name="solution" autocomplete="off" required></textarea>
+      </label>
+      <button id="btnaddsolution" type="submit">Submit</button>
+    </form>
+  </div>
+</div>
+  </body>
+</html>
