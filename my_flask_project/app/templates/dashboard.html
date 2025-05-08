@@ -25,11 +25,142 @@
     <div id="loading" class="loading-overlay hidden" >
       <img src="{{ url_for('static', filename='images/loading.gif') }}" alt="Loading..."/>
     </div>
-    
+    <div id="chat-container">
+      <div class="chat-header">
+          <div class="chat-title">AI Assistant</div>
+          <div class="close-chat">×</div>
+      </div>
+      <div class="chat-messages">
+        <div class="message-container ai-container">
+          <div class="avatar">
+            <img src="{{ url_for('static', filename='images/ai.png') }}" alt="AI Avatar">
+          </div>
+          <div class="message ai-message">Hello, how can I help you?</div>
+        </div>
+      </div>      
+      <div class="chat-input-container">    
+          <textarea id="chat-input" placeholder="enter your message..."></textarea>
+          <button id="send-button">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+          </button>
+      </div>
+  </div>
+  <!-- <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const aiButton = document.getElementById('aiautomation1');
+        const chatContainer = document.getElementById('chat-container');
+        const closeChat = document.querySelector('.close-chat');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const chatMessages = document.querySelector('.chat-messages');
+        
+        // Toggle chat container when AI button is clicked
+        aiButton.addEventListener('click', function() {
+                this.classList.add('active');
+                
+                // Add ripple effect
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                    this.classList.remove('active');
+                }, 300);
+                
+                if (chatContainer.classList.contains('active')) {
+                    chatContainer.classList.remove('active');
+                    setTimeout(() => {
+                        chatContainer.style.display = 'none';
+                    }, 300);
+                } else {
+                    chatContainer.style.display = 'flex';
+                    setTimeout(() => {
+                        chatContainer.classList.add('active');
+                        chatInput.focus();
+                    }, 10);
+                }
+            });
+        
+        // Close chat when close button is clicked
+        closeChat.addEventListener('click', function() {
+            chatContainer.style.display = 'none';
+        });
+        
+        // Function to send a message
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message !== '') {
+                // Add user message
+                addMessage(message, 'user');
+                chatInput.value = '';
+                
+                // Simulate AI response (replace with actual AI integration)
+                setTimeout(function() {
+                    // This is a placeholder - in a real implementation, 
+                    // you would send the message to your AI backend and get a response
+                    const aiResponse = "Chức năng này đang trong quá trình phát triển. Đây là phản hồi tự động.";
+                    addMessage(aiResponse, 'ai');
+                }, 1000);
+            }
+        }
+        
+        // Add message to the chat
+        function addMessage(text, sender) {
+        const messageContainer = document.createElement('div');
+        messageContainer.classList.add('message-container');
+
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
+        messageDiv.textContent = text;
+
+        const avatarDiv = document.createElement('div');
+        avatarDiv.classList.add('avatar');
+        const avatarImg = document.createElement('img');
+        
+        if (sender === 'user') {
+            messageContainer.classList.add('user-container');
+            messageDiv.classList.add('user-message');
+            avatarImg.src = '/static/images/user.png'; 
+
+            avatarImg.alt = 'User Avatar';
+            avatarDiv.appendChild(avatarImg);
+
+            // Thứ tự: message trước, avatar sau
+            messageContainer.appendChild(messageDiv);
+            messageContainer.appendChild(avatarDiv);
+        } else {
+            messageContainer.classList.add('ai-container');
+            messageDiv.classList.add('ai-message');
+            avatarImg.src = '/static/images/ai.png';
+            avatarImg.alt = 'AI Avatar';
+            avatarDiv.appendChild(avatarImg);
+
+            // Thứ tự: avatar trước, message sau
+            messageContainer.appendChild(avatarDiv);
+            messageContainer.appendChild(messageDiv);
+        }
+
+        chatMessages.appendChild(messageContainer);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }        
+        sendButton.addEventListener('click', sendMessage);  
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    });
+</script> -->
     <div class="wrapper">
-      <!-- <div id="aiautomation1">
+      <!-- <div id="aiautomation1"> 
         <img id="aiautomation" src="{{ url_for('static', filename='images/Animation - 1744353683902.gif') }}"/>
       </div> -->
+      
       <div id="coppyright">
         <a href="{{ url_for('index1') }}">©<span id="year"></span> Copyright MET-Automation | IOT</a>
     </div>
@@ -55,12 +186,12 @@
             </a>
           </li>
           <li class="navbar-item flexbox-left">
-            <a class="navbar-item-inner flexbox-left">
+            <a class="navbar-item-inner flexbox-left" style="color: #fff;" href="{{ url_for('dashboard_page_glue') }}">
               <div class="navbar-item-inner-icon-wrapper flexbox">
-                <i class="fas fa-search" ></i>
+                <i class="fas fa-chart-line" ></i>
               </div>
               <div class="link-text">
-                <span  class="nav-text">Mục B</span>
+                <span  class="nav-text">Dashboard Glue Force</span>
               </div>
             </a>
           </li>
@@ -213,8 +344,7 @@
                     <svg class="svgIcon" viewBox="0 0 384 512" height="1em" xmlns="http://www.w3.org/2000/svg"><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"></path></svg>
                     <span class="icon2"></span>
                  </button>
-                </a>
-                
+                </a>                
               </div>
             </div>
             <div class="tbl-header">
@@ -222,9 +352,9 @@
                 <thead>
                   <tr style="background-color: transparent !important;">
                     <th class="stt">STT</th>
-                    <th>FACTORY</th>
-                    <th>LINE</th>
-                    <th>MACHINE NAME</th>
+                    <th>MACHINE CODE</th>
+                    <!-- <th>LINE</th>
+                    <th>MACHINE NAME</th> -->
                     <th>MODEL NAME</th>
                     <th>SERIAL NUMBER</th>
                     <th >FORCE 1</th>
@@ -296,125 +426,6 @@
               <figure class="highcharts-figure">
                 <div id="container"></div>
               </figure>
-              <!-- <script>
-                const screwForceTypes = ['Force 1', 'Force 2', 'Force 3', 'Force 4'];
-                const machineData = {
-                    name: 'Máy 1',
-                    forces: [
-                        { type: 'Force 1', min: 0.2, max: 0.6 },
-                        { type: 'Force 2', min: 0.2, max: 0.6 },
-                        { type: 'Force 3', min: 0.2, max: 0.6 },
-                        { type: 'Force 4', min: 0.2, max: 0.6 }
-                    ]
-                };
-                const getTestData = (forceIndex, minForce, maxForce) => {
-                    const midPoint = (minForce + maxForce) / 2;
-                    const variance = (maxForce - minForce) * 0.7;
-                    
-                    return new Array(30).fill(1).map(() => [
-                        forceIndex,
-                        midPoint + (Math.random() - 0.5) * variance
-                    ]);
-                };
-      
-                const minLineData = machineData.forces.map((force, index) => [index, force.min]);
-                const maxLineData = machineData.forces.map((force, index) => [index, force.max]);
-                const scatterSeries = machineData.forces.map((force, index) => ({
-                    name: force.type,
-                    type: 'scatter',
-                    data: getTestData(index, force.min, force.max),
-                    marker: {
-                        radius: 3,
-                        symbol: 'circle'
-                    },
-                    color: Highcharts.getOptions().colors[index],
-                    showInLegend: true,
-                    tooltip: {
-                        pointFormat: 'Loại: {series.name}<br/>Lực vít: {point.y:.3f}'
-                    }
-                }));
-                const lineSeries = [
-                    {
-                        name: 'Lực vít tối thiểu',
-                        type: 'line',
-                        data: minLineData,
-                        color: '#FF0000',
-                        marker: {
-                            enabled: true,
-                            symbol: 'diamond',
-                            radius: 5
-                        },
-                        lineWidth: 2,
-                        tooltip: {
-                            pointFormat: 'Lực vít tối thiểu: {point.y:.3f}'
-                        }
-                    },
-                    {
-                        name: 'Lực vít tối đa',
-                        type: 'line',
-                        data: maxLineData,
-                        color: '#00AA00',
-                        marker: {
-                            enabled: true,
-                            symbol: 'diamond',
-                            radius: 5
-                        },
-                        lineWidth: 2,
-                        tooltip: {
-                            pointFormat: 'Lực vít tối đa: {point.y:.3f}'
-                        }
-                    }
-                ];
-        
-                // Kết hợp tất cả series
-                const allSeries = [...scatterSeries, ...lineSeries];
-        
-                Highcharts.chart('container', {
-                    chart: {
-                        type: 'scatter',
-                        zoomType: 'xy',
-                        backgroundColor: null,
-                    },
-                    title: {
-                        text: `Biểu đồ lực vít cho ${machineData.name}`,
-                        align: 'left',
-                        style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
-                    },
-                    xAxis: {
-                        categories: screwForceTypes,
-                        labels: { style: { color: '#fff', fontSize: '12px' } },
-                        title: { text: 'Loại lực vít', style: { color: '#fff', fontSize: '12px' } }
-                    },
-                    yAxis: {
-                        title: {
-                            text: 'Lực vít', style: { color: '#fff', fontSize: '12px' }
-                        },
-                        labels: { style: { color: '#fff', fontSize: '12px' } }
-                    },
-                    legend: {
-                        enabled: false
-                    },
-                    credits: {
-                        enabled: false
-                    },
-                    accessibility: { enabled: false },
-                    legend: {
-                    align: 'center',
-                    verticalAlign: 'bottom',
-                    itemStyle: { color: '#fff' },
-                    itemHoverStyle: { color: '#cccccc' }
-                },
-                    plotOptions: {
-                        scatter: {
-                            jitter: {
-                                x: 0.15,
-                                y: 0
-                            }
-                        }
-                    },
-                    series: allSeries
-                });
-            </script> -->
             </div>
           </div>
         </div>
@@ -497,6 +508,14 @@
       <button id="btnaddsolution" type="submit">Submit</button>
     </form>
   </div>
+
+</div>
+<div id="download-progress-container" style="display: none;">
+  <h5>Dowloading...</h5>
+  <div id="progress-bar-outer">
+      <div id="progress-bar"></div>
+  </div>
+  <div id="progress-text">0%</div>
 </div>
   </body>
 </html>

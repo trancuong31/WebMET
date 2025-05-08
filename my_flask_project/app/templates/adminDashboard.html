@@ -74,7 +74,9 @@
         <h1>Welcome {{ username }}</h1>
         <div class="logout">
             <a href="{{ url_for('logout') }}">
-                <img src="{{ url_for('static', filename='images/logout.png') }}" alt="Logout">
+                <div style="color: #fff;" class="link-text">
+                    <span  class="nav-text">Logout</span>
+                  </div>
             </a>
         </div>
     </div>
@@ -90,21 +92,8 @@
     </div>
 
     <div class="container">
-        <div id="map"></div>
+        <div><h1>admin</h1></div>
     </div>
 
-    <script>
-        function initMap() {
-            var map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 21.0168864, lng: 105.7855574 },
-                zoom: 15
-            });
-        }
-    </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCT61ROrIlygoNTLRRiMW5dil_TLETDFeI&callback=initMap" async defer></script>
-
-    <div>
-        
-    </div>
 </body>
 </html>

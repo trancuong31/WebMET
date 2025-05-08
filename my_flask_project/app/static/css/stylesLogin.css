@@ -170,7 +170,7 @@ button:active{
   height: 100%;
   top: 0;
   left: 0;
-  z-index: 0;  /* Đẩy nền ra sau */
+  z-index: 0; 
 }
 .social .fb{
   margin-left: 25px;
@@ -181,7 +181,7 @@ button:active{
 #forgotpw{
     position: absolute;
     right: 0; 
-    margin-right: 5%;
+    margin-right: 7%;
     color: #fff; 
     font-weight: 200;
     margin-top: 5px;

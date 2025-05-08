@@ -15,7 +15,7 @@ function initializeFilter() {
             pollingTimer = null;
             console.log("Polling stopped");
         }
-    }   
+    }
     function debounce(func, delay) {
         let timeout;
         return function (...args) {
@@ -24,7 +24,8 @@ function initializeFilter() {
         };
     }
     // Xử lý sự kiện filter
-    document.getElementById('filter').addEventListener('click', debounce(async function (event) {
+    document.getElementById('filter').addEventListener('click', 
+        debounce(async function (event) {
         event.preventDefault();
         const button = this;
         button.disabled = true;
@@ -127,9 +128,9 @@ function initializeFilter() {
             let tr = document.createElement("tr");
             tr.innerHTML = `
                 <td class ="stt">${row.stt}</td>
-                <td>${row.factory ?? 'N/A'}</td>
-                <td>${row.line ?? 'N/A'}</td>
-                <td>${row.name_machine ?? 'N/A'}</td>
+                <td>
+                ${[row.factory, row.line, row.name_machine].filter(Boolean).join('_') || 'N/A'}
+                </td>
                 <td>${row.model_name ?? 'N/A'}</td>
                 <td>${row.serial_number ?? 'N/A'}</td>
                 <td class="${checkForceValue(row.line, row.name_machine,row.force_1)}">${row.force_1 ?? 'N/A'}</td>
@@ -232,6 +233,7 @@ function initializeFilter() {
             console.error("Dữ liệu biểu đồ tròn không hợp lệ:", pieData);
             return; 
         }
+
         const passData = [];
         const failData = [];
         const drilldownPass = [];
@@ -278,6 +280,15 @@ function initializeFilter() {
                     }
                 }
             },
+            subtitle: {
+                text: 'Click on the slices to view details',
+                align: 'left',
+                verticalAlign: 'top',
+                style: {
+                  fontSize: '12px',
+                  color: '#606060'
+                }
+              },
             title: {
                 text: `Rate Pass/Fail By ${totalDay} Day`,
                 align: "left",
@@ -445,6 +456,15 @@ function initializeFilter() {
                 zooming: { type: 'x' },
                 animation: { duration: 600, easing: 'easeOutExpo' }
             },
+            subtitle: {
+                text: 'Click on the columns to view details',
+                align: 'left',
+                verticalAlign: 'top',
+                style: {
+                  fontSize: '12px',
+                  color: '#606060'
+                }
+              },
             title: {
                 text: 'Top 3 Machine Fail Per Day',
                 align: 'left',
@@ -669,9 +689,9 @@ function initializeFilter() {
             const lineSeries = data.series.map((s, index) => ({
                 name: s.name,
                 type: 'spline',
-                data: s.data.map(val => parseFloat(val.toFixed(2))),
+                data: s.data.map(val => parseFloat((val??0).toFixed(2))),
                 marker: {
-                    enabled: true,
+                    enabled: false,
                     radius: 3,
                     symbol: 'circle'
                 },
@@ -691,7 +711,18 @@ function initializeFilter() {
                 lineWidth: 2,
                 marker: { enabled: false },
                 tooltip: { pointFormat: 'Min Force: {point.y:.2f}' },
-                enableMouseTracking: false
+                enableMouseTracking: false,
+                dataLabels: {
+                    enabled: true,
+                    formatter: function() {
+                      if (this.point.index === this.series.data.length - 1) {
+                        return 'LCL';
+                      }
+                      return null;
+                    },
+                    align: 'left',
+                    verticalAlign: 'top'
+                }
             };
     
             const maxLine = {
@@ -703,7 +734,18 @@ function initializeFilter() {
                 lineWidth: 2,
                 marker: { enabled: false },
                 tooltip: { pointFormat: 'Max Force: {point.y:.2f}' },
-                enableMouseTracking: false
+                enableMouseTracking: false,
+                dataLabels: {
+                    enabled: true,
+                    formatter: function() {
+                      if (this.point.index === this.series.data.length - 1) {
+                        return 'UCL';
+                      }
+                      return null;
+                    },
+                    align: 'left',
+                    verticalAlign: 'top'
+                  }
             };    
             const allSeries = [...lineSeries, minLine, maxLine];
     
@@ -752,7 +794,6 @@ function initializeFilter() {
             console.error('Error force chart:', error);
         }
     }
-    
 }
 
 //load dashboard
@@ -760,8 +801,7 @@ function initializeDashboard () {
     const tableBody = document.getElementById("table-body");
     const paginationDiv = document.getElementById("pagination");
     const POLLING_INTERVAL = 300000;
-    let currentPage = 1;
-    console.log("Dashboard loaded and polling data :", POLLING_INTERVAL +"ms");
+    console.log("Dashboard polling interval :", POLLING_INTERVAL +"ms");
     let chart;
     let isInDrilldown = false;
     let currentDrilldownId = null;
@@ -833,16 +873,17 @@ function initializeDashboard () {
     
         const { min, max } = limits;
         return (value >= min && value <= max) ? "low-force" : "high-force";
-    }    
+    } 
     function updateTable(rows) {
         let fragment = document.createDocumentFragment(); 
         rows.forEach(row => {
             let tr = document.createElement("tr");
             tr.innerHTML = `
                 <td class ="stt">${row.stt}</td>
-                <td>${row.factory ?? 'N/A'}</td>
-                <td>${row.line ?? 'N/A'}</td>
-                <td>${row.name_machine ?? 'N/A'}</td>
+                <td>
+                ${[row.factory, row.line, row.name_machine].filter(Boolean).join('_') || 'N/A'}
+                </td>
+
                 <td>${row.model_name ?? 'N/A'}</td>
                 <td>${row.serial_number ?? 'N/A'}</td>
                 <td class="${checkForceValue(row.line, row.name_machine,row.force_1)}">${row.force_1 ?? 'N/A'}</td>
@@ -887,125 +928,134 @@ function initializeDashboard () {
         });
     }
     function updatePieChart(pieData) {
-                const passData = [];
-                const failData = [];
-                const drilldownPass = [];
-                const drilldownFail = [];
-                pieData.details.forEach(item => {
-                    if (item.state === "PASS") {
-                        passData.push({ name: item.model_name, y: item.percentage });
-                        drilldownPass.push([item.model_name, item.percentage]);
-                    } else {
-                        failData.push({ name: item.model_name, y: item.percentage });
-                        drilldownFail.push([item.model_name, item.percentage]);
+        const passData = [];
+        const failData = [];
+        const drilldownPass = [];
+        const drilldownFail = [];
+        pieData.details.forEach(item => {
+            if (item.state === "PASS") {
+                passData.push({ name: item.model_name, y: item.percentage });
+                drilldownPass.push([item.model_name, item.percentage]);
+            } else {
+                failData.push({ name: item.model_name, y: item.percentage });
+                drilldownFail.push([item.model_name, item.percentage]);
+            }
+        });
+        const chartData = [
+            { name: "Pass", y: pieData.fpyPass, drilldown: "Pass", color: {
+                linearGradient: { x1: 0, y1: 1, x2: 0, y2: 0 },
+                stops: [[0, '#007bff'], [1, '#003366']]
+            } },
+            { name: "Fail", y: pieData.fpyFail, drilldown: "Fail", color: {
+                linearGradient: { x1: 0, y1: 1, x2: 0, y2: 0 },
+                stops: [[0, '#f88e8e'], [1, '#f84646']]
+            } }
+        ];
+        const drilldownSeries = [
+            { name: "Pass", id: "Pass", data: drilldownPass },
+            { name: "Fail", id: "Fail", data: drilldownFail }
+        ];
+        const chartOptions = {
+            chart: {
+                type: "pie",
+                backgroundColor: null,
+                plotBackgroundColor: null,
+                events: {
+                    drilldown: function(e) {
+                        isInDrilldown = true;
+                        currentDrilldownId = e.point.drilldown;
+                    },
+                    drillup: function() {
+                        isInDrilldown = false;
+                        currentDrilldownId = null;
                     }
-                });
-                const chartData = [
-                    { name: "Pass", y: pieData.fpyPass, drilldown: "Pass", color: {
-                        linearGradient: { x1: 0, y1: 1, x2: 0, y2: 0 },
-                        stops: [[0, '#007bff'], [1, '#003366']]
-                    } },
-                    { name: "Fail", y: pieData.fpyFail, drilldown: "Fail", color: {
-                        linearGradient: { x1: 0, y1: 1, x2: 0, y2: 0 },
-                        stops: [[0, '#f88e8e'], [1, '#f84646']]
-                    } }
-                ];
-                const drilldownSeries = [
-                    { name: "Pass", id: "Pass", data: drilldownPass },
-                    { name: "Fail", id: "Fail", data: drilldownFail }
-                ];
-                const chartOptions = {
-                    chart: {
-                        type: "pie",
-                        backgroundColor: null,
-                        plotBackgroundColor: null,
-                        events: {
-                            drilldown: function(e) {
-                                isInDrilldown = true;
-                                currentDrilldownId = e.point.drilldown;
-                            },
-                            drillup: function() {
-                                isInDrilldown = false;
-                                currentDrilldownId = null;
-                            }
-                        }
-                    },
-                    title: {
-                        text: "Rate Pass/Fail By 7 Day",
-                        align: "left",
-                        style: {
-                            color: "#fff",
-                            fontSize: "16px"
-                        }
-                    },
-                    accessibility: {
-                        announceNewData: {
-                            enabled: true
-                        },
-                        point: {
-                            valueSuffix: "%"
-                        },
-                        enabled: false
-                    },
-                    credits: false,
-                    plotOptions: {
-                        series: {
-                            borderRadius: 5,
-                            dataLabels: [{
-                                enabled: true,
-                                distance: 15,
-                                format: "{point.name}"
-                            }, {
-                                enabled: true,
-                                distance: "-30%",
-                                filter: {
-                                    property: "percentage",
-                                    operator: ">",
-                                    value: 5
-                                },
-                                format: "{point.y:.1f}%",
-                                style: {
-                                    fontSize: "1em",
-                                    color: "#fff",
-                                    textOutline: "none"
-                                }
-                            }]
-                        }
-                    },
-                    tooltip: {
-                        headerFormat: '<span style="font-size:12px">{series.name}</span><br>',
-                        pointFormat: '<span style="color:{point.color}">{point.name}</span>: ' +
-                            "<b>{point.y:.2f}%</b> of total<br/>"
-                    },
-                    series: [{
-                        name: "Rate",
-                        colorByPoint: true,
-                        cursor: 'pointer',
-                        data: chartData
-                    }],
-                    drilldown: {
-                        series: drilldownSeries
-                    }
-                };
-        
-                if (chart) {
-                    if (isInDrilldown && currentDrilldownId) {
-                        const currentDrilldownData = drilldownSeries.find(s => s.id === currentDrilldownId);
-                        if (currentDrilldownData) {
-                            const drilldownSerie = chart.get(currentDrilldownId);
-                            if (drilldownSerie) {
-                                drilldownSerie.setData(currentDrilldownData.data);
-                            }
-                        }
-                    } else {
-                        chart.series[0].setData(chartData);
-                        chart.drilldown.update({
-                            series: drilldownSeries
-                        });
-                    }
-                } else {
-                    chart = Highcharts.chart("container-pie", chartOptions);
                 }
+            },
+            subtitle: {
+                text: 'Click on the slices to view details',
+                align: 'left',
+                verticalAlign: 'top',
+                style: {
+                  fontSize: '12px',
+                  color: '#606060'
+                }
+              },
+            title: {
+                text: "Rate Pass/Fail By 7 Day",
+                align: "left",
+                style: {
+                    color: "#fff",
+                    fontSize: "16px"
+                }
+            },
+            accessibility: {
+                announceNewData: {
+                    enabled: true
+                },
+                point: {
+                    valueSuffix: "%"
+                },
+                enabled: false
+            },
+            credits: false,
+            plotOptions: {
+                series: {
+                    borderRadius: 5,
+                    dataLabels: [{
+                        enabled: true,
+                        distance: 15,
+                        format: "{point.name}"
+                    }, {
+                        enabled: true,
+                        distance: "-30%",
+                        filter: {
+                            property: "percentage",
+                            operator: ">",
+                            value: 5
+                        },
+                        format: "{point.y:.1f}%",
+                        style: {
+                            fontSize: "1em",
+                            color: "#fff",
+                            textOutline: "none"
+                        }
+                    }]
+                }
+            },
+            tooltip: {
+                headerFormat: '<span style="font-size:12px">{series.name}</span><br>',
+                pointFormat: '<span style="color:{point.color}">{point.name}</span>: ' +
+                    "<b>{point.y:.2f}%</b> of total<br/>"
+            },
+            series: [{
+                name: "Rate",
+                colorByPoint: true,
+                cursor: 'pointer',
+                data: chartData
+            }],
+            drilldown: {
+                series: drilldownSeries
+            }
+        };
+
+        if (chart) {
+            if (isInDrilldown && currentDrilldownId) {
+                const currentDrilldownData = drilldownSeries.find(s => s.id === currentDrilldownId);
+                if (currentDrilldownData) {
+                    const drilldownSerie = chart.get(currentDrilldownId);
+                    if (drilldownSerie) {
+                        drilldownSerie.setData(currentDrilldownData.data);
+                    }
+                }
+            } else {
+                chart.series[0].setData(chartData);
+                chart.drilldown.update({
+                    series: drilldownSeries
+                });
+            }
+        } else {
+            chart = Highcharts.chart("container-pie", chartOptions);
+        }
     }
     function processDataColumnChart(columnData) {
         if (!columnData || columnData.length === 0) {
@@ -1087,6 +1137,15 @@ function initializeDashboard () {
                 zooming: { type: 'x' },
                 animation: { duration: 600, easing: 'easeOutExpo' }
             },
+            subtitle: {
+                text: 'Click on the columns to view details',
+                align: 'left',
+                verticalAlign: 'top',
+                style: {
+                  fontSize: '12px',
+                  color: '#606060'
+                }
+              },
             title: {
                 text: 'Top 3 Machine Fail Per Day',
                 align: 'left',
@@ -1299,7 +1358,7 @@ function initializeDashboard () {
         } catch (error) {
             console.error('Error generating column2 chart:', error);
         }
-    }  
+    }
     function drawForceChart(data) {
         const categories = data.categories;
         const machineName = data.machine_name || 'Máy không xác định';
@@ -1333,7 +1392,7 @@ function initializeDashboard () {
                 dashStyle: 'ShortDash',
                 lineWidth: 2,
                 marker: { enabled: false },
-                enableMouseTracking: false,
+                enableMouseTracking: true,
                 dataLabels: {
                     enabled: true,
                     formatter: function() {
@@ -1355,7 +1414,7 @@ function initializeDashboard () {
                 dashStyle: 'ShortDash',
                 lineWidth: 2,
                 marker: { enabled: false },
-                enableMouseTracking: false,
+                enableMouseTracking: true,
                 dataLabels: {
                     enabled: true,
                     formatter: function() {
@@ -1385,6 +1444,15 @@ function initializeDashboard () {
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
+                subtitle: {
+                    text: 'Click to search by factory, model, line, machine name to view machine others',
+                    align: 'left',
+                    verticalAlign: 'top',
+                    style: {
+                      fontSize: '12px',
+                      color: '#606060'
+                    }
+                  },
                 xAxis: {
                     categories: categories,
                     title: { text: 'Time', style: { color: '#fff', fontSize: '12px' } },
@@ -1426,16 +1494,15 @@ function initializeDashboard () {
         fetchChart();
 
         pollingTimer = setInterval(() => {
-            // initForceLimitsAndLoad();
             fetchChart();
             fetchPage(page = 1)
         }, POLLING_INTERVAL);
     }
     startPolling();
     
-}
+} 
 
-//show list solution 
+//show list solution
 function modalSolution() {
     const downloadButton = document.getElementById('download-excel');
     const cancelDownload = document.getElementById('cancelDownload');
@@ -1604,7 +1671,7 @@ function modalSolution() {
         clearButton.style.display = searchInput.value ? 'inline' : 'none';
     });
     }
-
+    //Tạo nút search khi nhập text
     createClearSearchButton();
 
     function highlightSearchTerm() {
@@ -1649,8 +1716,7 @@ function modalSolution() {
                 const maxLength = 1000;
                 cell.innerHTML = `<textarea class="${inputClass}" style="width:100%; padding:5px;" maxlength="${maxLength}">${text}</textarea>`;
                 return;
-            }
-            
+            }            
             cell.innerHTML = `<input type="text" value="${text}" class="${inputClass}">`;
         });
 
@@ -1754,54 +1820,114 @@ function modalSolution() {
 }
 //download excel
 function downloadExcel() {
-    const downloadModal = document.getElementById('downloadModal');
     const confirmDownload = document.getElementById('confirmDownload');
-    confirmDownload.addEventListener('click', async function() {
-        downloadModal.style.display = 'none';
-    
-        const formatDatetime = (datetime) => {
-            return datetime ? datetime.replace('T', ' ') + ':00' : null;
-        };
-        const payload = {
-            line: document.getElementById("line-combobox").value.trim() || null,
-            model: document.getElementById("modelNamecombobox").value.trim() || null,
-            factory: document.getElementById("factory-combobox").value.trim() || null,
-            nameMachine: document.getElementById("nameMachine-combobox").value.trim() || null,
-            time_update: formatDatetime(document.getElementById("time_update").value),
-            time_end: formatDatetime(document.getElementById("time_end").value),
-            state: document.getElementById("state-combobox").value || null
-        };
-        document.getElementById('loading').style.display = 'block';
+    if (confirmDownload.dataset.initialized === 'true') return;
+
+    confirmDownload.dataset.initialized = 'true'; 
+
+    confirmDownload.addEventListener('click', async () => {
+        toggleModal(false);
+        showProgress();
+
+        const payload = getDownloadPayload();
+        if (!validatePayload(payload)) {
+            alert("Invalid input. Please check your fields.");
+            hideProgress();
+            return;
+        }
+
         try {
-            const response = await fetch('/api/downloadExcel', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-    
+            simulateProgress();
+
+            const response = await sendDownloadRequest(payload);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error("Error downloading Excel:", error);
-            alert("Failed to download the Excel file. Please try again.");
-        } finally {
-            document.getElementById('loading').style.display = 'none';
+            triggerDownload(blob);
+            completeProgress();
+            setTimeout(hideProgress, 500);
+        } catch (err) {
+            console.error(err);
+            alert("Download failed. Please try again.");
+            hideProgress();
         }
     });
 }
+// Utility functions
+function getDownloadPayload() {
+    const get = (id) => document.getElementById(id)?.value.trim() || null;
+    const format = (dt) => dt ? dt.replace('T', ' ') + ':00' : null;
+    return {
+        factory: get("factory-combobox"),
+        model: get("modelNamecombobox"),
+        line: get("line-combobox"),
+        nameMachine: get("nameMachine-combobox"),
+        time_update: format(get("time_update")),
+        time_end: format(get("time_end")),
+        state: get("state-combobox")
+    };
+}
+
+function validatePayload(payload) {
+    if (payload.time_update && payload.time_end && payload.time_update > payload.time_end) {
+        return false;
+    }
+    return true;
+}
+
+function sendDownloadRequest(data) {
+    return fetch('/api/downloadExcel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify(data)
+    });
+}
+
+function simulateProgress() {
+    let progress = 0;
+    const bar = document.getElementById('progress-bar');
+    const text = document.getElementById('progress-text');
+
+    const interval = setInterval(() => {
+        if (progress < 90) {
+            progress = Math.min(progress + Math.random() * 10, 90);
+            bar.style.width = `${progress}%`;
+            text.textContent = `${Math.round(progress)}%`;
+        } else {
+            clearInterval(interval);
+        }
+    }, 300);
+
+    window._progressInterval = interval;
+}
+
+function completeProgress() {
+    clearInterval(window._progressInterval);
+    document.getElementById('progress-bar').style.width = '100%';
+    document.getElementById('progress-text').textContent = '100%';
+}
+
+function triggerDownload(blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `filtered_data_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function showProgress() {
+    document.getElementById('download-progress-container').style.display = 'block';
+}
+
+function hideProgress() {
+    document.getElementById('download-progress-container').style.display = 'none';
+}
+
+function toggleModal(visible) {
+    document.getElementById('downloadModal').style.display = visible ? 'block' : 'none';
+}
+
 //get content top
 function fetchContentTop() {
     const totalRecords = document.getElementById("total-records");

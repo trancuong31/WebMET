@@ -9,7 +9,8 @@ import pandas as pd
 from flask_caching import Cache
 from collections import defaultdict
 from waitress import serve
-from app.routes import app
+from functools import wraps
+# from app.routes import app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'abc'
 socketio =SocketIO(app)
@@ -56,23 +57,51 @@ def admin_dashboard():
         return redirect(url_for('login'))
     return render_template('adminDashboard.html', username=username)
 
+def require_auth(role_required=None):
+    def wrapper(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            token = request.cookies.get('token')
+            if not token:
+                return jsonify({"error": "Unauthorized"}), 401
+            try:
+                data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+                if role_required and data.get('role') != role_required:
+                    return jsonify({"error": "Forbidden"}), 403
+                request.user = data  # attach user info
+            except jwt.ExpiredSignatureError:
+                return jsonify({"error": "Token expired"}), 401
+            except jwt.InvalidTokenError:
+                return jsonify({"error": "Invalid token"}), 401
+            return f(*args, **kwargs)
+        return decorated
+    return wrapper
+
 #redirect page index
 @app.route('/index', methods=['GET'])
 def index1():
     token = request.cookies.get('token')
+    app.logger.info(f"Index page accessed. Token exists: {bool(token)}")
+    
     if not token:
-        return redirect(('login'))
+        app.logger.warning("No token found, redirecting to login")
+        return redirect(url_for('login'))
+    
     try:
         data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
         username = data['username']
+        app.logger.info(f"Token decoded successfully for user: {username}")
+        return render_template('index.html', username=username)
+        
     except jwt.ExpiredSignatureError:
+        app.logger.warning("Token expired")
         flash('Token has expired, please log in again.', 'error')
-        return redirect(('login'))
+        return redirect(url_for('login'))
+        
     except jwt.InvalidTokenError:
+        app.logger.warning("Invalid token")
         flash('Invalid token, please log in again.', 'error')
-        return redirect(('login'))
-    return render_template('index.html', username=username)
-
+        return redirect(url_for('login'))
 # redirect page dashboard
 @app.route('/dashboard_page', methods=['GET'])
 def dashboard_page():
@@ -89,110 +118,68 @@ def dashboard_page():
         flash('Invalid token, please log in again.', 'error')
         return redirect(('login'))
     return render_template('dashboard.html', username=username)
-
-# Hàm lấy dữ liệu với phân trang
-# def get_paginated_data(page, per_page):
-#     offset = (page - 1) * per_page
-#     offset = (page - 1) * per_page 
-#     query = """
-#         SELECT 
-#             ROWNUM as stt,
-#             t.factory,
-#             t.line, 
-#             t.name_machine, 
-#             t.model_name,
-#             t.serial_number,
-#             t.force_1, 
-#             t.force_2, 
-#             t.force_3, 
-#             t.force_4,
-#             t.time_update,
-#             t.state 
-#         FROM (
-#             SELECT 
-#                 factory,
-#                 line, 
-#                 name_machine, 
-#                 model_name,
-#                 serial_number,
-#                 force_1,
-#                 force_2,
-#                 force_3,
-#                 force_4,
-#                 TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
-#                 state
-#             FROM SCREW_FORCE_INFO
-#             ORDER BY TIME_UPDATE DESC
-#             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
-#         ) t
-#     """
-#     connection = get_db_connection()
-#     cursor = connection.cursor()
-#     cursor.execute(query, {"offset": offset, "limit": per_page})
-#     rows = [
-#         {
-#             'stt': row[0],
-#             'factory': row[1],
-#             'line': row[2],
-#             'name_machine': row[3], 
-#             'model_name': row[4], 
-#             'serial_number': row[5],
-#             'force_1': row[6],
-#             'force_2': row[7],
-#             'force_3': row[8],
-#             'force_4': row[9],
-#             'time_update': row[10],
-#             'state': row[11]
-#         }
-#         for row in cursor
-#     ]    
-#     cursor.close()
-#     connection.close()
-#     return rows
+@app.route('/dashboard_page_glue', methods=['GET'])
+def dashboard_page_glue():
+    token = request.cookies.get('token')
+    if not token:
+        return redirect(('login'))
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        username = data['username']
+    except jwt.ExpiredSignatureError:
+        flash('Token has expired, please log in again.', 'error')
+        return redirect(('login'))
+    except jwt.InvalidTokenError:
+        flash('Invalid token, please log in again.', 'error')
+        return redirect(('login'))
+    return render_template('dashboardglue.html', username=username)
 
 def get_paginated_data(page, per_page):
     offset = (page - 1) * per_page
     query = """
+    SELECT 
+        ROWNUM as stt,
+        t.factory,
+        t.line, 
+        t.name_machine, 
+        t.model_name,
+        t.serial_number,
+        t.force_1, 
+        t.force_2, 
+        t.force_3, 
+        t.force_4,
+        t.time_update,
+        CASE
+            WHEN 
+                (t.force_1 IS NOT NULL AND NOT (t.force_1 BETWEEN d.min_force AND d.max_force)) OR
+                (t.force_2 IS NOT NULL AND NOT (t.force_2 BETWEEN d.min_force AND d.max_force)) OR
+                (t.force_3 IS NOT NULL AND NOT (t.force_3 BETWEEN d.min_force AND d.max_force)) OR
+                (t.force_4 IS NOT NULL AND NOT (t.force_4 BETWEEN d.min_force AND d.max_force))
+            THEN 'FAIL'
+            ELSE 'PASS'
+        END AS result
+    FROM (
         SELECT 
-            ROWNUM as stt,
-            t.factory,
-            t.line, 
-            t.name_machine, 
-            t.model_name,
-            t.serial_number,
-            t.force_1, 
-            t.force_2, 
-            t.force_3, 
-            t.force_4,
-            t.time_update,
-            CASE
-                WHEN 
-                    (t.force_1 IS NOT NULL AND NOT (t.force_1 BETWEEN d.min_force AND d.max_force)) OR
-                    (t.force_2 IS NOT NULL AND NOT (t.force_2 BETWEEN d.min_force AND d.max_force)) OR
-                    (t.force_3 IS NOT NULL AND NOT (t.force_3 BETWEEN d.min_force AND d.max_force)) OR
-                    (t.force_4 IS NOT NULL AND NOT (t.force_4 BETWEEN d.min_force AND d.max_force))
-                THEN 'FAIL'
-                ELSE 'PASS'
-            END AS result
-        FROM (
-            SELECT 
-                factory,
-                line, 
-                name_machine, 
-                model_name,
-                serial_number,
-                force_1,
-                force_2,
-                force_3,
-                force_4,
-                TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update
-            FROM SCREW_FORCE_INFO 
-            ORDER BY TIME_UPDATE DESC
-            OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
-        ) t
-        LEFT JOIN screw_force_default d 
-        ON t.line = d.line AND t.name_machine = d.name_machine
+            factory,
+            line, 
+            name_machine, 
+            model_name,
+            serial_number,
+            force_1,
+            force_2,
+            force_3,
+            force_4,
+            TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update
+        FROM SCREW_FORCE_INFO
+        ORDER BY TIME_UPDATE DESC
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+    ) t
+    LEFT JOIN force_default d
+        ON t.line = d.line 
+        AND t.name_machine = d.name_machine
+    WHERE d.type_machine = 'Screw'
     """
+
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(query, {"offset": offset, "limit": per_page})
@@ -201,7 +188,7 @@ def get_paginated_data(page, per_page):
             'stt': row[0],
             'factory': row[1],
             'line': row[2],
-            'name_machine': row[3], 
+            'name_machine': row[3],
             'model_name': row[4], 
             'serial_number': row[5],
             'force_1': row[6],
@@ -212,7 +199,7 @@ def get_paginated_data(page, per_page):
             'result': row[11]
         }
         for row in cursor
-    ]    
+    ]
     cursor.close()
     connection.close()
     return rows
@@ -270,9 +257,9 @@ def get_pie_chart_data(start_date=None, end_date=None):
             d.min_force,
             d.max_force
         FROM screw_force_info s
-        LEFT JOIN screw_force_default d
+        LEFT JOIN force_default d
         ON s.line = d.line AND s.name_machine = d.name_machine
-        WHERE s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS') 
+        WHERE d.type_machine ='Screw' AND s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS') 
                                 AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
     """
 
@@ -344,19 +331,18 @@ def get_column_chart_data(start_date=None, end_date=None):
     cursor = connection.cursor()
 
     if not start_date or not end_date:
-        end_date = datetime.now()
+        today = datetime.now()
+        end_date = today.replace(hour=23, minute=59, second=59, microsecond=0)
         start_date = end_date - timedelta(days=4)
-
-    #Lấy ngưỡng lực từ bảng screw_force_default
-    cursor.execute("SELECT line, name_machine, min_force, max_force FROM screw_force_default")
+    params = {
+        "start_date": start_date,
+        "end_date": end_date
+    }
+    # Lấy ngưỡng lực
+    cursor.execute("SELECT line, name_machine, min_force, max_force FROM force_default")
     force_limits = {
         (row[0].upper(), row[1].upper()): (row[2], row[3])
         for row in cursor.fetchall()
-    }
-
-    params = {
-        "start_date": start_date.strftime("%Y-%m-%d 00:00:00"),
-        "end_date": end_date.strftime("%Y-%m-%d 23:59:59")
     }
 
     cursor.execute("""
@@ -367,16 +353,12 @@ def get_column_chart_data(start_date=None, end_date=None):
             force_1, force_2, force_3, force_4,
             TO_CHAR(time_update, 'HH24') AS report_hour
         FROM screw_force_info
-        WHERE time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
-                              AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
+        WHERE time_update BETWEEN :start_date AND :end_date
     """, params)
 
     rows = cursor.fetchall()
     cursor.close()
     connection.close()
-
-    #Xử lý xác định FAIL theo từng máy trong từng ngày
-    from collections import defaultdict
 
     machine_fail_map = defaultdict(lambda: defaultdict(lambda: {
         "fail_count": 0,
@@ -397,7 +379,6 @@ def get_column_chart_data(start_date=None, end_date=None):
             machine_fail_map[date][machine]["fail_count"] += 1
             machine_fail_map[date][machine]["hourly_data"][hour] += 1
 
-    # 4. Lấy top 3 máy fail theo từng ngày
     get_column_chart_data = []
     all_dates = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d")
                  for i in range((end_date - start_date).days + 1)]
@@ -420,7 +401,6 @@ def get_column_chart_data(start_date=None, end_date=None):
             "date": date,
             "machines": machines
         })
-
     return get_column_chart_data
 
 #return column2_chart_data
@@ -433,7 +413,7 @@ def get_column2_chart_data(start_date=None, end_date=None):
     cursor = connection.cursor()
 
     # 1. Lấy ngưỡng min/max lực
-    cursor.execute("SELECT line, name_machine, min_force, max_force FROM screw_force_default")
+    cursor.execute("SELECT line, name_machine, min_force, max_force FROM force_default")
     force_limits = {
         (row[0].upper(), row[1].upper()): (row[2], row[3])
         for row in cursor.fetchall()
@@ -496,50 +476,12 @@ def get_column2_chart_data(start_date=None, end_date=None):
         })
 
     return fpy_chart_data
-
-# def get_data_force_chart(machine_name = None):
-#     connection = get_db_connection()
-#     cursor = connection.cursor()
-#     if machine_name is None:
-#         query= """select name_machine, force_1, force_2, force_3, force_4 
-#         from screw_force_info 
-#         where name_machine = 'Machine_6' order by time_update desc
-#         FETCH FIRST 50 ROWS ONLY"""
-#         cursor.execute(query)
-#     else:
-#         query = """select name_machine, force_1, force_2, force_3, force_4 
-#             from screw_force_info 
-#             where name_machine = :machine_name order by time_update desc
-#             FETCH FIRST 50 ROWS ONLY"""
-#         cursor.execute(query, {"machine_name": machine_name})
-#     raw_data = cursor.fetchall()
-#     # Đóng kết nối
-#     cursor.close()
-#     connection.close()
-
-#     series = [
-#         {"name": "Force 1", "data": []},
-#         {"name": "Force 2", "data": []},
-#         {"name": "Force 3", "data": []},
-#         {"name": "Force 4", "data": []}
-#     ]
-#     name_machine = raw_data[0][0] if raw_data else None
-#     for row in raw_data:
-#         series[0]["data"].append([0, row[1]])  # force_1
-#         series[1]["data"].append([1, row[2]])  # force_2
-#         series[2]["data"].append([2, row[3]])  # force_3
-#         series[3]["data"].append([3, row[4]])  # force_4
-
-#     return {
-#         "machine_name": name_machine,
-#         "categories": ["Force 1", "Force 2", "Force 3", "Force 4"],
-#         "series": series
-#     }
+# lấy ra lưỡng ngực dựa vào line và name_machine
 def get_min_max_force(line, machine_name):
     try:
         query = """
             SELECT MIN_FORCE, MAX_FORCE 
-            FROM SCREW_FORCE_DEFAULT
+            FROM force_default
             WHERE LINE = :line AND NAME_MACHINE = :machine_name
         """
         with get_db_connection() as connection:
@@ -553,7 +495,7 @@ def get_min_max_force(line, machine_name):
     except Exception as e:
         print(f"Error fetching min/max force: {e}")
         return {"min_force": None, "max_force": None}
-
+#get data Force chart
 def get_data_force_chart(machine_name=None, line= None):
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -624,7 +566,7 @@ def get_table():
 def get_default_force():
     try:
         query = """
-            SELECT LINE, NAME_MACHINE, MIN_FORCE, MAX_FORCE FROM SCREW_FORCE_DEFAULT
+            SELECT LINE, NAME_MACHINE, MIN_FORCE, MAX_FORCE FROM force_default
         """
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
@@ -664,129 +606,9 @@ def get_charts():
         app.logger.error(f"Error querying chart data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-#get data table by filter
-# @app.route('/api/filter', methods=['GET'])
-# def filter_data():
-#     try:
-#         line = request.args.get('line') if request.args.get('line') != "null" else None
-#         factory = request.args.get('factory') if request.args.get('factory') != "null" else None
-#         nameMachine = request.args.get('nameMachine') if request.args.get('nameMachine') != "null" else None
-#         model = request.args.get('model') if request.args.get('model') != "null" else None
-#         time_update = request.args.get('time_update') if request.args.get('time_update') != "null" else None
-#         time_end = request.args.get('time_end') if request.args.get('time_end') != "null" else None
-#         state = request.args.get('state') if request.args.get('state') != "null" else None
-#         page = int(request.args.get('page', 1)) 
-#         per_page = int(request.args.get('per_page', 10))
-#         offset = (page - 1) * per_page
-#         connection = get_db_connection()
-#         cursor = connection.cursor()
-#         base_query = """
-#             SELECT factory,
-#                     line,
-#                     name_machine, 
-#                     model_name,
-#                     serial_number,
-#                     force_1,
-#                     force_2,
-#                     force_3,
-#                     force_4, 
-#                    TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update, 
-#                    state
-#             FROM Screw_force_info
-#             WHERE 1=1
-#         """
-#         count_query = "SELECT COUNT(*) FROM Screw_force_info WHERE 1=1"
-#         params = {}        
-#         # Xử lý điều kiện lọc
-#         if line:
-#             base_query += " AND UPPER(line) = UPPER(:line)"
-#             count_query += " AND UPPER(line) = UPPER(:line)"
-#             params['line'] = line
-#         if factory:
-#             base_query += " AND UPPER(factory) = UPPER(:factory)"
-#             count_query += " AND UPPER(factory) = UPPER(:factory)"
-#             params['factory'] = factory
-#         if model:
-#             base_query += " AND UPPER(model_name) = UPPER(:model_name)"
-#             count_query += " AND UPPER(model_name) = UPPER(:model_name)"
-#             params['MODEL_NAME'] = model
-#         if nameMachine:
-#             base_query += " AND UPPER(NAME_MACHINE) = UPPER(:NAME_MACHINE)"
-#             count_query += " AND UPPER(NAME_MACHINE) = UPPER(:NAME_MACHINE)"
-#             params['NAME_MACHINE'] = nameMachine
-#         if time_update and time_end:
-#             base_query += """
-#                 AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')
-#                                     AND TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')
-#             """
-#             count_query += """
-#                 AND time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')
-#                                     AND TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')
-#             """
-#             params['time_update'] = time_update
-#             params['time_end'] = time_end
-#         elif time_update:
-#             base_query += " AND time_update >= TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')"
-#             count_query += " AND time_update >= TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')"
-#             params['time_update'] = time_update
-#         elif time_end:
-#             base_query += " AND time_update <= TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')"
-#             count_query += " AND time_update <= TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')"
-#             params['time_end'] = time_end
-#         if state:
-#             base_query += " AND UPPER(state) = UPPER(:state)"
-#             count_query += " AND UPPER(state) = UPPER(:state)"
-#             params['state'] = state
-
-#         base_query += f" ORDER BY time_update DESC OFFSET {offset} ROWS FETCH NEXT {per_page} ROWS ONLY"
-
-#         # Thực thi query dữ liệu
-#         cursor.execute(base_query, params)
-#         results = []
-#         stt = offset + 1
-#         for row in cursor:
-#             results.append({
-#                 'stt': stt,  
-#                 'factory': row[0],
-#                 'line': row[1],
-#                 'name_machine': row[2],
-#                 'model_name': row[3],
-#                 'serial_number': row[4],
-#                 'force_1': row[5],
-#                 'force_2': row[6],
-#                 'force_3': row[7],
-#                 'force_4': row[8],
-#                 'time_update': row[9],
-#                 'state': row[10]
-#             })
-#             stt += 1
-
-#         cursor.execute(count_query, params)
-#         total_records = cursor.fetchone()[0]
-#         total_pages = (total_records + per_page - 1) // per_page
-
-#         cursor.close()
-#         connection.close()
-
-#         return jsonify({
-#             "success": True,
-#             "data": results,
-#             "total_records": total_records,
-#             "total_pages": total_pages,
-#             "current_page": page,
-#             "per_page": per_page,
-#             "message": f"{total_records} result found"
-#         }), 200
-
-#     except Exception as e:
-#         app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
-#         return jsonify({
-#             "success": False,
-#             "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
-#             "message": str(e)
-#         }), 500
 #filter table
 @app.route('/api/filter', methods=['GET'])
+# @require_auth()
 def filter_data():
     try:
         # Lấy các tham số từ request
@@ -800,7 +622,6 @@ def filter_data():
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 10))
         offset = (page - 1) * per_page
-
         connection = get_db_connection()
         cursor = connection.cursor()
 
@@ -818,7 +639,7 @@ def filter_data():
                        ELSE 'FAIL'
                    END as state
             FROM Screw_force_info s
-            LEFT JOIN screw_force_default d ON s.line = d.line AND s.name_machine = d.name_machine
+            LEFT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine     
             WHERE 1=1
         """
 
@@ -826,7 +647,7 @@ def filter_data():
         count_query = """
             SELECT COUNT(*)
             FROM Screw_force_info s
-            LEFT JOIN screw_force_default d ON s.line = d.line AND s.name_machine = d.name_machine
+            RIGHT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine            
             WHERE 1=1
         """
         params = {}
@@ -868,7 +689,7 @@ def filter_data():
             count_query += " AND s.time_update <= TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')"
             params['time_end'] = time_end
 
-        elif state:
+        if state:
             if state.upper() == 'PASS':
                 state_condition = """
                     AND (
@@ -945,7 +766,7 @@ def filter_data():
             "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
             "message": str(e)
         }), 500
-# filter charts
+# filter chartsbn
 @app.route('/api/dashboard/filterCharts', methods=['GET'])
 def filter_charts():
     try:
@@ -1015,15 +836,17 @@ def login():
                     'exp': datetime.now(timezone.utc) + timedelta(days=7),
                     'type': 'refresh'
                 }, app.config['SECRET_KEY'], algorithm='HS256')
+
                 resp = make_response(redirect('/adminDashboard' if role == 'admin' else '/index'))
                 # Thiết lập cookie
-                resp.set_cookie('token', access_token, httponly=True, secure=True, max_age=60*60, samesite='Strict')
-                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=True, max_age=7*24*60*60, samesite='Strict')                
+                resp.set_cookie('token', access_token, httponly=True, secure=False, max_age=60*60*6, samesite='Lax')
+                resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=False, max_age=7*24*60*60, samesite='Lax')                
                 return resp
             else:
                 return render_template('login.html', error='Incorrect username or password')
         except Exception as e:
             error_message = str(e)
+            app.logger.error(f"Login error: {str(e)}")
             return render_template('login.html', error=f"{error_message} Please check backend.")
         finally:
             if cursor:
@@ -1044,11 +867,11 @@ def refresh():
         
         new_access_token = jwt.encode({
             'username': data['username'],
-            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours= 1),
+            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours= 6),
             'type' : 'access'
         }, app.config['SECRET_KEY'], algorithm='HS256')
         resp = make_response(jsonify({"message": 'Token refreshed!'}))
-        resp.set_cookie('token', new_access_token, httponly=True, secure=True, max_age=60*60) #1h
+        resp.set_cookie('token', new_access_token, httponly=True, secure=True, max_age=60*60*60) #6h
         return resp
     except jwt.ExpiredSignatureError:
         return jsonify({"error": "Refresh token has expired"}), 401
@@ -1093,7 +916,7 @@ def register():
 
 #get data combobox
 @app.route('/api/getDataComboboxs', methods=['GET'])
-@cache.cached(timeout=300)
+@cache.cached(timeout=86400)
 def get_lines():
     try:
         query = """
@@ -1157,6 +980,7 @@ def get_cascading_options():
 
 #get total , output, fpy
 @app.route('/api/getinfo', methods=['GET'])
+
 def getinfo():
     try:
         query = """
@@ -1238,7 +1062,6 @@ def fetch_filtered_data(filters):
         result = cursor.fetchall()
         cursor.close()
         connection.close()
-
         return result
     except Exception as e:
         app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
@@ -1255,6 +1078,7 @@ def download_excel():
             'FORCE_3', 'FORCE_4', 'TIME_UPDATE', 'STATE'
         ])
         df = df.fillna("N/A")
+        
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'dataScrewForce_{timestamp}.xlsx'
         # Tạo file Excel trong bộ nhớ
@@ -1290,7 +1114,7 @@ def download_excel():
 def get_data_solution():
     try:
         query = """
-            SELECT * FROM SCREW_FORCE_ERROR WHERE STATUS = 1 ORDER BY ERROR_CODE DESC
+            SELECT * FROM force_error WHERE STATUS = 1 ORDER BY ERROR_CODE DESC
         """ 
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
@@ -1322,7 +1146,7 @@ def update_data_solution(id):
             return jsonify({"error": "Missing required fields"}), 400
 
         query = """
-            UPDATE SCREW_FORCE_ERROR
+            UPDATE force_error
             SET ERROR_NAME = :error_name, ROOT_CAUSE = :root_cause, SOLUTION = :solution
             WHERE ERROR_CODE = :id
         """
@@ -1348,7 +1172,7 @@ def update_data_solution(id):
 def delete_data_solution(id):
     try:
         query = """
-            DELETE FROM SCREW_FORCE_ERROR
+            DELETE FROM force_error
             WHERE ERROR_CODE = :id
         """
         with get_db_connection() as connection:
@@ -1374,7 +1198,7 @@ def add_data_soulution():
         if not all([error_name, root_cause, solution]):
             return jsonify({"error": "Missing required fields"}), 400
         query = """
-            INSERT INTO SCREW_FORCE_ERROR (ERROR_CODE, ERROR_NAME, ROOT_CAUSE, SOLUTION, STATUS)
+            INSERT INTO force_error (ERROR_CODE, ERROR_NAME, ROOT_CAUSE, SOLUTION, STATUS)
             VALUES (:error_code,:error_name, :root_cause, :solution, 1)
         """
         params = {
@@ -1394,6 +1218,7 @@ def add_data_soulution():
     except Exception as e:
         print(f"Error updating: {e}")
         return jsonify({"error": "Error code was existed"}), 500
+
 if __name__=='__main__':
-    # app.run( host='0.0.0.0', debug=True, threaded = 4)
-    serve(app, host="0.0.0.0", port=5000, threads= 4)
+    app.run( host='0.0.0.0', debug=True, threaded = 4)
+    # serve(app, host="0.0.0.0", port=5000, threads= 4)
