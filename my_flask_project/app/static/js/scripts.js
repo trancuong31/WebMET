@@ -1,3 +1,13 @@
+let machineTypeSelect;
+let getCurrentMachineType;
+let pollingTimer = null; 
+function stopPolling() {
+        if (pollingTimer) {
+            clearInterval(pollingTimer);
+            pollingTimer = null;
+            console.log("Polling stopped");
+        }
+    }
 //filter data
 function initializeFilter() {
     const tableBody = document.getElementById("table-body");
@@ -9,13 +19,8 @@ function initializeFilter() {
     let columnChart = null;
     let forceChart = null;
     let forceLimits = {};
-    function stopPolling() {
-        if (pollingTimer) {
-            clearInterval(pollingTimer);
-            pollingTimer = null;
-            console.log("Polling stopped");
-        }
-    }
+
+    
     function debounce(func, delay) {
         let timeout;
         return function (...args) {
@@ -49,28 +54,28 @@ function initializeFilter() {
         const state = document.getElementById('state-combobox').value.trim();
         const nameMachine = document.getElementById('nameMachine-combobox').value.trim();
     
-        const formatDatetime = (datetime) => {
-            return datetime ? datetime.replace('T', ' ') + ':00' : null;
-        };
+        const formatDatetime = (datetime) => datetime ? datetime.replace('T', ' ') + ':00' : null;
     
-        // Tạo URL với tham số query
-        const params = new URLSearchParams({
-            line: line || null,
-            factory: factory || null,
-            model: model || null,
-            nameMachine: nameMachine || null,
-            time_update: formatDatetime(time_update),
-            time_end: formatDatetime(time_end),
-            state: state || null,
-            page: page,
-            per_page: 10
-        });
+        const params = new URLSearchParams();
+        if (line) params.append('line', line);
+        if (factory) params.append('factory', factory);
+        if (model) params.append('model', model);
+        if (nameMachine) params.append('nameMachine', nameMachine);
+        if (time_update) params.append('time_update', formatDatetime(time_update));
+        if (time_end) params.append('time_end', formatDatetime(time_end));
+        if (state) params.append('state', state);
+        
+        params.append('page', page);
+        params.append('per_page', 10);
+        params.append('typeMachine', getCurrentMachineType());
+
     
         const url = `/api/filter?${params.toString()}`;
+    
         const loadingEl = document.getElementById('loading');
         loadingEl.style.display = 'block';
+    
         try {
-            // Gửi yêu cầu GET
             const response = await fetch(url, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
@@ -79,12 +84,11 @@ function initializeFilter() {
             const data = await response.json();
             loadingEl.style.display = 'none';
     
-            // Xử lý dữ liệu trả về từ backend
-            if (data.success) {                    
-                document.getElementById('count').textContent = data.message ||""
+            if (data.success) {
+                document.getElementById('count').textContent = data.message || "";
                 updateTable(data.data);
                 updatePagination(data.current_page, data.total_pages, data.group_start, data.group_end);
-                if (data.total_records == 0){
+                if (data.total_records == 0) {
                     tableBody.innerHTML = `<tr><td class="no-data" colspan="12">No data found.</td></tr>`;
                     paginationDiv.innerHTML = '';
                 }
@@ -103,8 +107,9 @@ function initializeFilter() {
             loadingEl.style.display = 'none';
         }
     }
+    
     function initForceLimitsAndLoad() {
-        fetch('/api/dashboard/getDefaultForce')
+        fetch(`/api/dashboard/getDefaultForce?type_machine=${getCurrentMachineType()}`)
             .then(res => res.json())
             .then(data => {
                 forceLimits = data; 
@@ -181,24 +186,16 @@ function initializeFilter() {
         const formattedTimeUpdate = time_update ? time_update.replace('T', ' ') + ':00' : null;
         const formattedTimeEnd = time_end ? time_end.replace('T', ' ') + ':00' : null;
         const totalDay = time_end === time_update ? 7 : Math.floor((new Date(time_end) - new Date(time_update)) / (1000 * 60 * 60 * 24));
-        let url = '/api/dashboard/filterCharts?';
-        if (formattedTimeUpdate) {
-            url += `time_update=${encodeURIComponent(formattedTimeUpdate)}&`;
-        }
-        if (formattedTimeEnd) {
-            url += `time_end=${encodeURIComponent(formattedTimeEnd)}&`;
-        }
-        if (machine_name) {
-            url += `nameMachine=${encodeURIComponent(machine_name)}&`;
-        }
-        if (line) {
-            url += `line=${encodeURIComponent(line)}&`;
-        }
-        if (url.endsWith('&')) {
-            url = url.slice(0, -1);
-        }
+        
+        const params = new URLSearchParams();
+        params.append("type_machine", getCurrentMachineType());
+        if (formattedTimeUpdate) params.append("time_update", formattedTimeUpdate);
+        if (formattedTimeEnd) params.append("time_end", formattedTimeEnd);
+        if (machine_name) params.append("nameMachine", machine_name);
+        if (line) params.append("line", line);
+        
+        const url = `/api/dashboard/filterCharts?${params.toString()}`;
     
-        // Gọi API tổng hợp
         fetch(url, {
             method: 'GET',
             headers: {
@@ -208,18 +205,10 @@ function initializeFilter() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                if (data.pie_chart_data) {
-                    updatePieChart(data.pie_chart_data, totalDay);
-                }
-                if (data.column_chart_data) {
-                    drawColumnChart(data.column_chart_data);
-                }
-                if (data.column2_chart_data) {
-                    drawColumn2Chart(data.column2_chart_data, 98);
-                }
-                if (data.force_chart_data) {
-                    drawForceChart(data.force_chart_data);
-                }
+                if (data.pie_chart_data) updatePieChart(data.pie_chart_data, totalDay);
+                if (data.column_chart_data) drawColumnChart(data.column_chart_data);
+                if (data.column2_chart_data) drawColumn2Chart(data.column2_chart_data, 98);
+                if (data.force_chart_data) drawForceChart(data.force_chart_data);
             } else {
                 console.error("Lỗi dữ liệu biểu đồ:", data.error);
             }
@@ -227,7 +216,7 @@ function initializeFilter() {
         .catch(error => {
             console.error("Lỗi gọi API biểu đồ:", error);
         });
-    }
+    }    
     function updatePieChart(pieData, totalDay) {
         if (!pieData || !pieData.details) {
             console.error("Dữ liệu biểu đồ tròn không hợp lệ:", pieData);
@@ -795,7 +784,6 @@ function initializeFilter() {
         }
     }
 }
-
 //load dashboard
 function initializeDashboard () {
     const tableBody = document.getElementById("table-body");
@@ -810,7 +798,8 @@ function initializeDashboard () {
     let forceChart = null;
     let forceLimits = {};
     function initForceLimitsAndLoad() {
-        fetch('/api/dashboard/getDefaultForce')
+        const typeMachine = getCurrentMachineType();
+        fetch(`/api/dashboard/getDefaultForce?type_machine=${typeMachine}`)
             .then(res => res.json())
             .then(data => {
                 forceLimits = data;
@@ -822,8 +811,9 @@ function initializeDashboard () {
             });
     }
     function fetchPage(page = 1) {
+        const typeMachine = getCurrentMachineType();
         document.getElementById('loading').style.display = 'block';
-        fetch(`/api/dashboard/table?page=${page}`, {
+        fetch(`/api/dashboard/table?page=${page}&type_machine=${typeMachine}`, {
             headers: { "X-Requested-With": "XMLHttpRequest" }
         })
         .then(response => response.json())
@@ -845,7 +835,8 @@ function initializeDashboard () {
         });
     }
     function fetchChart() {
-        fetch(`/api/dashboard/charts`, {
+        const typeMachine = getCurrentMachineType();
+        fetch(`/api/dashboard/charts?type_machine=${typeMachine}`, {
             headers: { "X-Requested-With": "XMLHttpRequest" }
         })
         .then(response => response.json())
@@ -873,7 +864,7 @@ function initializeDashboard () {
     
         const { min, max } = limits;
         return (value >= min && value <= max) ? "low-force" : "high-force";
-    } 
+    }
     function updateTable(rows) {
         let fragment = document.createDocumentFragment(); 
         rows.forEach(row => {
@@ -1118,18 +1109,23 @@ function initializeDashboard () {
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
 
-        if (columnChart) {
-            columnChart.xAxis[0].setCategories(dates);
-            columnChart.series.forEach((series, i) => {
-                series.setData(seriesData[i].data, false);
+        if (!dates.length || !seriesData.length) {
+            Highcharts.chart('container-toperr', {
+                chart: { type: 'column', backgroundColor: null },
+                title: {
+                    
+                text: 'Top 3 Machine Fail Per Day',
+                align: 'left',
+                style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+            },
+                subtitle: { text: 'No data available',verticalAlign: 'center', align: 'center', style: { color: '#fff', fontSize: '16px' } },
+                xAxis: { categories: [] },
+                yAxis: { title: { text: 'Fail Count' } },
+                series: [],
+                credits: { enabled: false }
             });
-            columnChart.update({
-                drilldown: { series: drilldownSeries }
-            });
-            columnChart.redraw();
             return;
         }
-
         columnChart = Highcharts.chart('container-toperr', {
             chart: {
                 type: 'column',
@@ -1156,7 +1152,8 @@ function initializeDashboard () {
                     categories: dates,
                     title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } },
                     labels: { style: { color: '#fff', fontSize: '12px' } },
-                    visible: true
+                    visible: true,
+                    minRange: 5
                 },
                 {
                     categories: Array.from({ length: 24 }, (_, i) => `${i}:00 - ${i + 1}:00`),
@@ -1489,19 +1486,26 @@ function initializeDashboard () {
             console.error('Error rendering force chart:', error);
         }
     }
-    function startPolling() {
+    function startPolling() {  
+        stopPolling();      
         initForceLimitsAndLoad();
         fetchChart();
-
         pollingTimer = setInterval(() => {
+            
             fetchChart();
             fetchPage(page = 1)
         }, POLLING_INTERVAL);
     }
+    machineTypeSelect.addEventListener('change', () => {
+        startPolling(); 
+        modalSolution();
+        downloadExcel();
+        modeScreen();
+        showCBB();
+        fetchContentTop();
+    });
     startPolling();
-    
-} 
-
+}
 //show list solution
 function modalSolution() {
     const downloadButton = document.getElementById('download-excel');
@@ -1520,7 +1524,7 @@ function modalSolution() {
     const deleteButtons = document.querySelectorAll('.btn-delete');
     window.addEventListener("load", adjustTableScroll);
     window.addEventListener("resize", adjustTableScroll);
-
+    
     const style = document.createElement('style');
     document.head.appendChild(style);
     function adjustTableScroll() {
@@ -1575,6 +1579,7 @@ function modalSolution() {
             alert(data.error);
             return;
         }
+            alert(data.message);
             console.log('Dữ liệu đã được thêm:', data);
             fetchDataAndUpdateTable(); 
             modal1.style.display = 'none';
@@ -1585,7 +1590,7 @@ function modalSolution() {
         });
     });
     function fetchDataAndUpdateTable() {
-        fetch(`/api/getDataSolution`)
+        fetch(`/api/getDataSolution?typeMachine=${getCurrentMachineType()}`)
             .then(response => response.json())
             .then(data => {
                 const tbody = document.getElementById('tbodySolution');
@@ -1651,7 +1656,6 @@ function modalSolution() {
     function updateSearchResultCount(visibleCount, totalCount) {
     console.log(`Tìm thấy ${visibleCount}/${totalCount} kết quả`);
     }
-    33
     // Thêm sự kiện tìm kiếm
     searchInput.addEventListener('input', performDynamicSearch);
 
@@ -1873,9 +1877,9 @@ function validatePayload(payload) {
     }
     return true;
 }
-
+;
 function sendDownloadRequest(data) {
-    return fetch('/api/downloadExcel', {
+    return fetch(`/api/downloadExcel?typeMachine=${getCurrentMachineType()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify(data)
@@ -1927,15 +1931,14 @@ function hideProgress() {
 function toggleModal(visible) {
     document.getElementById('downloadModal').style.display = visible ? 'block' : 'none';
 }
-
 //get content top
 function fetchContentTop() {
     const totalRecords = document.getElementById("total-records");
     const outputPass = document.getElementById("pass-records");
     const failRecords = document.getElementById("fail-records");
     const fpyPercentage = document.getElementById("fpy-percentage");
-    const POLLING_INTERVAL = 300000; //(ms)
-    fetch("/api/getinfo", {
+    const typeMachine = getCurrentMachineType();
+    fetch(`/api/getinfo?type_machine=${typeMachine}`, {
         method: "GET",
         headers: {
             "X-Requested-With": "XMLHttpRequest"
@@ -1964,6 +1967,7 @@ function fetchContentTop() {
         //     setTimeout(fetchContentTop, POLLING_INTERVAL);
         // });
 }
+//mode screen
 function modeScreen(){
     const fullscreenIcon = document.getElementById("fullscreenic");
     const toggleFullscreen = document.getElementById("toggle_fullscreen");
@@ -1987,7 +1991,6 @@ function modeScreen(){
         }
     });
 }
-
 //show list combobox
 function showCBB(){
     const lineCombobox = document.getElementById("line-combobox");
@@ -2000,86 +2003,92 @@ function showCBB(){
         resetCombobox("modelNamecombobox");
         resetCombobox("line-combobox");
         resetCombobox("nameMachine-combobox");
-    
+
         if (factory) {
-            fetch(`/api/getCascadingOptions?factory=${factory}`)
+            fetch(`/api/getCascadingOptions?typeMachine=${getCurrentMachineType()}&factory=${factory}`)
                 .then(res => res.json())
                 .then(models => populateCombobox("modelNamecombobox", models));
         }
     });
-    
+
     document.getElementById("modelNamecombobox").addEventListener("change", function () {
         const factory = document.getElementById("factory-combobox").value;
         const model = this.value;
         resetCombobox("line-combobox");
         resetCombobox("nameMachine-combobox");
-    
+
         if (factory && model) {
-            fetch(`/api/getCascadingOptions?factory=${factory}&model_name=${model}`)
+            fetch(`/api/getCascadingOptions?typeMachine=${getCurrentMachineType()}&factory=${factory}&model_name=${model}`)
                 .then(res => res.json())
                 .then(lines => populateCombobox("line-combobox", lines));
         }
     });
-    
-    document.getElementById("line-combobox").addEventListener("change",function () {
+
+    document.getElementById("line-combobox").addEventListener("change", function () {
         const factory = document.getElementById("factory-combobox").value;
         const model = document.getElementById("modelNamecombobox").value;
         const line = this.value;
-        resetCombobox("nameMachine-combobox");    
+        resetCombobox("nameMachine-combobox");
+
         if (factory && model && line) {
-            fetch(`/api/getCascadingOptions?factory=${factory}&model_name=${model}&line=${line}`)
+            fetch(`/api/getCascadingOptions?typeMachine=${getCurrentMachineType()}&factory=${factory}&model_name=${model}&line=${line}`)
                 .then(res => res.json())
                 .then(machines => populateCombobox("nameMachine-combobox", machines));
         }
     });
-    fetch("/api/getDataComboboxs")
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        lineCombobox.innerHTML = '<option value="">All</option>';
-        data.lines.forEach(line => {
-            const option = document.createElement("option");
-            option.value = line;
-            option.textContent = line;
-            lineCombobox.appendChild(option);
-        });
-        factoryCombobox.innerHTML = '<option value="">All</option>';
-        data.factories.forEach(factory => {
-            const option = document.createElement("option");
-            option.value = factory;
-            option.textContent = factory;
-            factoryCombobox.appendChild(option);
-        });
-        stateCombobox.innerHTML = '<option value="">All</option>';
-        data.states.forEach(state => {
-            const option = document.createElement("option");
-            option.value = state;
-            option.textContent = state;
-            stateCombobox.appendChild(option);
-        });
-        nameMachineCombobox.innerHTML = '<option value="">All</option>';
-        data.nameMachines.forEach(nameMachine => {
-            const option = document.createElement("option");
-            option.value = nameMachine;
-            option.textContent = nameMachine;
-            nameMachineCombobox.appendChild(option);
-        });
 
-        modelNamecombobox.innerHTML = '<option value="">All</option>';
-        data.modelNames.forEach(modelName => {
-            const option = document.createElement("option");
-            option.value = modelName;
-            option.textContent = modelName;
-            modelNamecombobox.appendChild(option);
+    fetch(`/api/getDataComboboxs?typeMachine=${getCurrentMachineType()}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            lineCombobox.innerHTML = '<option value="">All</option>';
+            data.lines.forEach(line => {
+                const option = document.createElement("option");
+                option.value = line;
+                option.textContent = line;
+                lineCombobox.appendChild(option);
+            });
+
+            factoryCombobox.innerHTML = '<option value="">All</option>';
+            data.factories.forEach(factory => {
+                const option = document.createElement("option");
+                option.value = factory;
+                option.textContent = factory;
+                factoryCombobox.appendChild(option);
+            });
+
+            stateCombobox.innerHTML = '<option value="">All</option>';
+            data.states.forEach(state => {
+                const option = document.createElement("option");
+                option.value = state;
+                option.textContent = state;
+                stateCombobox.appendChild(option);
+            });
+
+            nameMachineCombobox.innerHTML = '<option value="">All</option>';
+            data.nameMachines.forEach(nameMachine => {
+                const option = document.createElement("option");
+                option.value = nameMachine;
+                option.textContent = nameMachine;
+                nameMachineCombobox.appendChild(option);
+            });
+
+            const modelNameCombobox = document.getElementById("modelNamecombobox");
+            modelNameCombobox.innerHTML = '<option value="">All</option>';
+            data.modelNames.forEach(modelName => {
+                const option = document.createElement("option");
+                option.value = modelName;
+                option.textContent = modelName;
+                modelNameCombobox.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error("Error fetching lines and states:", error);
         });
-    })
-    .catch(error => {
-        console.error("Error fetching lines and states:", error);
-    });
 }
 
 function resetCombobox(id) {
@@ -2089,7 +2098,11 @@ function resetCombobox(id) {
 
 function populateCombobox(id, data) {
     const cbb = document.getElementById(id);
-    data.forEach(item => {
+    cbb.innerHTML = '<option value="">All</option>';
+
+    // Duyệt mảng dữ liệu duy nhất
+    const uniqueValues = [...new Set(data)];
+    uniqueValues.forEach(item => {
         const option = document.createElement("option");
         option.value = item;
         option.textContent = item;
@@ -2099,15 +2112,20 @@ function populateCombobox(id, data) {
 
 //load info overview
 function initializeOverview () {
+    if (machineTypeSelect) {
+        machineTypeSelect.value = "Screw";
+    }
     modalSolution();
     downloadExcel();
     modeScreen();
     showCBB();
     fetchContentTop();
 }
-
 //Dom all
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {    
+    machineTypeSelect = document.getElementById("machine-type");
+    getCurrentMachineType = () => machineTypeSelect.value;
+    
     initializeFilter();
     initializeDashboard();
     initializeOverview();

@@ -104,7 +104,7 @@ function initializeFilter() {
         }
     }
     function initForceLimitsAndLoad() {
-        fetch('/api/dashboard/getDefaultForce')
+        fetch(`/api/dashboard/getDefaultForce?type_machine=Glue`)
             .then(res => res.json())
             .then(data => {
                 forceLimits = data; 
@@ -823,7 +823,7 @@ function initializeDashboard () {
     }
     function fetchPage(page = 1) {
         document.getElementById('loading').style.display = 'block';
-        fetch(`/api/dashboard/table?page=${page}`, {
+        fetch(`/api/dashboard/tableglue?page=${page}&type_machine=Glue`, {
             headers: { "X-Requested-With": "XMLHttpRequest" }
         })
         .then(response => response.json())

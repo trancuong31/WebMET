@@ -19,7 +19,7 @@
     />
     <title>Dashboard</title>
     <link rel="icon" href="{{ url_for('static', filename='images/automation.svg') }}" type="image/png">
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    
   </head>
   <body>
     <div id="loading" class="loading-overlay hidden" >
@@ -341,7 +341,7 @@
               <div class="dowfile" title="Dowload Exel">
                 <a id="download-excel">
                   <button class="Btn">
-                    <svg class="svgIcon" viewBox="0 0 384 512" height="1em" xmlns="http://www.w3.org/2000/svg"><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"></path></svg>
+                    <svg class="svgIcon" viewBox="0 0 384 512" height="1em"><path d="M169.4 470.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 370.8 224 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 306.7L54.6 265.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"></path></svg>
                     <span class="icon2"></span>
                  </button>
                 </a>                
@@ -375,6 +375,12 @@
             </div>
             <!-- filter -->
             <div class="filter">
+              <select id="machine-type">
+              <option value="Screw">Screw</option>
+              <option value="Shielding">Shielding cover</option>
+              <option value="Glue">Glue</option>
+            </select>
+
             Factory: <select id="factory-combobox" style="cursor: pointer;">
             </select>
             Model: <select id="modelNamecombobox" style="width: 70px; cursor: pointer;"></select>
@@ -394,7 +400,7 @@
             <a href="#" id="toggle_fullscreen">
               <img
                 id="fullscreenic"
-                src="/static/images/fullscreen1.png"
+                src="{{ url_for('static', filename='images/Fullscreen1.png') }}"
                 alt="Fullscreen Icon"
               />
             </a>
@@ -436,7 +442,7 @@
 </div>
 <div id="downloadModal" class="modal-overlay" style="display: none;">
   <div class="modal-content">
-      <h6 style="color: #000; text-transform: capitalize;"> <span> <img src="/static/images/warning.png" id="imgwarning" alt=""></span>Confirm download</h6>
+      <h6 style="color: #000; text-transform: capitalize;"> <span> <img src="{{ url_for('static', filename='images/warning.png') }}" id="imgwarning" alt=""></span>Confirm download</h6>
       <p style="color: #f74141; font-family:'Lucida Sans', Arial, sans-serif">Large data may slow down the download. Check the filter before downloading. Continue?</p>
       <div class="modal-buttons">
           <button id="cancelDownload" class="cancel">Cancel</button>
@@ -452,7 +458,7 @@
       <div class="custom-tooltip-content">
         <span class="custom-tooltip-arrow"></span>
         <p class="custom-tooltip-text">
-          Warning: Each solution is separated by a dot. <br> eg: "Solution 1. Solution 2.".
+          Warning: Each solution is separated by a dot.<br> eg: "Solution 1. Solution 2.".
         </p>
       </div>
     </div>
@@ -517,5 +523,6 @@
   </div>
   <div id="progress-text">0%</div>
 </div>
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
   </body>
 </html>
