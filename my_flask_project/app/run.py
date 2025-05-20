@@ -20,7 +20,6 @@ DB_CONFIG = {
     "dsn": "localhost:1521/orcl3"
 }
 oracledb.init_oracle_client(lib_dir=r"D:\instantclient\instantclient_23_5")
-
 CORS(app)
 #kết nối Oracle
 def get_db_connection():
@@ -40,7 +39,7 @@ def get_db_connection():
 
 @app.route('/', methods=['GET'])
 def home():
-    return render_template('login.html')
+    return render_template('index.html')
 # redirect page adminDashboard
 @app.route('/adminDashboard', methods=['GET'])
 def admin_dashboard():
@@ -79,7 +78,6 @@ def require_auth(role_required=None):
             return f(*args, **kwargs)
         return decorated
     return wrapper
-
 #redirect page index
 @app.route('/index', methods=['GET'])
 def index1():
@@ -137,120 +135,6 @@ def dashboard_page_glue():
         return redirect(('login'))
     return render_template('dashboardglue.html', username=username)
 
-# def get_paginated_data(page, per_page, type_machine):
-#     offset = (page - 1) * per_page
-#     if type_machine == 'Screw':
-#         query = """
-#         SELECT 
-#             ROWNUM as stt,
-#             t.factory,
-#             t.line, 
-#             t.name_machine, 
-#             t.model_name,
-#             t.serial_number,
-#             t.force_1, 
-#             t.force_2, 
-#             t.force_3,
-#             t.force_4,
-#             t.time_update,
-#             CASE
-#                 WHEN 
-#                     (t.force_1 IS NOT NULL AND NOT (t.force_1 BETWEEN d.min_force AND d.max_force)) OR
-#                     (t.force_2 IS NOT NULL AND NOT (t.force_2 BETWEEN d.min_force AND d.max_force)) OR
-#                     (t.force_3 IS NOT NULL AND NOT (t.force_3 BETWEEN d.min_force AND d.max_force)) OR
-#                     (t.force_4 IS NOT NULL AND NOT (t.force_4 BETWEEN d.min_force AND d.max_force))
-#                 THEN 'FAIL'
-#                 ELSE 'PASS'
-#             END AS result
-#         FROM (
-#             SELECT 
-#                 factory,
-#                 line, 
-#                 name_machine, 
-#                 model_name,
-#                 serial_number,
-#                 force_1,
-#                 force_2,
-#                 force_3,
-#                 force_4,
-#                 TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update
-#             FROM SCREW_FORCE_INFO
-#             ORDER BY TIME_UPDATE DESC
-#             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
-#         ) t
-#         LEFT JOIN force_default d
-#             ON t.line = d.line 
-#             AND t.name_machine = d.name_machine
-#         WHERE d.type_machine = 'Screw'
-#         """
-#     else:
-#         query = """
-#         SELECT 
-#             ROWNUM as stt,
-#             t.factory,
-#             t.line, 
-#             t.name_machine, 
-#             t.model_name,
-#             t.serial_number,
-#             t.force_1, 
-#             t.force_2, 
-#             t.force_3,
-#             t.force_4,
-#             t.time_update,
-#             CASE
-#                 WHEN 
-#                     (t.force_1 IS NOT NULL AND NOT (t.force_1 BETWEEN d.min_force AND d.max_force)) OR
-#                     (t.force_2 IS NOT NULL AND NOT (t.force_2 BETWEEN d.min_force AND d.max_force)) OR
-#                     (t.force_3 IS NOT NULL AND NOT (t.force_3 BETWEEN d.min_force AND d.max_force)) OR
-#                     (t.force_4 IS NOT NULL AND NOT (t.force_4 BETWEEN d.min_force AND d.max_force))
-#                 THEN 'FAIL'
-#                 ELSE 'PASS'
-#             END AS result
-#         FROM (
-#             SELECT 
-#                 factory,
-#                 line, 
-#                 name_machine, 
-#                 model_name,
-#                 serial_number,
-#                 force_1,
-#                 force_2,
-#                 force_3,
-#                 force_4,
-#                 TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update
-#             FROM GLUE_FORCE_INFO
-#             ORDER BY TIME_UPDATE DESC
-#             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
-#         ) t
-#         LEFT JOIN force_default d
-#             ON t.line = d.line 
-#             AND t.name_machine = d.name_machine
-#         WHERE d.type_machine = 'Glue'
-#         """
-#     connection = get_db_connection()
-#     cursor = connection.cursor()
-#     cursor.execute(query, {"offset": offset, "limit": per_page})
-#     rows = [
-#         {
-#             'stt': row[0],
-#             'factory': row[1],
-#             'line': row[2],
-#             'name_machine': row[3],
-#             'model_name': row[4], 
-#             'serial_number': row[5],
-#             'force_1': row[6],
-#             'force_2': row[7],
-#             'force_3': row[8],
-#             'force_4': row[9],
-#             'time_update': row[10],
-#             'result': row[11]
-#         }
-#         for row in cursor
-#     ]
-#     cursor.close()
-#     connection.close()
-#     return rows
-
 def get_paginated_data(page, per_page, type_machine):
     offset = (page - 1) * per_page
     if type_machine == 'Screw':
@@ -304,7 +188,7 @@ def get_paginated_data(page, per_page, type_machine):
         ) t
         WHERE rn > :offset AND rn <= :offset + :limit
         """
-    else:
+    elif type_machine == 'Glue':
         query = """
         SELECT 
             ROWNUM as stt,
@@ -355,6 +239,60 @@ def get_paginated_data(page, per_page, type_machine):
         ) t
         WHERE rn > :offset AND rn <= :offset + :limit
         """
+    elif type_machine == 'Shielding':
+        query = """
+        SELECT 
+            ROWNUM as stt,
+            factory,
+            line, 
+            name_machine, 
+            model_name,
+            serial_number,
+            force_1, 
+            force_2, 
+            force_3,
+            force_4,
+            time_update,
+            CASE
+                WHEN 
+                    (force_1 IS NOT NULL AND NOT (force_1 BETWEEN min_force AND max_force)) OR
+                    (force_2 IS NOT NULL AND NOT (force_2 BETWEEN min_force AND max_force)) OR
+                    (force_3 IS NOT NULL AND NOT (force_3 BETWEEN min_force AND max_force)) OR
+                    (force_4 IS NOT NULL AND NOT (force_4 BETWEEN min_force AND max_force))
+                THEN 'FAIL'
+                ELSE 'PASS'
+            END AS result
+        FROM (
+            SELECT 
+                ROWNUM AS rn,
+                t.*,
+                d.min_force,
+                d.max_force
+            FROM (
+                SELECT 
+                    factory,
+                    line, 
+                    name_machine, 
+                    model_name,
+                    serial_number,
+                    force_1,
+                    force_2,
+                    force_3,
+                    force_4,
+                    TO_CHAR(time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update
+                FROM Shielding_COVER_FORCE_INFO
+                ORDER BY time_update DESC
+            ) t
+            LEFT JOIN force_default d
+                ON t.line = d.line 
+                AND t.name_machine = d.name_machine
+            WHERE d.type_machine = 'Shielding'
+        ) t
+        WHERE rn > :offset AND rn <= :offset + :limit
+        """
+    
+    else:
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(query, {"offset": offset, "limit": per_page})
@@ -378,13 +316,18 @@ def get_paginated_data(page, per_page, type_machine):
     cursor.close()
     connection.close()
     return rows
-# Hàm lấy tổng số bản ghi trong bảng
 
+# Hàm lấy tổng số bản ghi trong bảng
 def get_total_records(type_machine):
     if type_machine == 'Screw':
         query = """SELECT COUNT(*) FROM SCREW_FORCE_INFO"""
-    else:
+    elif type_machine == 'Glue':
         query = """SELECT COUNT(*) FROM GLUE_FORCE_INFO"""
+    elif type_machine == 'Shielding':
+        query = """SELECT COUNT(*) FROM SHIELDING_COVER_FORCE_INFO"""
+    
+    else:
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(query)
@@ -411,19 +354,16 @@ def calculate_pagination(page, per_page, total_records):
         "group_start": group_start,
         "group_end": group_end
     }
-
+ 
 #return pie_chart_data
 def get_pie_chart_data(type_machine, start_date=None, end_date=None):
     if start_date is None:
         start_date = datetime.now() - timedelta(days=7)
     if end_date is None:
         end_date = datetime.now()
-
-    # Kết nối DB
     connection = get_db_connection()
     cursor = connection.cursor()
     if type_machine == 'Screw':
-    # Truy vấn dữ liệu lực và giới hạn của máy đó
         query = """
             SELECT 
                 s.model_name,
@@ -438,13 +378,12 @@ def get_pie_chart_data(type_machine, start_date=None, end_date=None):
             FROM screw_force_info s
             LEFT JOIN force_default d
             ON s.line = d.line AND s.name_machine = d.name_machine
-            WHERE d.type_machine ='Screw' AND s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS') 
+            WHERE d.type_machine ='Screw' AND s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
                                     AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
         """
-    else:
-    # Truy vấn dữ liệu lực và giới hạn của máy đó
+    elif type_machine == 'Glue':
         query = """
-            SELECT 
+            SELECT
                 s.model_name,
                 s.line,
                 s.name_machine,
@@ -458,8 +397,29 @@ def get_pie_chart_data(type_machine, start_date=None, end_date=None):
             LEFT JOIN force_default d
             ON s.line = d.line AND s.name_machine = d.name_machine
             WHERE d.type_machine ='Glue' AND s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS') 
-                                    AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
+            AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
         """
+    elif type_machine == 'Shielding':
+        query = """
+            SELECT
+                s.model_name,
+                s.line,
+                s.name_machine,
+                s.force_1,
+                s.force_2,
+                s.force_3,
+                s.force_4,
+                d.min_force,
+                d.max_force
+            FROM Shielding_cover_force_info s
+            LEFT JOIN force_default d
+            ON s.line = d.line AND s.name_machine = d.name_machine
+            WHERE d.type_machine ='Shielding' AND s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS') 
+            AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
+        """
+    
+    else:
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
     params = {
         "start_date": start_date.strftime("%Y-%m-%d %H:%M:%S"),
         "end_date": end_date.strftime("%Y-%m-%d %H:%M:%S")
@@ -552,7 +512,7 @@ def get_column_chart_data(type_machine, start_date=None, end_date=None):
             FROM screw_force_info
             WHERE time_update BETWEEN :start_date AND :end_date
         """, params)
-    else:
+    elif type_machine == 'Glue':
         cursor.execute("""
             SELECT
                 TO_CHAR(time_update, 'YYYY-MM-DD') AS report_date,
@@ -563,7 +523,19 @@ def get_column_chart_data(type_machine, start_date=None, end_date=None):
             FROM glue_force_info
             WHERE time_update BETWEEN :start_date AND :end_date
         """, params)
-
+    elif type_machine == 'Shielding':
+        cursor.execute("""
+            SELECT
+                TO_CHAR(time_update, 'YYYY-MM-DD') AS report_date,
+                name_machine,
+                line,
+                force_1, force_2, force_3, force_4,
+                TO_CHAR(time_update, 'HH24') AS report_hour
+            FROM Shielding_COVER_FORCE_INFO
+            WHERE time_update BETWEEN :start_date AND :end_date
+        """, params)
+    else:
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
     rows = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -643,7 +615,7 @@ def get_column2_chart_data(type_machine, start_date=None, end_date=None):
             WHERE time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
                                 AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
         """, params)
-    else:
+    elif type_machine == 'Glue':
         cursor.execute("""
             SELECT
                 TO_CHAR(time_update, 'YYYY-MM-DD') AS report_date,
@@ -654,7 +626,20 @@ def get_column2_chart_data(type_machine, start_date=None, end_date=None):
             WHERE time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
                                 AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
         """, params)
-
+    elif type_machine == 'Shielding':
+        cursor.execute("""
+            SELECT
+                TO_CHAR(time_update, 'YYYY-MM-DD') AS report_date,
+                line,
+                name_machine,
+                force_1, force_2, force_3, force_4
+            FROM Shielding_cover_force_info
+            WHERE time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
+                                AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
+        """, params)
+    
+    else:
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
     rows = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -736,10 +721,10 @@ def get_data_force_chart(type_machine, machine_name=None, line=None):
             WHERE ROWNUM <= 30
         """
         cursor.execute(query, {"machine_name": machine_name, "line": line})
-    else:
+    elif type_machine == 'Glue':
         if machine_name is None and line is None:
-            machine_name = 'Machine_6'
-            line = 'Line_6'
+            machine_name = 'DK02'
+            line = 'T06'
 
         minmax = get_min_max_force(line=line, machine_name=machine_name)
         query = """
@@ -752,12 +737,30 @@ def get_data_force_chart(type_machine, machine_name=None, line=None):
             WHERE ROWNUM <= 30
         """
         cursor.execute(query, {"machine_name": machine_name, "line": line})
+    elif type_machine == 'Shielding':
+        if machine_name is None and line is None:
+            machine_name = 'Machine_6'
+            line = 'Line_6'
 
+        minmax = get_min_max_force(line=line, machine_name=machine_name)
+        query = """
+            SELECT * FROM (
+                SELECT name_machine, force_1, force_2, force_3, force_4, time_update
+                FROM Shielding_cover_force_info
+                WHERE name_machine = :machine_name AND line = :line
+                ORDER BY time_update DESC
+            )
+            WHERE ROWNUM <= 30
+        """
+        cursor.execute(query, {"machine_name": machine_name, "line": line})
+    
+    else:
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
     raw_data = cursor.fetchall()
     cursor.close()
     connection.close()
 
-    raw_data = raw_data[::-1]  # Đảo ngược để hiển thị thời gian tăng dần
+    raw_data = raw_data[::-1] 
     time_labels = [row[5].strftime("%H:%M:%S") for row in raw_data]
 
     series = [
@@ -795,27 +798,8 @@ def get_table():
     except Exception as e:
         app.logger.error(f"Error querying table data: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-@app.route('/api/dashboard/tableglue', methods=['GET'])
-def get_table_glue():
-    try:
-        type_machine = request.args.get('type_machine')
-        page = request.args.get('page', 1, type=int)
-        per_page = 10
-        rows = get_paginated_data(page, per_page, type_machine)
-        total_records = get_total_records(type_machine)
-        pagination_data = calculate_pagination(page, per_page, total_records)
-
-        return jsonify({
-            "data": rows,
-            "per_page": per_page,
-            "total_records": total_records,
-            **pagination_data
-        })
-    except Exception as e:
-        app.logger.error(f"Error querying table data: {str(e)}")
-        return jsonify({"error": str(e)}), 500
 #get Limits Force by name_machine and line
+
 @app.route('/api/dashboard/getDefaultForce', methods=['GET'])
 def get_default_force():
     try:
@@ -825,11 +809,19 @@ def get_default_force():
                 SELECT LINE, NAME_MACHINE, MIN_FORCE, MAX_FORCE FROM force_default
                 WHERE TYPE_MACHINE = 'Screw'
             """
-        else:
+        elif type_machine == 'Glue':
              query = """
                 SELECT LINE, NAME_MACHINE, MIN_FORCE, MAX_FORCE FROM force_default
                 WHERE TYPE_MACHINE = 'Glue'
             """
+        elif type_machine == 'Shielding':
+            query = """
+                SELECT LINE, NAME_MACHINE, MIN_FORCE, MAX_FORCE FROM force_default
+                WHERE TYPE_MACHINE = 'Shielding'
+            """
+        else:
+            raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue' or 'Shielding'.")
+        
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(query)
@@ -869,167 +861,6 @@ def get_charts():
         app.logger.error(f"Error querying chart data: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-#filter table
-# @app.route('/api/filter', methods=['GET'])
-# def filter_data():
-#     try:
-#         # Lấy các tham số từ request
-#         line = request.args.get('line') if request.args.get('line') != "null" else None
-#         factory = request.args.get('factory') if request.args.get('factory') != "null" else None
-#         nameMachine = request.args.get('nameMachine') if request.args.get('nameMachine') != "null" else None
-#         model = request.args.get('model') if request.args.get('model') != "null" else None
-#         time_update = request.args.get('time_update') if request.args.get('time_update') != "null" else None
-#         time_end = request.args.get('time_end') if request.args.get('time_end') != "null" else None
-#         state = request.args.get('state') if request.args.get('state') != "null" else None
-#         type_machine = request.args.get('typeMachine', 'Screw')
-#         table_name = "Screw_force_info" if type_machine.lower() == 'screw' else "Glue_force_info"
-#         page = int(request.args.get('page', 1))
-#         per_page = int(request.args.get('per_page', 10))
-#         offset = (page - 1) * per_page
-#         connection = get_db_connection()
-#         cursor = connection.cursor()
-        
-#         # Truy vấn chính với tính toán state
-#         base_query = f"""
-#             SELECT s.factory, s.line, s.name_machine, s.model_name, s.serial_number,
-#                    s.force_1, s.force_2, s.force_3, s.force_4,
-#                    TO_CHAR(s.time_update, 'YYYY-MM-DD HH24:MI:SS') as time_update,
-#                    CASE
-#                        WHEN (s.force_1 IS NULL OR (d.min_force <= s.force_1 AND s.force_1 <= d.max_force)) AND
-#                             (s.force_2 IS NULL OR (d.min_force <= s.force_2 AND s.force_2 <= d.max_force)) AND
-#                             (s.force_3 IS NULL OR (d.min_force <= s.force_3 AND s.force_3 <= d.max_force)) AND
-#                             (s.force_4 IS NULL OR (d.min_force <= s.force_4 AND s.force_4 <= d.max_force))
-#                        THEN 'PASS'
-#                        ELSE 'FAIL'
-#                    END as state
-#             FROM {table_name} s
-#             RIGHT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine
-#             WHERE 1=1
-#         """
-#         # Truy vấn đếm
-#         count_query = f"""
-#             SELECT COUNT(*)
-#             FROM {table_name} s
-#             RIGHT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine            
-#             WHERE 1=1
-#         """
-#         params = {}
-
-#         # Thêm các bộ lọc
-#         if line:
-#             base_query += " AND UPPER(s.line) = UPPER(:line)"
-#             count_query += " AND UPPER(s.line) = UPPER(:line)"
-#             params['line'] = line
-#         if factory:
-#             base_query += " AND UPPER(s.factory) = UPPER(:factory)"
-#             count_query += " AND UPPER(s.factory) = UPPER(:factory)"
-#             params['factory'] = factory
-#         if model:
-#             base_query += " AND UPPER(s.model_name) = UPPER(:model_name)"
-#             count_query += " AND UPPER(s.model_name) = UPPER(:model_name)"
-#             params['model_name'] = model
-#         if nameMachine:
-#             base_query += " AND UPPER(s.name_machine) = UPPER(:name_machine)"
-#             count_query += " AND UPPER(s.name_machine) = UPPER(:name_machine)"
-#             params['name_machine'] = nameMachine
-#         if time_update and time_end:
-#             base_query += """
-#                 AND s.time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')
-#                                     AND TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')
-#             """
-#             count_query += """
-#                 AND s.time_update BETWEEN TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')
-#                                     AND TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')
-#             """
-#             params['time_update'] = time_update
-#             params['time_end'] = time_end
-#         elif time_update:
-#             base_query += " AND s.time_update >= TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')"
-#             count_query += " AND s.time_update >= TO_DATE(:time_update, 'YYYY-MM-DD HH24:MI:SS')"
-#             params['time_update'] = time_update
-#         elif time_end:
-#             base_query += " AND s.time_update <= TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')"
-#             count_query += " AND s.time_update <= TO_DATE(:time_end, 'YYYY-MM-DD HH24:MI:SS')"
-#             params['time_end'] = time_end
-
-#         if state:
-#             if state.upper() == 'PASS':
-#                 state_condition = """
-#                     AND (
-#                         (s.force_1 IS NULL OR (d.min_force <= s.force_1 AND s.force_1 <= d.max_force)) AND
-#                         (s.force_2 IS NULL OR (d.min_force <= s.force_2 AND s.force_2 <= d.max_force)) AND
-#                         (s.force_3 IS NULL OR (d.min_force <= s.force_3 AND s.force_3 <= d.max_force)) AND
-#                         (s.force_4 IS NULL OR (d.min_force <= s.force_4 AND s.force_4 <= d.max_force))
-#                     )
-#                 """
-#             elif state.upper() == 'FAIL':
-#                 state_condition = """
-#                     AND (
-#                         (s.force_1 IS NOT NULL AND (s.force_1 < d.min_force OR s.force_1 > d.max_force)) OR
-#                         (s.force_2 IS NOT NULL AND (s.force_2 < d.min_force OR s.force_2 > d.max_force)) OR
-#                         (s.force_3 IS NOT NULL AND (s.force_3 < d.min_force OR s.force_3 > d.max_force)) OR
-#                         (s.force_4 IS NOT NULL AND (s.force_4 < d.min_force OR s.force_4 > d.max_force))
-#                     )
-#                 """
-#             else:
-#                 return jsonify({"success": False, "error": "Invalid state value"}), 400
-#             base_query += state_condition
-#             count_query += state_condition
-
-#         # Thêm phân trang cho base_query
-#         base_query += f" ORDER BY s.time_update DESC OFFSET {offset} ROWS FETCH NEXT {per_page} ROWS ONLY"
-
-#         # Thực thi truy vấn lấy dữ liệu
-#         cursor.execute(base_query, params)
-#         rows = cursor.fetchall()
-
-#         results = []
-#         stt = offset + 1
-
-#         for row in rows:
-#             factory, line, machine, model, serial, f1, f2, f3, f4, time_update_str, state_result = row
-#             results.append({
-#                 'stt': stt,
-#                 'factory': factory,
-#                 'line': line,
-#                 'name_machine': machine,
-#                 'model_name': model,
-#                 'serial_number': serial,
-#                 'force_1': f1,
-#                 'force_2': f2,
-#                 'force_3': f3,
-#                 'force_4': f4,
-#                 'time_update': time_update_str,
-#                 'result': state_result
-#             })
-#             stt += 1
-
-#         # Thực thi truy vấn đếm
-#         cursor.execute(count_query, params)
-#         total_records = cursor.fetchone()[0]
-#         total_pages = (total_records + per_page - 1) // per_page
-
-#         cursor.close()
-#         connection.close()
-
-#         return jsonify({
-#             "success": True,
-#             "data": results,
-#             "total_records": total_records,
-#             "total_pages": total_pages,
-#             "current_page": page,
-#             "per_page": per_page,
-#             "message": f"{total_records} result found"
-#         }), 200
-
-#     except Exception as e:
-#         app.logger.error(f"Lỗi khi truy vấn dữ liệu: {str(e)}")
-#         return jsonify({
-#             "success": False,
-#             "error": "Đã có lỗi xảy ra khi truy vấn dữ liệu",
-#             "message": str(e)
-#         }), 500
-
 @app.route('/api/filter', methods=['GET'])
 def filter_data():
     try:
@@ -1041,8 +872,16 @@ def filter_data():
         time_update = request.args.get('time_update') if request.args.get('time_update') != "null" else None
         time_end = request.args.get('time_end') if request.args.get('time_end') != "null" else None
         state = request.args.get('state') if request.args.get('state') != "null" else None
-        type_machine = request.args.get('typeMachine', 'Screw')  # default Screw
-        table_name = "Screw_force_info" if type_machine.lower() == 'screw' else "glue_force_info"
+        type_machine = request.args.get('typeMachine', 'Screw')
+        if not type_machine:
+            type_machine = 'Screw'
+        type_machine_all = type_machine.lower()
+        if type_machine_all == 'screw':
+            table_name = "Screw_force_info"
+        elif type_machine_all == 'glue':
+            table_name = "glue_force_info"
+        elif type_machine_all == 'shielding':
+            table_name = "Shielding_cover_force_info"
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 10))
         offset = (page - 1) * per_page
@@ -1065,18 +904,19 @@ def filter_data():
                    END as state
             FROM {table_name} s
             RIGHT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine
+            AND d.type_machine = :type_machine
             WHERE 1=1 AND s.time_update IS NOT NULL
         """
-
         count_query = f"""
             SELECT COUNT(*)
             FROM {table_name} s
             RIGHT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine
+            AND d.type_machine = :type_machine
             WHERE 1=1 AND s.time_update IS NOT NULL
         """
 
         params = {}
-
+        params['type_machine'] = type_machine
         if line:
             base_query += " AND UPPER(s.line) = UPPER(:line)"
             count_query += " AND UPPER(s.line) = UPPER(:line)"
@@ -1245,7 +1085,6 @@ def logout():
 def login():
     if request.method == 'POST':
         username = request.form.get('username').strip()
-
         password = request.form.get('password').strip()
         try:
             # Kết nối CSDL
@@ -1375,6 +1214,17 @@ def get_lines():
                 UNION
                 SELECT 'ModelName', MODEL_NAME FROM GLUE_FORCE_INFO WHERE MODEL_NAME IS NOT NULL
             """
+        elif type_machine == 'Shielding':
+            query = """
+                SELECT 'Line', Line FROM Shielding_COVER_FORCE_INFO WHERE LINE IS NOT NULL
+                UNION
+                SELECT 'NameMachine', NAME_MACHINE FROM Shielding_COVER_FORCE_INFO WHERE NAME_MACHINE IS NOT NULL
+                UNION
+                SELECT 'Factory', FACTORY FROM Shielding_COVER_FORCE_INFO WHERE FACTORY IS NOT NULL
+                UNION
+                SELECT 'ModelName', MODEL_NAME FROM Shielding_COVER_FORCE_INFO WHERE MODEL_NAME IS NOT NULL
+            """
+        
         else:
             return jsonify({"error": "Invalid or missing type_machine"}), 400
 
@@ -1430,6 +1280,19 @@ def get_cascading_options():
             params = {'factory': factory, 'model': model, 'line': line}
         else:
             return jsonify({"error": "Insufficient parameters"}), 400
+    elif type_machine == 'Shielding':
+        if factory and not model:
+            query = "SELECT DISTINCT MODEL_NAME FROM Shielding_cover_FORCE_INFO WHERE FACTORY = :factory"
+            params = {'factory': factory}
+        elif factory and model and not line:
+            query = "SELECT DISTINCT LINE FROM Shielding_cover_FORCE_INFO WHERE FACTORY = :factory AND MODEL_NAME = :model"
+            params = {'factory': factory, 'model': model}
+        elif factory and model and line:
+            query = "SELECT DISTINCT NAME_MACHINE FROM Shielding_cover_FORCE_INFO WHERE FACTORY = :factory AND MODEL_NAME = :model AND LINE = :line"
+            params = {'factory': factory, 'model': model, 'line': line}
+        else:
+            return jsonify({"error": "Insufficient parameters"}), 400
+    
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
@@ -1471,10 +1334,9 @@ def getinfo():
                 ) AS fail
             FROM SCREW_FORCE_INFO s
             RIGHT JOIN force_default d
-                ON s.line = d.line AND s.name_machine = d.name_machine
+                ON s.line = d.line AND s.name_machine = d.name_machine AND d.type_machine = 'Screw'
             WHERE 1=1 AND s.time_update IS NOT NULL
             """
-        
         elif type_machine == 'Glue':
             query = """
                 SELECT
@@ -1501,7 +1363,37 @@ def getinfo():
                 ) AS fail
             FROM GLUE_FORCE_INFO s
             RIGHT JOIN force_default d
-                ON s.line = d.line AND s.name_machine = d.name_machine
+                ON s.line = d.line AND s.name_machine = d.name_machine AND d.type_machine = 'Glue'
+            WHERE 1=1 AND s.time_update IS NOT NULL
+            """
+        
+        elif type_machine == 'Shielding':
+            query = """
+                SELECT
+                COUNT(*) AS total,
+                SUM(
+                    CASE
+                        WHEN
+                            (s.force_1 IS NULL OR (d.min_force <= s.force_1 AND s.force_1 <= d.max_force)) AND
+                            (s.force_2 IS NULL OR (d.min_force <= s.force_2 AND s.force_2 <= d.max_force)) AND
+                            (s.force_3 IS NULL OR (d.min_force <= s.force_3 AND s.force_3 <= d.max_force)) AND
+                            (s.force_4 IS NULL OR (d.min_force <= s.force_4 AND s.force_4 <= d.max_force))
+                        THEN 1 ELSE 0
+                    END
+                ) AS output,
+                SUM(
+                    CASE
+                        WHEN
+                            (s.force_1 IS NOT NULL AND (s.force_1 < d.min_force OR s.force_1 > d.max_force)) OR
+                            (s.force_2 IS NOT NULL AND (s.force_2 < d.min_force OR s.force_2 > d.max_force)) OR
+                            (s.force_3 IS NOT NULL AND (s.force_3 < d.min_force OR s.force_3 > d.max_force)) OR
+                            (s.force_4 IS NOT NULL AND (s.force_4 < d.min_force OR s.force_4 > d.max_force))
+                        THEN 1 ELSE 0
+                    END
+                ) AS fail
+            FROM Shielding_COVER_FORCE_INFO s
+            RIGHT JOIN force_default d
+                ON s.line = d.line AND s.name_machine = d.name_machine AND d.type_machine = 'Shielding'
             WHERE 1=1 AND s.time_update IS NOT NULL
             """
         with get_db_connection() as connection:
@@ -1534,7 +1426,8 @@ def fetch_filtered_data(filters, type_machine):
         # Mapping bảng theo loại máy
         table_mapping = {
             'Screw': 'screw_force_info',
-            'Glue': 'glue_force_info'
+            'Glue': 'glue_force_info',
+            'Shielding': 'Shielding_cover_force_info'
         }
 
         if type_machine not in table_mapping:
@@ -1554,11 +1447,12 @@ def fetch_filtered_data(filters, type_machine):
                        ELSE 'FAIL'
                    END as state
             FROM {table_name} s
-            RIGHT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine
+            RIGHT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine AND d.type_machine = :type_machine
             WHERE 1=1 AND s.time_update IS NOT NULL
         """
 
         params = {}
+        params['type_machine'] = type_machine
         conditions = []
 
         def append_condition(field, param_name):
@@ -1644,7 +1538,7 @@ def download_excel():
             df.to_excel(writer, index=False, sheet_name='Dữ liệu lực vít')
             workbook = writer.book
             worksheet = writer.sheets['Dữ liệu lực vít']
-            header_format = workbook.add_format({
+            header_format = workbook.add_format({ 
                 'bold': True,
                 'font_size': 12,
                 'bg_color': '#D3D3D3'
@@ -1679,6 +1573,13 @@ def get_data_solution():
             query = """
                 SELECT * FROM force_error WHERE STATUS = 1 and type_machine = 'Glue' ORDER BY ERROR_CODE DESC
             """
+        elif type_machine == 'Shielding':
+            query = """
+                SELECT * FROM force_error WHERE STATUS = 1 and type_machine = 'Shielding' ORDER BY ERROR_CODE DESC
+            """
+        
+        else:
+            raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(query)
@@ -1704,7 +1605,6 @@ def update_data_solution(id):
         error_name = data.get('error_name')
         root_cause = data.get('root_cause')
         solution = data.get('solution')
-
         if not all([error_name, root_cause, solution]):
             return jsonify({"error": "Missing required fields"}), 400
 
@@ -1719,7 +1619,6 @@ def update_data_solution(id):
             'solution': solution,
             'id': id
         }
-
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(query, params)
@@ -1757,18 +1656,20 @@ def add_data_soulution():
         error_name = data.get('error_name')
         root_cause = data.get('root_cause')
         solution = data.get('solution')
-
+        type_machine = data.get('type_machine')
         if not all([error_name, root_cause, solution]):
             return jsonify({"error": "Missing required fields"}), 400
         query = """
-            INSERT INTO force_error (ERROR_CODE, ERROR_NAME, ROOT_CAUSE, SOLUTION, STATUS)
-            VALUES (:error_code,:error_name, :root_cause, :solution, 1)
+            INSERT INTO force_error (ERROR_CODE, ERROR_NAME, ROOT_CAUSE,  SOLUTION, STATUS, TYPE_MACHINE)
+            VALUES (:error_code,:error_name, :root_cause, :solution,:status, :type_machine)
         """
         params = {
             'error_code': error_code,
             'error_name': error_name,
             'root_cause': root_cause,
-            'solution': solution
+            'solution': solution,
+            'status': None,
+            'type_machine': type_machine
         }
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
@@ -1784,5 +1685,5 @@ def add_data_soulution():
 if __name__=='__main__':
     app.run( host='0.0.0.0', debug=True, threaded = 4)
     # serve(app, host="0.0.0.0", port=5000)
-
- 
+#pyinstaller --onefile run.py
+#pyinstaller run.spec

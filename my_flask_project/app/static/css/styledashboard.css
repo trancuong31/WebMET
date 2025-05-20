@@ -236,7 +236,6 @@ select option:hover{
   width: 100%;
   height: 6em;
   align-items: center;
-  background: hsl(var(--background-secondary-dark));
 }
 .navbar-logo > .navbar-item-inner {
   width: calc(5rem - 8px);
@@ -1795,7 +1794,7 @@ to {
 }
 
 .high-force {
-  background-color: rgba(146, 146, 146, 0.61);
+  background-color: rgba(245, 72, 72, 0.788);
   color: white;
 }
 
@@ -1803,7 +1802,10 @@ to {
   background-color: rgba(0, 255, 106, 0.644);
   color: white; 
 }
-
+.force-na{
+  background-color: rgba(114, 114, 113, 0.644);
+  color: white; 
+}
 .modalForm {
   display: none; 
   position: fixed;

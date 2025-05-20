@@ -37,7 +37,7 @@
           </div>
           <div class="message ai-message">Hello, how can I help you?</div>
         </div>
-      </div>      
+      </div>
       <div class="chat-input-container">    
           <textarea id="chat-input" placeholder="enter your message..."></textarea>
           <button id="send-button">
@@ -48,7 +48,7 @@
           </button>
       </div>
   </div>
-  <!-- <script>
+  <script>
     document.addEventListener('DOMContentLoaded', function() {
         const aiButton = document.getElementById('aiautomation1');
         const chatContainer = document.getElementById('chat-container');
@@ -57,7 +57,6 @@
         const sendButton = document.getElementById('send-button');
         const chatMessages = document.querySelector('.chat-messages');
         
-        // Toggle chat container when AI button is clicked
         aiButton.addEventListener('click', function() {
                 this.classList.add('active');
                 
@@ -97,11 +96,7 @@
                 // Add user message
                 addMessage(message, 'user');
                 chatInput.value = '';
-                
-                // Simulate AI response (replace with actual AI integration)
                 setTimeout(function() {
-                    // This is a placeholder - in a real implementation, 
-                    // you would send the message to your AI backend and get a response
                     const aiResponse = "Chức năng này đang trong quá trình phát triển. Đây là phản hồi tự động.";
                     addMessage(aiResponse, 'ai');
                 }, 1000);
@@ -155,11 +150,11 @@
             }
         });
     });
-</script> -->
+</script>
     <div class="wrapper">
-      <!-- <div id="aiautomation1"> 
+      <div id="aiautomation1"> 
         <img id="aiautomation" src="{{ url_for('static', filename='images/Animation - 1744353683902.gif') }}"/>
-      </div> -->
+      </div>
       
       <div id="coppyright">
         <a href="{{ url_for('index1') }}">©<span id="year"></span> Copyright MET-Automation | IOT</a>
@@ -180,7 +175,7 @@
               <div class="navbar-item-inner-icon-wrapper flexbox">
                 <i class="fas fa-chart-line"></i>
               </div>
-              <div  class="link-text">
+              <div class="link-text">
                 <span class="nav-text">Dashboard Screw Force</span>
               </div>
             </a>
@@ -191,7 +186,7 @@
                 <i class="fas fa-chart-line" ></i>
               </div>
               <div class="link-text">
-                <span  class="nav-text">Dashboard Glue Force</span>
+                <span  class="nav-text">Mục B</span>
               </div>
             </a>
           </li>
@@ -377,10 +372,9 @@
             <div class="filter">
               <select id="machine-type">
               <option value="Screw">Screw</option>
-              <option value="Shielding">Shielding cover</option>
+              <option value="Shielding">Sheilding cover</option>
               <option value="Glue">Glue</option>
             </select>
-
             Factory: <select id="factory-combobox" style="cursor: pointer;">
             </select>
             Model: <select id="modelNamecombobox" style="width: 70px; cursor: pointer;"></select>
@@ -514,7 +508,6 @@
       <button id="btnaddsolution" type="submit">Submit</button>
     </form>
   </div>
-
 </div>
 <div id="download-progress-container" style="display: none;">
   <h5>Dowloading...</h5>

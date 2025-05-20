@@ -121,7 +121,9 @@ function initializeFilter() {
     function checkForceValue(line, machine, value) {
         const key = `${line},${machine}`;
         const limits = forceLimits[key];
-    
+        if (value === null || value === undefined || value === "N/A") {
+        return "force-na";
+    }
         if (!limits) return "high-force"; 
     
         const { min, max } = limits;
@@ -279,7 +281,7 @@ function initializeFilter() {
                 }
               },
             title: {
-                text: `Rate Pass/Fail By ${totalDay} Day`,
+                text: `Pass/Fail By ${totalDay} Day`,
                 align: "left",
                 style: {
                     color: "#fff",
@@ -338,7 +340,7 @@ function initializeFilter() {
         if (chart) {
             chart.update({
                 title: {
-                    text: `Rate Pass/Fail By ${totalDay} Day`
+                    text: `Pass/Fail By ${totalDay} Day`
                 },
                 series: [{
                     data: chartData
@@ -668,9 +670,15 @@ function initializeFilter() {
     //setup force chart
     function drawForceChart(data) {
         const categories = data.categories;
+        type_machine = getCurrentMachineType();
         const machineName = data.machine_name || 'không xác định';
         const minForce = data.min_force || 0;
         const maxForce = data.max_force || 0;
+        const title = type_machine === 'Glue'
+        ? `CPK Glue Force of ${machineName}`
+        : `CPK Screw Force of ${machineName}`;
+        const unit = getUnitByType(type_machine);
+        
         try {
             if (forceChart) {
                 forceChart.destroy();
@@ -747,7 +755,7 @@ function initializeFilter() {
                     animation: { duration: 600, easing: 'easeOutExpo' },
                 },
                 title: {
-                    text: `Chart CPK Screw Force of ${machineName}`,
+                    text: `CPK Screw Force of ${machineName}`,
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
@@ -761,7 +769,7 @@ function initializeFilter() {
                 },
                 yAxis: {
                     title: {
-                        text: 'Force Screw',
+                        text: 'Force',
                         style: { color: '#fff', fontSize: '12px' }
                     },
                     labels: {
@@ -784,6 +792,7 @@ function initializeFilter() {
         }
     }
 }
+
 //load dashboard
 function initializeDashboard () {
     const tableBody = document.getElementById("table-body");
@@ -822,7 +831,7 @@ function initializeDashboard () {
             if (data.data) {
                 updateTable(data.data);
                 document.getElementById('count').textContent = "";
-                updatePagination(data.page, data.total_pages, data.group_start, data.group_end);               
+                updatePagination(data.page, data.total_pages, data.group_start, data.group_end);       
             } else {
                 tableBody.innerHTML = `<tr><td colspan="12">No data found.</td></tr>`;
                 paginationDiv.innerHTML = '';
@@ -859,22 +868,37 @@ function initializeDashboard () {
     function checkForceValue(line, machine, value) {
         const key = `${line},${machine}`;
         const limits = forceLimits[key];
-    
+        if (value === null || value === undefined || value === "N/A") {
+        return "force-na";
+    }
         if (!limits) return "high-force";
     
         const { min, max } = limits;
         return (value >= min && value <= max) ? "low-force" : "high-force";
     }
     function updateTable(rows) {
-        let fragment = document.createDocumentFragment(); 
+        let fragment = document.createDocumentFragment();
         rows.forEach(row => {
             let tr = document.createElement("tr");
+            const ths = document.querySelectorAll("table thead tr th");
+            type_machine = getCurrentMachineType();
+            if (type_machine === 'Glue') {
+                ths[4].innerText = 'Weight 1';
+                ths[5].innerText = 'Weight 2';
+                ths[6].innerText = 'Weight 3';
+                ths[7].innerText = 'Weight 4';
+            }
+            else if (type_machine === 'Screw') {
+                ths[4].innerText = 'Force 1';
+                ths[5].innerText = 'Force 2';
+                ths[6].innerText = 'Force 3';
+                ths[7].innerText = 'Force 4';
+            }
             tr.innerHTML = `
                 <td class ="stt">${row.stt}</td>
                 <td>
                 ${[row.factory, row.line, row.name_machine].filter(Boolean).join('_') || 'N/A'}
                 </td>
-
                 <td>${row.model_name ?? 'N/A'}</td>
                 <td>${row.serial_number ?? 'N/A'}</td>
                 <td class="${checkForceValue(row.line, row.name_machine,row.force_1)}">${row.force_1 ?? 'N/A'}</td>
@@ -972,7 +996,7 @@ function initializeDashboard () {
                 }
               },
             title: {
-                text: "Rate Pass/Fail By 7 Day",
+                text: "Pass/Fail By 7 Day",
                 align: "left",
                 style: {
                     color: "#fff",
@@ -1235,6 +1259,7 @@ function initializeDashboard () {
             });
         });
     }
+    //setup column2 chart screw force trend
     function drawColumn2Chart(data, targetValue) {
         try {
             const categories = data.map(item => item.date);
@@ -1242,11 +1267,6 @@ function initializeDashboard () {
             const failData = data.map(item => isNaN(item.count_fail) ? 0 : item.count_fail);
             const fpyData = data.map(item => isNaN(item.fpy) ? 0 : item.fpy);
             
-            // if (passData.every(v => v === 0) && failData.every(v => v === 0) && fpyData.every(v => v === 0)) {
-            //     console.warn("No valid data to display in the chart.");
-            //     return;
-            // }
-    
             if (column2Chart) {
                 column2Chart.xAxis[0].setCategories(categories);
                 column2Chart.series[0].setData(passData, false);
@@ -1356,16 +1376,24 @@ function initializeDashboard () {
             console.error('Error generating column2 chart:', error);
         }
     }
+    //setup force chart
     function drawForceChart(data) {
-        const categories = data.categories;
-        const machineName = data.machine_name || 'Máy không xác định';
+        const categories = data.categories;        
+        type_machine = getCurrentMachineType();
+        const machineName = data.machine_name || 'Machine NaN';
         const minForce = data.min_force || 0;
         const maxForce = data.max_force || 0;
+        const title = type_machine === 'Glue'
+        ? `CPK Glue Force of ${machineName}`
+        : type_machine === 'Shielding'
+            ? `CPK Shielding Force of ${machineName}`
+            : `CPK Force of ${machineName}`;
+
+        const unit = getUnitByType(type_machine);        
         try {
             if (forceChart) {
                 forceChart.destroy();
             }
-    
             const lineSeries = data.series.map((s, index) => ({
                 name: s.name,
                 type: 'spline',
@@ -1437,7 +1465,7 @@ function initializeDashboard () {
                 },
 
                 title: {
-                    text: `Chart CPK Screw Force of ${machineName}`,
+                    text: title,
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
@@ -1457,11 +1485,11 @@ function initializeDashboard () {
                 },
                 yAxis: {
                     title: {
-                        text: 'Force Screw',
+                        text: 'Force',
                         style: { color: '#fff', fontSize: '12px' }
                     },
                     labels: {
-                        format: '{value} kgf.cm',
+                        format: `{value} ${unit}`,
                         style: { color: '#fff', fontSize: '12px' }
                     }
                 },
@@ -1505,6 +1533,18 @@ function initializeDashboard () {
         fetchContentTop();
     });
     startPolling();
+}
+function getUnitByType(type_machine) {
+    switch (type_machine) {
+        case 'Screw':
+            return 'kgf.cm';
+        case 'Glue':
+            return 'g';
+        case 'Shielding':
+            return 'kgf.cm';
+        default:
+            return 'kgf.cm';
+    }
 }
 //show list solution
 function modalSolution() {
@@ -1557,13 +1597,14 @@ function modalSolution() {
     // Xử lý sự kiện submit form
     solutionForm.addEventListener('submit', function(event) {
         event.preventDefault();
-
+        type_machine = getCurrentMachineType()
         const formData = new FormData(solutionForm);
         const data = {
             error_code: formData.get('error_code'),
             error_name: formData.get('error_name'),
             root_cause: formData.get('root_cause'),
-            solution: formData.get('solution')
+            solution: formData.get('solution'),
+            type_machine: type_machine
         };
 
         fetch("/api/addDataSolution", {
@@ -1877,7 +1918,7 @@ function validatePayload(payload) {
     }
     return true;
 }
-;
+
 function sendDownloadRequest(data) {
     return fetch(`/api/downloadExcel?typeMachine=${getCurrentMachineType()}`, {
         method: 'POST',
@@ -1963,9 +2004,6 @@ function fetchContentTop() {
             failRecords.textContent = "Error";
             fpyPercentage.textContent = "Error";
         })
-        // .finally(() => {
-        //     setTimeout(fetchContentTop, POLLING_INTERVAL);
-        // });
 }
 //mode screen
 function modeScreen(){
