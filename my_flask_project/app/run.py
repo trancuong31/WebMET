@@ -292,7 +292,7 @@ def get_paginated_data(page, per_page, type_machine):
         """
     
     else:
-        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue' or 'Shielding'.")
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(query, {"offset": offset, "limit": per_page})
@@ -325,9 +325,8 @@ def get_total_records(type_machine):
         query = """SELECT COUNT(*) FROM GLUE_FORCE_INFO"""
     elif type_machine == 'Shielding':
         query = """SELECT COUNT(*) FROM SHIELDING_COVER_FORCE_INFO"""
-    
     else:
-        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue' or 'Shielding'.")
     connection = get_db_connection()
     cursor = connection.cursor()
     cursor.execute(query)
@@ -356,11 +355,12 @@ def calculate_pagination(page, per_page, total_records):
     }
  
 #return pie_chart_data
-def get_pie_chart_data(type_machine, start_date=None, end_date=None):
+def get_pie_chart_data(type_machine, start_date=None, end_date=None, line=None, name_machine=None):
     if start_date is None:
-        start_date = datetime.now() - timedelta(days=7)
+        start_date = datetime.now() - timedelta(days=5)
     if end_date is None:
         end_date = datetime.now()
+
     connection = get_db_connection()
     cursor = connection.cursor()
     if type_machine == 'Screw':
@@ -377,8 +377,8 @@ def get_pie_chart_data(type_machine, start_date=None, end_date=None):
                 d.max_force
             FROM screw_force_info s
             LEFT JOIN force_default d
-            ON s.line = d.line AND s.name_machine = d.name_machine
-            WHERE d.type_machine ='Screw' AND s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
+            ON s.line = d.line AND s.name_machine = d.name_machine AND d.type_machine = 'Screw'
+            WHERE s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
                                     AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
         """
     elif type_machine == 'Glue':
@@ -396,8 +396,9 @@ def get_pie_chart_data(type_machine, start_date=None, end_date=None):
             FROM glue_force_info s
             LEFT JOIN force_default d
             ON s.line = d.line AND s.name_machine = d.name_machine
-            WHERE d.type_machine ='Glue' AND s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS') 
-            AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
+            WHERE d.type_machine = 'Glue'
+              AND s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
+                                    AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
         """
     elif type_machine == 'Shielding':
         query = """
@@ -414,20 +415,25 @@ def get_pie_chart_data(type_machine, start_date=None, end_date=None):
             FROM Shielding_cover_force_info s
             LEFT JOIN force_default d
             ON s.line = d.line AND s.name_machine = d.name_machine
-            WHERE d.type_machine ='Shielding' AND s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS') 
-            AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
+            WHERE d.type_machine = 'Shielding'
+              AND s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
+                                    AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
         """
-    
     else:
-        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
+        raise ValueError("Invalid type_machine. Must be 'Screw', 'Glue', or 'Shielding'.")
+
+    # Tham số truyền vào truy vấn
     params = {
         "start_date": start_date.strftime("%Y-%m-%d %H:%M:%S"),
-        "end_date": end_date.strftime("%Y-%m-%d %H:%M:%S")
+        "end_date": end_date.strftime("%Y-%m-%d %H:%M:%S"),
+        # "line": line,
+        # "name_machine": name_machine
     }
-
-    cursor.execute(query, params)
+    # Thực thi truy vấn
+    cursor.execute(query, {k: v for k, v in params.items() if v is not None})
     rows = cursor.fetchall()
 
+    # Xử lý dữ liệu
     model_stats = {
         "PASS": defaultdict(int),
         "FAIL": defaultdict(int)
@@ -453,7 +459,8 @@ def get_pie_chart_data(type_machine, start_date=None, end_date=None):
         else:
             fail_count += 1
 
-    get_pie_chart_data = {
+    # Chuẩn bị dữ liệu trả về
+    pie_chart_data = {
         "total": total,
         "output": pass_count,
         "fail": fail_count,
@@ -463,24 +470,24 @@ def get_pie_chart_data(type_machine, start_date=None, end_date=None):
     }
 
     for model, count in model_stats["PASS"].items():
-        get_pie_chart_data["details"].append({
+        pie_chart_data["details"].append({
             "state": "PASS",
             "model_name": model,
             "count": count,
-            "percentage": ((count / pass_count)* 100)  if total else 0
+            "percentage": (count / pass_count) * 100 if pass_count else 0
         })
 
     for model, count in model_stats["FAIL"].items():
-        get_pie_chart_data["details"].append({
+        pie_chart_data["details"].append({
             "state": "FAIL",
             "model_name": model,
             "count": count,
-            "percentage": (count / fail_count)* 100 if total else 0
+            "percentage": (count / fail_count) * 100 if fail_count else 0
         })
 
     cursor.close()
     connection.close()
-    return get_pie_chart_data
+    return pie_chart_data
 
 # return column_chart_data
 def get_column_chart_data(type_machine, start_date=None, end_date=None):
@@ -490,7 +497,9 @@ def get_column_chart_data(type_machine, start_date=None, end_date=None):
     if not start_date or not end_date:
         today = datetime.now()
         end_date = today.replace(hour=23, minute=59, second=59, microsecond=0)
-        start_date = end_date - timedelta(days=4)
+        start_date = (end_date - timedelta(days=4)).replace(hour=0, minute=0, second=0, microsecond=0)
+        print("Start Date:", start_date)
+        print("End Date:", end_date)
     params = {
         "start_date": start_date,
         "end_date": end_date
@@ -506,9 +515,10 @@ def get_column_chart_data(type_machine, start_date=None, end_date=None):
             SELECT
                 TO_CHAR(time_update, 'YYYY-MM-DD') AS report_date,
                 name_machine,
-                line,
+                line, model_name, serial_number,
                 force_1, force_2, force_3, force_4,
-                TO_CHAR(time_update, 'HH24') AS report_hour
+                TO_CHAR(time_update, 'HH24') AS report_hour,
+                TO_CHAR(time_update, 'HH24:MI:SS') AS report_time   
             FROM screw_force_info
             WHERE time_update BETWEEN :start_date AND :end_date
         """, params)
@@ -516,10 +526,11 @@ def get_column_chart_data(type_machine, start_date=None, end_date=None):
         cursor.execute("""
             SELECT
                 TO_CHAR(time_update, 'YYYY-MM-DD') AS report_date,
-                name_machine,
-                line,
+                name_machine, 
+                line,model_name, serial_number,
                 force_1, force_2, force_3, force_4,
-                TO_CHAR(time_update, 'HH24') AS report_hour
+                TO_CHAR(time_update, 'HH24') AS report_hour,
+                TO_CHAR(time_update, 'HH24:MI:SS') AS report_time
             FROM glue_force_info
             WHERE time_update BETWEEN :start_date AND :end_date
         """, params)
@@ -527,28 +538,31 @@ def get_column_chart_data(type_machine, start_date=None, end_date=None):
         cursor.execute("""
             SELECT
                 TO_CHAR(time_update, 'YYYY-MM-DD') AS report_date,
-                name_machine,
-                line,
+                name_machine, 
+                line,model_name, serial_number,
                 force_1, force_2, force_3, force_4,
-                TO_CHAR(time_update, 'HH24') AS report_hour
+                TO_CHAR(time_update, 'HH24') AS report_hour,
+                TO_CHAR(time_update, 'HH24:MI:SS') AS report_time
             FROM Shielding_COVER_FORCE_INFO
             WHERE time_update BETWEEN :start_date AND :end_date
         """, params)
     else:
-        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue' or 'Shielding'.")
     rows = cursor.fetchall()
     cursor.close()
     connection.close()
 
     machine_fail_map = defaultdict(lambda: defaultdict(lambda: {
         "fail_count": 0,
-        "hourly_data": defaultdict(int)
+        "hourly_data": defaultdict(int),
+        "details": []
     }))
 
     for row in rows:
-        date, machine, line = row[0], row[1], row[2]
-        forces = [row[3], row[4], row[5], row[6]]
-        hour = row[7]
+        date, machine, line, model_name, serial_number = row[0], row[1], row[2], row[3], row[4]
+        forces = [row[5], row[6], row[7], row[8]]
+        hour = row[9]
+        time = row[10]
         key = (line.upper() if line else "", machine.upper() if machine else "")
         min_force, max_force = force_limits.get(key, (None, None))
 
@@ -558,6 +572,21 @@ def get_column_chart_data(type_machine, start_date=None, end_date=None):
         if any(is_force_invalid(f) for f in forces):
             machine_fail_map[date][machine]["fail_count"] += 1
             machine_fail_map[date][machine]["hourly_data"][hour] += 1
+            machine_fail_map[date][machine]["details"].append({
+                "line": line,
+                "machine": machine,
+                "date": date,
+                "model_name":model_name,
+                "serial_number": serial_number,
+                "hour": hour,
+                "time": time,
+                "force_1": forces[0],
+                "force_2": forces[1],
+                "force_3": forces[2],
+                "force_4": forces[3],
+                "min_force": min_force,
+                "max_force": max_force,
+            })
 
     get_column_chart_data = []
     all_dates = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d")
@@ -574,12 +603,14 @@ def get_column_chart_data(type_machine, start_date=None, end_date=None):
             machines.append({
                 "name": machine_name,
                 "fail_count": stats["fail_count"],
-                "hourly_data": hourly
+                "hourly_data": hourly,
+                "details": stats["details"]
             })
 
         get_column_chart_data.append({
             "date": date,
             "machines": machines
+
         })
     return get_column_chart_data
 
@@ -598,7 +629,6 @@ def get_column2_chart_data(type_machine, start_date=None, end_date=None):
         (row[0].upper(), row[1].upper()): (row[2], row[3])
         for row in cursor.fetchall()
     }
-
     # 2. Truy vấn dữ liệu lực
     params = {
         "start_date": start_date.strftime("%Y-%m-%d 00:00:00"),
@@ -639,7 +669,7 @@ def get_column2_chart_data(type_machine, start_date=None, end_date=None):
         """, params)
     
     else:
-        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue' or 'Shielding'.")
     rows = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -682,16 +712,17 @@ def get_column2_chart_data(type_machine, start_date=None, end_date=None):
     return fpy_chart_data
 
 # lấy ra lưỡng ngực dựa vào line và name_machine
-def get_min_max_force(line, machine_name):
+def get_min_max_force(line, machine_name, type_machine):
     try:
         query = """
             SELECT MIN_FORCE, MAX_FORCE 
             FROM force_default
-            WHERE LINE = :line AND NAME_MACHINE = :machine_name AND TYPE_MACHINE = 'Screw'
+            WHERE LINE = :line AND NAME_MACHINE = :machine_name AND TYPE_MACHINE = :type_machine
         """
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(query, {'line': line, 'machine_name': machine_name})
+                # Thêm tham số type_machine vào dictionary
+                cursor.execute(query, {'line': line, 'machine_name': machine_name, 'type_machine': type_machine})
                 result = cursor.fetchone()
                 if result:
                     return {"min_force": result[0], "max_force": result[1]}
@@ -703,14 +734,13 @@ def get_min_max_force(line, machine_name):
 #get data Force chart
 def get_data_force_chart(type_machine, machine_name=None, line=None):
     connection = get_db_connection()
-    cursor = connection.cursor()
-    
+    cursor = connection.cursor()    
     if type_machine == 'Screw':
         if machine_name is None and line is None:
             machine_name = 'Machine_6'
             line = 'Line_6'
 
-        minmax = get_min_max_force(line=line, machine_name=machine_name)
+        minmax = get_min_max_force(line=line, machine_name=machine_name, type_machine=type_machine)
         query = """
             SELECT * FROM (
                 SELECT name_machine, force_1, force_2, force_3, force_4, time_update
@@ -726,7 +756,7 @@ def get_data_force_chart(type_machine, machine_name=None, line=None):
             machine_name = 'DK02'
             line = 'T06'
 
-        minmax = get_min_max_force(line=line, machine_name=machine_name)
+        minmax = get_min_max_force(line=line, machine_name=machine_name, type_machine=type_machine)
         query = """
             SELECT * FROM (
                 SELECT name_machine, force_1, force_2, force_3, force_4, time_update
@@ -742,7 +772,7 @@ def get_data_force_chart(type_machine, machine_name=None, line=None):
             machine_name = 'Machine_6'
             line = 'Line_6'
 
-        minmax = get_min_max_force(line=line, machine_name=machine_name)
+        minmax = get_min_max_force(line=line, machine_name=machine_name, type_machine=type_machine)
         query = """
             SELECT * FROM (
                 SELECT name_machine, force_1, force_2, force_3, force_4, time_update
@@ -752,17 +782,14 @@ def get_data_force_chart(type_machine, machine_name=None, line=None):
             )
             WHERE ROWNUM <= 30
         """
-        cursor.execute(query, {"machine_name": machine_name, "line": line})
-    
+        cursor.execute(query, {"machine_name": machine_name, "line": line})    
     else:
-        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
+        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue' or 'Shielding'.")
     raw_data = cursor.fetchall()
     cursor.close()
     connection.close()
-
-    raw_data = raw_data[::-1] 
+    raw_data = raw_data[::-1]
     time_labels = [row[5].strftime("%H:%M:%S") for row in raw_data]
-
     series = [
         {"name": "Force 1", "data": [row[1] for row in raw_data]},
         {"name": "Force 2", "data": [row[2] for row in raw_data]},
@@ -798,8 +825,8 @@ def get_table():
     except Exception as e:
         app.logger.error(f"Error querying table data: {str(e)}")
         return jsonify({"error": str(e)}), 500
-#get Limits Force by name_machine and line
 
+#get Limits Force by name_machine and line
 @app.route('/api/dashboard/getDefaultForce', methods=['GET'])
 def get_default_force():
     try:
@@ -1041,7 +1068,7 @@ def filter_data():
             "message": str(e)
         }), 500
 
-# filter chartsbn
+# filter charts
 @app.route('/api/dashboard/filterCharts', methods=['GET'])
 def filter_charts():
     try:
@@ -1055,10 +1082,10 @@ def filter_charts():
             end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
         else:
             end_date = datetime.now()
-            start_date = end_date - timedelta(days=7)
+            start_date = end_date - timedelta(days=6)
 
         # Gọi các hàm xử lý dữ liệu
-        pie_chart_data = get_pie_chart_data(type_machine,start_date, end_date)
+        pie_chart_data = get_pie_chart_data(type_machine,start_date, end_date, line, machine_name )
         column_chart_data = get_column_chart_data(type_machine, start_date, end_date)
         column2_chart_data = get_column2_chart_data(type_machine, start_date, end_date)
         force_chart_data = get_data_force_chart(type_machine, machine_name, line) if machine_name else None
@@ -1307,10 +1334,16 @@ def get_cascading_options():
 @app.route('/api/getinfo', methods=['GET'])
 def getinfo():
     try:
+        end_time = datetime.now()
+        start_time = end_time - timedelta(days=30)
+
         type_machine = request.args.get('type_machine')
-        if type_machine == 'Screw':            
-            query = """
-                SELECT
+        if not type_machine:
+            return jsonify({"error": "Missing type_machine parameter"}), 400
+
+        # Tạo câu truy vấn SQL
+        base_query = """
+            SELECT
                 COUNT(*) AS total,
                 SUM(
                     CASE
@@ -1332,84 +1365,48 @@ def getinfo():
                         THEN 1 ELSE 0
                     END
                 ) AS fail
-            FROM SCREW_FORCE_INFO s
+            FROM {table_name} s
             RIGHT JOIN force_default d
-                ON s.line = d.line AND s.name_machine = d.name_machine AND d.type_machine = 'Screw'
-            WHERE 1=1 AND s.time_update IS NOT NULL
-            """
-        elif type_machine == 'Glue':
-            query = """
-                SELECT
-                COUNT(*) AS total,
-                SUM(
-                    CASE
-                        WHEN
-                            (s.force_1 IS NULL OR (d.min_force <= s.force_1 AND s.force_1 <= d.max_force)) AND
-                            (s.force_2 IS NULL OR (d.min_force <= s.force_2 AND s.force_2 <= d.max_force)) AND
-                            (s.force_3 IS NULL OR (d.min_force <= s.force_3 AND s.force_3 <= d.max_force)) AND
-                            (s.force_4 IS NULL OR (d.min_force <= s.force_4 AND s.force_4 <= d.max_force))
-                        THEN 1 ELSE 0
-                    END
-                ) AS output,
-                SUM(
-                    CASE
-                        WHEN
-                            (s.force_1 IS NOT NULL AND (s.force_1 < d.min_force OR s.force_1 > d.max_force)) OR
-                            (s.force_2 IS NOT NULL AND (s.force_2 < d.min_force OR s.force_2 > d.max_force)) OR
-                            (s.force_3 IS NOT NULL AND (s.force_3 < d.min_force OR s.force_3 > d.max_force)) OR
-                            (s.force_4 IS NOT NULL AND (s.force_4 < d.min_force OR s.force_4 > d.max_force))
-                        THEN 1 ELSE 0
-                    END
-                ) AS fail
-            FROM GLUE_FORCE_INFO s
-            RIGHT JOIN force_default d
-                ON s.line = d.line AND s.name_machine = d.name_machine AND d.type_machine = 'Glue'
-            WHERE 1=1 AND s.time_update IS NOT NULL
-            """
-        
-        elif type_machine == 'Shielding':
-            query = """
-                SELECT
-                COUNT(*) AS total,
-                SUM(
-                    CASE
-                        WHEN
-                            (s.force_1 IS NULL OR (d.min_force <= s.force_1 AND s.force_1 <= d.max_force)) AND
-                            (s.force_2 IS NULL OR (d.min_force <= s.force_2 AND s.force_2 <= d.max_force)) AND
-                            (s.force_3 IS NULL OR (d.min_force <= s.force_3 AND s.force_3 <= d.max_force)) AND
-                            (s.force_4 IS NULL OR (d.min_force <= s.force_4 AND s.force_4 <= d.max_force))
-                        THEN 1 ELSE 0
-                    END
-                ) AS output,
-                SUM(
-                    CASE
-                        WHEN
-                            (s.force_1 IS NOT NULL AND (s.force_1 < d.min_force OR s.force_1 > d.max_force)) OR
-                            (s.force_2 IS NOT NULL AND (s.force_2 < d.min_force OR s.force_2 > d.max_force)) OR
-                            (s.force_3 IS NOT NULL AND (s.force_3 < d.min_force OR s.force_3 > d.max_force)) OR
-                            (s.force_4 IS NOT NULL AND (s.force_4 < d.min_force OR s.force_4 > d.max_force))
-                        THEN 1 ELSE 0
-                    END
-                ) AS fail
-            FROM Shielding_COVER_FORCE_INFO s
-            RIGHT JOIN force_default d
-                ON s.line = d.line AND s.name_machine = d.name_machine AND d.type_machine = 'Shielding'
-            WHERE 1=1 AND s.time_update IS NOT NULL
-            """
+                ON s.line = d.line AND s.name_machine = d.name_machine AND d.type_machine = :type_machine
+            WHERE s.time_update IS NOT NULL
+              AND s.time_update BETWEEN TO_TIMESTAMP(:start_time, 'YYYY-MM-DD HH24:MI:SS')
+                                  AND TO_TIMESTAMP(:end_time, 'YYYY-MM-DD HH24:MI:SS')
+        """
+        # Xác định tên bảng tương ứng với loại máy
+        table_map = {
+            'Screw': 'SCREW_FORCE_INFO',
+            'Glue': 'GLUE_FORCE_INFO',
+            'Shielding': 'SHIELDING_COVER_FORCE_INFO'
+        }
+
+        if type_machine not in table_map:
+            return jsonify({"error": "Invalid type_machine. Must be 'Screw', 'Glue', or 'Shielding'"}), 400
+
+        query = base_query.format(table_name=table_map[type_machine])
+
+        # Tham số truyền vào SQL
+        params = {
+            'start_time': start_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'end_time': end_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'type_machine': type_machine
+        }
+
+        # Thực thi truy vấn
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(query)
+                cursor.execute(query, params)
                 result = cursor.fetchone()
-        
+
         total, output, fail = result
-        fpy = (output / total) * 100 if total > 0 else 0 
-        
+        fpy = (output / total) * 100 if total > 0 else 0
+
         return jsonify({
             "total": total,
             "output": output,
             "fail": fail,
-            "fpy": fpy
+            "fpy": round(fpy, 2)
         })
+
     except Exception as e:
         app.logger.error(f"Error querying data: {str(e)}")
         return jsonify({
@@ -1579,7 +1576,7 @@ def get_data_solution():
             """
         
         else:
-            raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue'.")
+            raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue' or 'Shielding'.")
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(query)

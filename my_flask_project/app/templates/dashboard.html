@@ -306,7 +306,7 @@
         <div  class="overlay-image" alt="overlay"></div>
         <header>
           <h4>DASHBOARD</h4>
-          <h1 style="display: inline;"> Screw machine Information</h1>
+          <h1 id="titleTypeMachine" style="display: inline;"> Screw machine Information</h1>
         </header>
         <div class="mainContent">
           <h1 style="padding: 10px;"></h1>
@@ -515,6 +515,13 @@
       <div id="progress-bar"></div>
   </div>
   <div id="progress-text">0%</div>
+</div>
+<div id="detailsModal2" class="modal2">
+    <div class="modal-content2">
+        <span class="close-modal2">&times;</span>
+        <h1 style="height: 0; margin-bottom: 40px;">Detail By Hour</h1>
+        <div class="modal-body2"></div>
+    </div>
 </div>
 <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
   </body>

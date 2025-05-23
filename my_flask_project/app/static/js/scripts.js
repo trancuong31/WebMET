@@ -42,7 +42,7 @@ function initializeFilter() {
 
         setTimeout(() => {
             button.disabled = false;
-        }, 1000);
+        }, 500);
     }, 600));
     
     async function fetchFilteredData(page = 1, isPagination = false) {
@@ -153,19 +153,26 @@ function initializeFilter() {
         tableBody.appendChild(fragment);
     }
     //pagination table
-    function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
-        paginationDiv.innerHTML = "";
-        if (currentPage > 1) {
-            paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
+    function updatePagination(currentPage, totalPages) {
+        let paginationHTML = "";
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
         }
-        for (let i = groupStart; i <= groupEnd; i++) {
-            paginationDiv.innerHTML += `
+        if (currentPage > 1) {
+            paginationHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
+        }
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `
                 <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
             `;
         }
         if (currentPage < totalPages) {
-            paginationDiv.innerHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
+            paginationHTML += `<a href="#" class="page-link" data-page="${currentPage + 1}">&raquo;</a>`;
         }
+        paginationDiv.innerHTML = paginationHTML;
         bindPaginationEvents();
     }
     function bindPaginationEvents() {
@@ -196,8 +203,7 @@ function initializeFilter() {
         if (machine_name) params.append("nameMachine", machine_name);
         if (line) params.append("line", line);
         
-        const url = `/api/dashboard/filterCharts?${params.toString()}`;
-    
+        const url = `/api/dashboard/filterCharts?${params.toString()}`;    
         fetch(url, {
             method: 'GET',
             headers: {
@@ -357,7 +363,8 @@ function initializeFilter() {
                         drilldownSerie.setData(currentDrilldownData.data);
                     }
                 }
-            } else {
+            } 
+            else {
                 chart.series[0].setData(chartData);
                 chart.drilldown.update({
                     series: drilldownSeries
@@ -372,35 +379,43 @@ function initializeFilter() {
             console.error("No data available.");
             return { dates: [], seriesData: [], drilldownSeries: [] };
         }
+
         const dates = [...new Set(columnData.map(item => item.date))].sort((a, b) => new Date(a) - new Date(b));
-    
+
         let machineMap = {};
         let drilldownSeries = [];
-    
+
         columnData.forEach(day => {
             const dayIndex = dates.indexOf(day.date);
             if (!day.machines || day.machines.length === 0) return;
-    
+
             day.machines.sort((a, b) => b.fail_count - a.fail_count);
+
             day.machines.forEach(machine => {
                 if (!machineMap[machine.name]) {
                     machineMap[machine.name] = Array(dates.length).fill(null);
                 }
                 machineMap[machine.name][dayIndex] = machine.fail_count;
-    
-                let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [
-                    `${hour.toString().padStart(2, '0')}:00 - ${hour === 23 ? '00:00' : (hour + 1).toString().padStart(2, '0')}:00`,
-                    0
-                ]);
+
+                // Khởi tạo đầy đủ 24 giờ, mỗi giờ có y=0 và custom.details=[]
+                let fullHourlyData = Array.from({ length: 24 }, (_, hour) => ({
+                    name: `${hour.toString().padStart(2, '0')}:00 - ${hour === 23 ? '00:00' : (hour + 1).toString().padStart(2, '0')}:00`,
+                    y: 0,
+                    custom: { details: [] }
+                }));
+
                 if (Array.isArray(machine.hourly_data)) {
-                    // Sắp xếp theo giờ để đảm bảo đúng thứ tự
-                    machine.hourly_data.sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
-    
                     machine.hourly_data.forEach(hourItem => {
-                        fullHourlyData[parseInt(hourItem.hour)][1] = hourItem.fail_count;
+                        const h = parseInt(hourItem.hour);
+                        fullHourlyData[h].y = hourItem.fail_count;
+
+                        // Gán `details` cho giờ tương ứng
+                        if (Array.isArray(machine.details)) {
+                            fullHourlyData[h].custom.details = machine.details.filter(detail => detail.hour === hourItem.hour);
+                        }
                     });
                 }
-    
+
                 drilldownSeries.push({
                     id: `${machine.name}-${day.date}`,
                     name: `Detail for ${machine.name} on ${day.date}`,
@@ -409,8 +424,7 @@ function initializeFilter() {
                 });
             });
         });
-        
-        // Tạo seriesData và sắp xếp theo tổng `fail_count` giảm dần
+
         let seriesData = Object.keys(machineMap).map(machineName => ({
             name: machineName,
             data: machineMap[machineName],
@@ -424,18 +438,95 @@ function initializeFilter() {
         
         return { dates, seriesData, drilldownSeries };
     }
+    function showDetailsModal(details) {
+        const modal = document.getElementById('detailsModal2');
+        const modalBody = modal.querySelector('.modal-body2');        
+        // Xóa nội dung cũ
+        modalBody.innerHTML = '';
+
+        // Tạo bảng hiển thị details
+        const table = document.createElement('table');
+        table.classList.add('details-table');
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Line</th>
+                    <th>Machine</th>
+                    <th>Date</th>
+                    <th>Hour</th>
+                    <th>Model Name</th>
+                    <th>Serial Number</th>
+                    <th>Force 1</th>
+                    <th>Force 2</th>
+                    <th>Force 3</th>
+                    <th>Force 4</th>
+                    <th>Min Force</th>
+                    <th>Max Force</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${details.map(detail => `
+                    <tr>
+                        <td>${detail.line || 'N/A'}</td>
+                        <td>${detail.machine || 'N/A'}</td>
+                        <td>${detail.date || 'N/A'}</td>
+                        <td>${detail.hour || 'N/A'}</td>
+                        <td>${detail.model_name || 'N/A'}</td>
+                        <td>${detail.serial_number || 'N/A'}</td>
+                        <td>${detail.force_1 ?? 'N/A'}</td>
+                        <td>${detail.force_2 ?? 'N/A'}</td>
+                        <td>${detail.force_3 ?? 'N/A'}</td>
+                        <td>${detail.force_4 ?? 'N/A'}</td>
+                        <td>${detail.min_force ?? 'N/A'}</td>
+                        <td>${detail.max_force ?? 'N/A'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+        modalBody.appendChild(table);
+        modal.style.display = 'block';
+        modal.querySelector('.close-modal2').addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
     //setup column chart top machine fail per day 
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
 
         if (columnChart) {
-            columnChart.xAxis[0].setCategories(dates);
-            columnChart.series.forEach((series, i) => {
-                series.setData(seriesData[i].data, false);
+            // Lấy danh sách tên series hiện tại và mới
+            const currentSeriesNames = columnChart.series.map(s => s.name);
+            const newSeriesNames = seriesData.map(s => s.name);
+
+            // Xác định series cần xóa, thêm, hoặc cập nhật
+            const seriesToRemove = currentSeriesNames.filter(name => !newSeriesNames.includes(name));
+            const seriesToAdd = seriesData.filter(s => !currentSeriesNames.includes(s.name));
+            const seriesToUpdate = seriesData.filter(s => currentSeriesNames.includes(s.name));
+
+            // Xóa series không còn trong dữ liệu mới
+            seriesToRemove.forEach(name => {
+                const series = columnChart.series.find(s => s.name === name);
+                if (series) series.remove(false);
             });
+
+            // Thêm series mới
+            seriesToAdd.forEach(newSeries => {
+                columnChart.addSeries(newSeries, false);
+            });
+
+            // Cập nhật dữ liệu cho series hiện có
+            seriesToUpdate.forEach(newSeries => {
+                const series = columnChart.series.find(s => s.name === newSeries.name);
+                if (series) series.setData(newSeries.data, false);
+            });
+
+            // Cập nhật trục x và drilldown
+            columnChart.xAxis[0].setCategories(dates, false);
             columnChart.update({
                 drilldown: { series: drilldownSeries }
-            });
+            }, false);
+
+            // Vẽ lại biểu đồ
             columnChart.redraw();
             return;
         }
@@ -495,17 +586,31 @@ function initializeFilter() {
                             click: function () {
                                 const drilldownId = `${this.series.name}-${this.category}`;
                                 const drilldownExists = columnChart.options.drilldown.series.some(d => d.id === drilldownId);
+
                                 if (drilldownExists) {
                                     columnChart.xAxis[0].update({ visible: false });
                                     columnChart.xAxis[1].update({ visible: true });
+
+                                    const drillSeries = columnChart.options.drilldown.series.find(d => d.id === drilldownId);
+                                    const seriesData = drillSeries.data.map(item => ({
+                                        name: item.name,
+                                        y: item.y,
+                                        custom: { details: item.custom.details }
+                                    }));
+
                                     columnChart.addSeriesAsDrilldown(this, {
                                         id: drilldownId,
                                         name: `Fail Count`,
-                                        data: columnChart.options.drilldown.series.find(d => d.id === drilldownId).data,
+                                        data: seriesData,
                                         xAxis: 1
                                     });
                                     columnChart.applyDrilldown();
                                 }
+                                else if (this.options.custom && this.options.custom.details) {
+                                    console.log("Details:", this.options.custom.details);
+                                    showDetailsModal(this.options.custom.details);
+                                }
+
                             }
                         }
                     }
@@ -792,7 +897,6 @@ function initializeFilter() {
         }
     }
 }
-
 //load dashboard
 function initializeDashboard () {
     const tableBody = document.getElementById("table-body");
@@ -850,8 +954,8 @@ function initializeDashboard () {
         })
         .then(response => response.json())
         .then(data => {
-            // console.log("Charts data:", data);
             if (data.pie_chart_data || data.column_chart_data || data.column2_chart_data || data.data_force_chart) {
+                console.log("Pie chart data:", data.pie_chart_data);
                 updatePieChart(data.pie_chart_data);
                 drawColumnChart(data.column_chart_data);
                 drawColumn2Chart(data.column2_chart_data, 98);
@@ -862,7 +966,7 @@ function initializeDashboard () {
         })
         .catch(error => {
             console.error("Error fetching pie chart data:", error);
-            // alert("Error fetch data charts:", error)            
+            // alert("Error fetch data charts:", error)
         });
     }
     function checkForceValue(line, machine, value) {
@@ -913,12 +1017,19 @@ function initializeDashboard () {
         tableBody.innerHTML = "";
         tableBody.appendChild(fragment);
     }
-    function updatePagination(currentPage, totalPages, groupStart, groupEnd) {
+    function updatePagination(currentPage, totalPages) {
         let paginationHTML = "";
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+
         if (currentPage > 1) {
             paginationHTML += `<a href="#" class="page-link" data-page="${currentPage - 1}">&laquo;</a>`;
         }
-        for (let i = groupStart; i <= groupEnd; i++) {
+        for (let i = startPage; i <= endPage; i++) {
             paginationHTML += `
                 <a href="#" class="page-link ${i === currentPage ? "active" : ""}" data-page="${i}">${i}</a>
             `;
@@ -996,7 +1107,7 @@ function initializeDashboard () {
                 }
               },
             title: {
-                text: "Pass/Fail By 7 Day",
+                text: "Pass/Fail By 5 Day",
                 align: "left",
                 style: {
                     color: "#fff",
@@ -1015,7 +1126,7 @@ function initializeDashboard () {
             credits: false,
             plotOptions: {
                 series: {
-                    borderRadius: 5,
+                    borderRadius: 5,                    
                     dataLabels: [{
                         enabled: true,
                         distance: 15,
@@ -1072,40 +1183,48 @@ function initializeDashboard () {
             chart = Highcharts.chart("container-pie", chartOptions);
         }
     }
+
     function processDataColumnChart(columnData) {
         if (!columnData || columnData.length === 0) {
             console.error("No data available.");
             return { dates: [], seriesData: [], drilldownSeries: [] };
         }
+
         const dates = [...new Set(columnData.map(item => item.date))].sort((a, b) => new Date(a) - new Date(b));
-    
+
         let machineMap = {};
         let drilldownSeries = [];
-    
+
         columnData.forEach(day => {
             const dayIndex = dates.indexOf(day.date);
             if (!day.machines || day.machines.length === 0) return;
-    
+
             day.machines.sort((a, b) => b.fail_count - a.fail_count);
+
             day.machines.forEach(machine => {
                 if (!machineMap[machine.name]) {
                     machineMap[machine.name] = Array(dates.length).fill(null);
                 }
                 machineMap[machine.name][dayIndex] = machine.fail_count;
-    
-                let fullHourlyData = Array.from({ length: 24 }, (_, hour) => [
-                    `${hour.toString().padStart(2, '0')}:00 - ${hour === 23 ? '00:00' : (hour + 1).toString().padStart(2, '0')}:00`,
-                    0
-                ]);
+
+                let fullHourlyData = Array.from({ length: 24 }, (_, hour) => ({
+                    name: `${hour.toString().padStart(2, '0')}:00 - ${hour === 23 ? '00:00' : (hour + 1).toString().padStart(2, '0')}:00`,
+                    y: 0,
+                    custom: { details: [] }
+                }));
+
                 if (Array.isArray(machine.hourly_data)) {
-                    // Sắp xếp theo giờ để đảm bảo đúng thứ tự
-                    machine.hourly_data.sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
-    
                     machine.hourly_data.forEach(hourItem => {
-                        fullHourlyData[parseInt(hourItem.hour)][1] = hourItem.fail_count;
+                        const h = parseInt(hourItem.hour);
+                        fullHourlyData[h].y = hourItem.fail_count;
+
+                        // Gán `details` cho giờ tương ứng
+                        if (Array.isArray(machine.details)) {
+                            fullHourlyData[h].custom.details = machine.details.filter(detail => detail.hour === hourItem.hour);
+                        }
                     });
                 }
-    
+
                 drilldownSeries.push({
                     id: `${machine.name}-${day.date}`,
                     name: `Detail for ${machine.name} on ${day.date}`,
@@ -1114,8 +1233,7 @@ function initializeDashboard () {
                 });
             });
         });
-        
-        // Tạo seriesData và sắp xếp theo tổng `fail_count` giảm dần
+
         let seriesData = Object.keys(machineMap).map(machineName => ({
             name: machineName,
             data: machineMap[machineName],
@@ -1129,27 +1247,102 @@ function initializeDashboard () {
         
         return { dates, seriesData, drilldownSeries };
     }
+    function showDetailsModal(details) {
+        const modal = document.getElementById('detailsModal2');
+        const modalBody = modal.querySelector('.modal-body2');
+
+        // Xóa nội dung cũ
+        modalBody.innerHTML = '';
+
+        // Tạo bảng hiển thị details
+        const table = document.createElement('table');
+        table.classList.add('details-table');
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Line</th>
+                    <th>Machine</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Model Name</th>
+                    <th>Serial Number</th>
+                    <th>Force 1</th>
+                    <th>Force 2</th>
+                    <th>Force 3</th>
+                    <th>Force 4</th>
+                    <th>Min Force</th>
+                    <th>Max Force</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                ${details.map(detail => `
+                    <tr>
+                        <td>${detail.line || 'N/A'}</td>
+                        <td>${detail.machine || 'N/A'}</td>
+                        <td>${detail.date || 'N/A'}</td>
+                        <td>${detail.time || 'N/A'}</td>
+                        <td>${detail.model_name || 'N/A'}</td>
+                        <td>${detail.serial_number || 'N/A'}</td>
+                        <td>${detail.force_1 ?? 'N/A'}</td>
+                        <td>${detail.force_2 ?? 'N/A'}</td>
+                        <td>${detail.force_3 ?? 'N/A'}</td>
+                        <td>${detail.force_4 ?? 'N/A'}</td>                        
+                        <td>${detail.min_force ?? 'N/A'}</td>
+                        <td>${detail.max_force ?? 'N/A'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+        modalBody.appendChild(table);
+
+        modal.style.display = 'block';
+        modal.querySelector('.close-modal2').addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
     //setup column chart top machine fail per day 
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
+        
+        if (columnChart) {
+            // Lấy danh sách tên series hiện tại và mới
+            const currentSeriesNames = columnChart.series.map(s => s.name);
+            const newSeriesNames = seriesData.map(s => s.name);
 
-        if (!dates.length || !seriesData.length) {
-            Highcharts.chart('container-toperr', {
-                chart: { type: 'column', backgroundColor: null },
-                title: {
-                    
-                text: 'Top 3 Machine Fail Per Day',
-                align: 'left',
-                style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
-            },
-                subtitle: { text: 'No data available',verticalAlign: 'center', align: 'center', style: { color: '#fff', fontSize: '16px' } },
-                xAxis: { categories: [] },
-                yAxis: { title: { text: 'Fail Count' } },
-                series: [],
-                credits: { enabled: false }
+            // Xác định series cần xóa, thêm, hoặc cập nhật
+            const seriesToRemove = currentSeriesNames.filter(name => !newSeriesNames.includes(name));
+            const seriesToAdd = seriesData.filter(s => !currentSeriesNames.includes(s.name));
+            const seriesToUpdate = seriesData.filter(s => currentSeriesNames.includes(s.name));
+
+            // Xóa series không còn trong dữ liệu mới
+            seriesToRemove.forEach(name => {
+                const series = columnChart.series.find(s => s.name === name);
+                if (series) series.remove(false);
             });
+
+            // Thêm series mới
+            seriesToAdd.forEach(newSeries => {
+                columnChart.addSeries(newSeries, false);
+            });
+
+            // Cập nhật dữ liệu cho series hiện có
+            seriesToUpdate.forEach(newSeries => {
+                const series = columnChart.series.find(s => s.name === newSeries.name);
+                if (series) series.setData(newSeries.data, false);
+            });
+
+            // Cập nhật trục x và drilldown
+            columnChart.xAxis[0].setCategories(dates, false);
+            columnChart.update({
+                drilldown: { series: drilldownSeries }
+            }, false);
+
+            // Vẽ lại biểu đồ
+            columnChart.redraw();
             return;
         }
+
         columnChart = Highcharts.chart('container-toperr', {
             chart: {
                 type: 'column',
@@ -1176,8 +1369,7 @@ function initializeDashboard () {
                     categories: dates,
                     title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } },
                     labels: { style: { color: '#fff', fontSize: '12px' } },
-                    visible: true,
-                    minRange: 5
+                    visible: true
                 },
                 {
                     categories: Array.from({ length: 24 }, (_, i) => `${i}:00 - ${i + 1}:00`),
@@ -1206,17 +1398,31 @@ function initializeDashboard () {
                             click: function () {
                                 const drilldownId = `${this.series.name}-${this.category}`;
                                 const drilldownExists = columnChart.options.drilldown.series.some(d => d.id === drilldownId);
+
                                 if (drilldownExists) {
                                     columnChart.xAxis[0].update({ visible: false });
                                     columnChart.xAxis[1].update({ visible: true });
+
+                                    const drillSeries = columnChart.options.drilldown.series.find(d => d.id === drilldownId);
+                                    const seriesData = drillSeries.data.map(item => ({
+                                        name: item.name,
+                                        y: item.y,
+                                        custom: { details: item.custom.details }
+                                    }));
+
                                     columnChart.addSeriesAsDrilldown(this, {
                                         id: drilldownId,
                                         name: `Fail Count`,
-                                        data: columnChart.options.drilldown.series.find(d => d.id === drilldownId).data,
+                                        data: seriesData,
                                         xAxis: 1
                                     });
                                     columnChart.applyDrilldown();
                                 }
+                                else if (this.options.custom && this.options.custom.details) {
+                                    console.log("Details:", this.options.custom.details);
+                                    showDetailsModal(this.options.custom.details);
+                                }
+
                             }
                         }
                     }
@@ -1514,6 +1720,7 @@ function initializeDashboard () {
             console.error('Error rendering force chart:', error);
         }
     }
+    
     function startPolling() {  
         stopPolling();      
         initForceLimitsAndLoad();
@@ -1525,6 +1732,19 @@ function initializeDashboard () {
         }, POLLING_INTERVAL);
     }
     machineTypeSelect.addEventListener('change', () => {
+        const machineType = getCurrentMachineType();
+        if (machineType === "Screw") {
+            document.getElementById("titleTypeMachine").innerHTML = "Screw machine Information";
+        }
+        else if (machineType === "Glue") {
+            document.getElementById("titleTypeMachine").innerHTML = "Glue machine Information";
+        }
+        else if (machineType === "Shielding") {
+            document.getElementById("titleTypeMachine").innerHTML = "Shielding machine Information";
+        }
+        else {
+            document.getElementById("titleTypeMachine").innerHTML = "Unknown machine type";
+        }
         startPolling(); 
         modalSolution();
         downloadExcel();
@@ -2137,8 +2357,6 @@ function resetCombobox(id) {
 function populateCombobox(id, data) {
     const cbb = document.getElementById(id);
     cbb.innerHTML = '<option value="">All</option>';
-
-    // Duyệt mảng dữ liệu duy nhất
     const uniqueValues = [...new Set(data)];
     uniqueValues.forEach(item => {
         const option = document.createElement("option");
@@ -2160,9 +2378,10 @@ function initializeOverview () {
     fetchContentTop();
 }
 //Dom all
-document.addEventListener('DOMContentLoaded', function() {    
+document.addEventListener('DOMContentLoaded', function() {
     machineTypeSelect = document.getElementById("machine-type");
     getCurrentMachineType = () => machineTypeSelect.value;
+    
     
     initializeFilter();
     initializeDashboard();
