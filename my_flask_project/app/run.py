@@ -79,6 +79,7 @@ def require_auth(role_required=None):
     return wrapper
 #redirect page index
 @app.route('/index', methods=['GET'])
+
 def index1():
     token = request.cookies.get('token')
     app.logger.info(f"Index page accessed. Token exists: {bool(token)}")
