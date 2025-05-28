@@ -36,7 +36,6 @@ def get_db_connection():
     except oracledb.DatabaseError as e:
         print(f"Lỗi kết nối cơ sở dữ liệu: {e}")
         abort(500, description="Không thể kết nối cơ sở dữ liệu.")
-
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html')
@@ -356,12 +355,12 @@ def calculate_pagination(page, per_page, total_records):
  
 #return pie_chart_data
 def get_pie_chart_data(type_machine, start_date=None, end_date=None, line=None, name_machine=None):
-    if start_date is None:
-        start_date = datetime.now() - timedelta(days=5)
-    if end_date is None:
-        end_date = datetime.now()
-
-    connection = get_db_connection()
+    if not start_date or not end_date:
+        today = datetime.now()
+        end_date = today.replace(hour=23, minute=59, second=59, microsecond=0)
+        start_date = (end_date - timedelta(days=4)).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    connection = get_db_connection()    
     cursor = connection.cursor()
     if type_machine == 'Screw':
         query = """
@@ -421,13 +420,14 @@ def get_pie_chart_data(type_machine, start_date=None, end_date=None, line=None, 
         """
     else:
         raise ValueError("Invalid type_machine. Must be 'Screw', 'Glue', or 'Shielding'.")
-
+    if line and name_machine:
+        query += " AND s.line = :line AND s.name_machine = :name_machine"
     # Tham số truyền vào truy vấn
     params = {
         "start_date": start_date.strftime("%Y-%m-%d %H:%M:%S"),
         "end_date": end_date.strftime("%Y-%m-%d %H:%M:%S"),
-        # "line": line,
-        # "name_machine": name_machine
+        "line": line,
+        "name_machine": name_machine
     }
     # Thực thi truy vấn
     cursor.execute(query, {k: v for k, v in params.items() if v is not None})
@@ -615,10 +615,11 @@ def get_column_chart_data(type_machine, start_date=None, end_date=None):
     return get_column_chart_data
 
 #return column2_chart_data
-def get_column2_chart_data(type_machine, start_date=None, end_date=None):
+def get_column2_chart_data(type_machine, start_date=None, end_date=None, line=None, name_machine=None):
     if not start_date or not end_date:
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=4)
+        today = datetime.now()
+        end_date = today.replace(hour=23, minute=59, second=59, microsecond=0)
+        start_date = (end_date - timedelta(days=4)).replace(hour=0, minute=0, second=0, microsecond=0)
 
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -629,48 +630,40 @@ def get_column2_chart_data(type_machine, start_date=None, end_date=None):
         (row[0].upper(), row[1].upper()): (row[2], row[3])
         for row in cursor.fetchall()
     }
-    # 2. Truy vấn dữ liệu lực
+
+    # 2. Truy vấn dữ liệu theo loại máy
     params = {
         "start_date": start_date.strftime("%Y-%m-%d 00:00:00"),
-        "end_date": end_date.strftime("%Y-%m-%d 23:59:59")
+        "end_date": end_date.strftime("%Y-%m-%d 23:59:59"),
+        "line": line,
+        "name_machine": name_machine
     }
+
+    base_query = """
+        SELECT
+            TO_CHAR(s.time_update, 'YYYY-MM-DD') AS report_date,
+            s.line,
+            s.name_machine,
+            s.force_1, s.force_2, s.force_3, s.force_4
+        FROM {table_name} s
+        WHERE s.time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
+                                AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
+    """
+    if line and name_machine:
+        base_query += " AND s.line = :line AND s.name_machine = :name_machine"
+
     if type_machine == 'Screw':
-        cursor.execute("""
-            SELECT
-                TO_CHAR(time_update, 'YYYY-MM-DD') AS report_date,
-                line,
-                name_machine,
-                force_1, force_2, force_3, force_4
-            FROM screw_force_info
-            WHERE time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
-                                AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
-        """, params)
+        final_query = base_query.format(table_name="screw_force_info")
     elif type_machine == 'Glue':
-        cursor.execute("""
-            SELECT
-                TO_CHAR(time_update, 'YYYY-MM-DD') AS report_date,
-                line,
-                name_machine,
-                force_1, force_2, force_3, force_4
-            FROM glue_force_info
-            WHERE time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
-                                AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
-        """, params)
+        final_query = base_query.format(table_name="glue_force_info")
     elif type_machine == 'Shielding':
-        cursor.execute("""
-            SELECT
-                TO_CHAR(time_update, 'YYYY-MM-DD') AS report_date,
-                line,
-                name_machine,
-                force_1, force_2, force_3, force_4
-            FROM Shielding_cover_force_info
-            WHERE time_update BETWEEN TO_DATE(:start_date, 'YYYY-MM-DD HH24:MI:SS')
-                                AND TO_DATE(:end_date, 'YYYY-MM-DD HH24:MI:SS')
-        """, params)
-    
+        final_query = base_query.format(table_name="Shielding_cover_force_info")
     else:
-        raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue' or 'Shielding'.")
+        raise ValueError("Invalid type_machine. Must be 'Screw', 'Glue', or 'Shielding'.")
+
+    cursor.execute(final_query, {k: v for k, v in params.items() if v is not None})
     rows = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
@@ -737,8 +730,8 @@ def get_data_force_chart(type_machine, machine_name=None, line=None):
     cursor = connection.cursor()    
     if type_machine == 'Screw':
         if machine_name is None and line is None:
-            machine_name = 'Machine_6'
-            line = 'Line_6'
+            machine_name = 'Machine_3'
+            line = 'Line_3'
 
         minmax = get_min_max_force(line=line, machine_name=machine_name, type_machine=type_machine)
         query = """
@@ -930,14 +923,14 @@ def filter_data():
                        ELSE 'FAIL'
                    END as state
             FROM {table_name} s
-            RIGHT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine
+            LEFT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine
             AND d.type_machine = :type_machine
             WHERE 1=1 AND s.time_update IS NOT NULL
         """
         count_query = f"""
             SELECT COUNT(*)
             FROM {table_name} s
-            RIGHT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine
+            LEFT JOIN force_default d ON s.line = d.line AND s.name_machine = d.name_machine
             AND d.type_machine = :type_machine
             WHERE 1=1 AND s.time_update IS NOT NULL
         """
@@ -1081,13 +1074,14 @@ def filter_charts():
             start_date = datetime.strptime(time_update, "%Y-%m-%d %H:%M:%S")
             end_date = datetime.strptime(time_end, "%Y-%m-%d %H:%M:%S")
         else:
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=6)
+            today = datetime.now()
+            end_date = today.replace(hour=23, minute=59, second=59, microsecond=0)
+            start_date = (end_date - timedelta(days=6)).replace(hour=0, minute=0, second=0, microsecond=0)
 
         # Gọi các hàm xử lý dữ liệu
         pie_chart_data = get_pie_chart_data(type_machine,start_date, end_date, line, machine_name )
         column_chart_data = get_column_chart_data(type_machine, start_date, end_date)
-        column2_chart_data = get_column2_chart_data(type_machine, start_date, end_date)
+        column2_chart_data = get_column2_chart_data(type_machine, start_date, end_date, line, machine_name)
         force_chart_data = get_data_force_chart(type_machine, machine_name, line) if machine_name else None
 
         return jsonify({
@@ -1156,6 +1150,7 @@ def login():
             if connection:
                 connection.close()
     return render_template('login.html')
+
 #refresh token
 @app.route('/refresh', methods=['POST'])
 def refresh():
@@ -1336,7 +1331,6 @@ def getinfo():
     try:
         end_time = datetime.now()
         start_time = end_time - timedelta(days=30)
-
         type_machine = request.args.get('type_machine')
         if not type_machine:
             return jsonify({"error": "Missing type_machine parameter"}), 400
@@ -1680,7 +1674,7 @@ def add_data_soulution():
         return jsonify({"error": "Error code was existed"}), 500
 
 if __name__=='__main__':
-    app.run( host='0.0.0.0', debug=True, threaded = 4)
+    app.run( host='0.0.0.0', debug= True, threaded= 4)
     # serve(app, host="0.0.0.0", port=5000)
 #pyinstaller --onefile run.py
 #pyinstaller run.spec

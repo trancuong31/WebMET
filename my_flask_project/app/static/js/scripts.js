@@ -18,9 +18,7 @@ function initializeFilter() {
     let column2Chart = null;
     let columnChart = null;
     let forceChart = null;
-    let forceLimits = {};
-
-    
+    let forceLimits = {};    
     function debounce(func, delay) {
         let timeout;
         return function (...args) {
@@ -35,11 +33,10 @@ function initializeFilter() {
         const button = this;
         button.disabled = true;
         initForceLimitsAndLoad();
-        this.dataset.filtering = 'true'; 
+        this.dataset.filtering = 'true';
         isFiltering = true;
         stopPolling();
         await fetchFilteredData(1, false);
-
         setTimeout(() => {
             button.disabled = false;
         }, 500);
@@ -106,8 +103,7 @@ function initializeFilter() {
             paginationDiv.innerHTML = '';
             loadingEl.style.display = 'none';
         }
-    }
-    
+    }    
     function initForceLimitsAndLoad() {
         fetch(`/api/dashboard/getDefaultForce?type_machine=${getCurrentMachineType()}`)
             .then(res => res.json())
@@ -203,7 +199,7 @@ function initializeFilter() {
         if (machine_name) params.append("nameMachine", machine_name);
         if (line) params.append("line", line);
         
-        const url = `/api/dashboard/filterCharts?${params.toString()}`;    
+        const url = `/api/dashboard/filterCharts?${params.toString()}`;
         fetch(url, {
             method: 'GET',
             headers: {
@@ -213,9 +209,9 @@ function initializeFilter() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                if (data.pie_chart_data) updatePieChart(data.pie_chart_data, totalDay);
+                if (data.pie_chart_data) updatePieChart(data.pie_chart_data, totalDay, machine_name, line);
                 if (data.column_chart_data) drawColumnChart(data.column_chart_data);
-                if (data.column2_chart_data) drawColumn2Chart(data.column2_chart_data, 98);
+                if (data.column2_chart_data) drawColumn2Chart(data.column2_chart_data, 98, machine_name, line);
                 if (data.force_chart_data) drawForceChart(data.force_chart_data);
             } else {
                 console.error("Lỗi dữ liệu biểu đồ:", data.error);
@@ -224,13 +220,13 @@ function initializeFilter() {
         .catch(error => {
             console.error("Lỗi gọi API biểu đồ:", error);
         });
-    }    
-    function updatePieChart(pieData, totalDay) {
+    }
+    function updatePieChart(pieData, totalDay, machine_name, line) {
         if (!pieData || !pieData.details) {
             console.error("Dữ liệu biểu đồ tròn không hợp lệ:", pieData);
             return; 
         }
-
+        const titleText = `Pass/Fail By ${totalDay} Day of ${machine_name || 'Machine NaN'} on ${line || 'Line NaN'}`;
         const passData = [];
         const failData = [];
         const drilldownPass = [];
@@ -244,7 +240,6 @@ function initializeFilter() {
                 drilldownFail.push([item.model_name, item.percentage]);
             }
         });
-
         const chartData = [
             { name: "Pass", y: pieData.fpyPass, drilldown: "Pass", color: {
                 linearGradient: { x1: 0, y1: 1, x2: 0, y2: 0 },
@@ -287,7 +282,7 @@ function initializeFilter() {
                 }
               },
             title: {
-                text: `Pass/Fail By ${totalDay} Day`,
+                text: titleText,
                 align: "left",
                 style: {
                     color: "#fff",
@@ -346,7 +341,7 @@ function initializeFilter() {
         if (chart) {
             chart.update({
                 title: {
-                    text: `Pass/Fail By ${totalDay} Day`
+                    text: titleText
                 },
                 series: [{
                     data: chartData
@@ -440,7 +435,8 @@ function initializeFilter() {
     }
     function showDetailsModal(details) {
         const modal = document.getElementById('detailsModal2');
-        const modalBody = modal.querySelector('.modal-body2');        
+        const modalBody = modal.querySelector('.modal-body2');
+
         // Xóa nội dung cũ
         modalBody.innerHTML = '';
 
@@ -452,8 +448,7 @@ function initializeFilter() {
                 <tr>
                     <th>Line</th>
                     <th>Machine</th>
-                    <th>Date</th>
-                    <th>Hour</th>
+                    <th>Time</th>
                     <th>Model Name</th>
                     <th>Serial Number</th>
                     <th>Force 1</th>
@@ -462,6 +457,7 @@ function initializeFilter() {
                     <th>Force 4</th>
                     <th>Min Force</th>
                     <th>Max Force</th>
+                    
                 </tr>
             </thead>
             <tbody>
@@ -469,14 +465,13 @@ function initializeFilter() {
                     <tr>
                         <td>${detail.line || 'N/A'}</td>
                         <td>${detail.machine || 'N/A'}</td>
-                        <td>${detail.date || 'N/A'}</td>
-                        <td>${detail.hour || 'N/A'}</td>
+                        <td>${detail.date && detail.time ? `${detail.date} ${detail.time}` : 'N/A'}</td>
                         <td>${detail.model_name || 'N/A'}</td>
                         <td>${detail.serial_number || 'N/A'}</td>
                         <td>${detail.force_1 ?? 'N/A'}</td>
                         <td>${detail.force_2 ?? 'N/A'}</td>
                         <td>${detail.force_3 ?? 'N/A'}</td>
-                        <td>${detail.force_4 ?? 'N/A'}</td>
+                        <td>${detail.force_4 ?? 'N/A'}</td>                        
                         <td>${detail.min_force ?? 'N/A'}</td>
                         <td>${detail.max_force ?? 'N/A'}</td>
                     </tr>
@@ -484,6 +479,7 @@ function initializeFilter() {
             </tbody>
         `;
         modalBody.appendChild(table);
+
         modal.style.display = 'block';
         modal.querySelector('.close-modal2').addEventListener('click', () => {
             modal.style.display = 'none';
@@ -654,13 +650,13 @@ function initializeFilter() {
         });
     }
     //setup column2 chart screw force trend
-    function drawColumn2Chart(data, targetValue) {
+    function drawColumn2Chart(data, targetValue, machine, line) {
         try {
             const categories = data.map(item => item.date);
             const passData = data.map(item => isNaN(item.count_pass) ? 0 : item.count_pass);
             const failData = data.map(item => isNaN(item.count_fail) ? 0 : item.count_fail);
             const fpyData = data.map(item => isNaN(item.fpy) ? 0 : item.fpy);
-            
+            const titleText = `Screw Force Trend of ${machine || 'Machine NaN'} on ${line || 'Line NaN'}`; 
             if (passData.every(v => v === 0) && failData.every(v => v === 0) && fpyData.every(v => v === 0)) {
                 console.warn("No valid data to display in the chart.");
                 return;
@@ -672,6 +668,7 @@ function initializeFilter() {
                 column2Chart.series[1].setData(failData, false);
                 column2Chart.series[2].setData(fpyData, false);
                 column2Chart.series[3].setData(Array(categories.length).fill(targetValue), false);
+                column2Chart.setTitle({text: titleText}, false);
                 column2Chart.redraw();
                 return;
             }
@@ -683,7 +680,7 @@ function initializeFilter() {
                     plotBackgroundColor: null
                 },
                 title: {
-                    text: 'Screw Force Trend',
+                    text: titleText,
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
@@ -758,6 +755,7 @@ function initializeFilter() {
                             align: 'left',
                             verticalAlign: 'top',
                             y: -25,
+                            
                             style: {
                                 fontSize: '16px',
                                 fontWeight: 'bold',
@@ -776,100 +774,107 @@ function initializeFilter() {
     function drawForceChart(data) {
         const categories = data.categories;
         type_machine = getCurrentMachineType();
-        const machineName = data.machine_name || 'không xác định';
+        const machineName = data.machine_name || 'Machine NaN';
         const minForce = data.min_force || 0;
         const maxForce = data.max_force || 0;
         const title = type_machine === 'Glue'
-        ? `CPK Glue Force of ${machineName}`
-        : `CPK Screw Force of ${machineName}`;
+            ? `CPK Glue Force of ${machineName}`
+            : type_machine === 'Shielding'
+                ? `CPK Shielding Force of ${machineName}`
+                : `CPK Screw Force of ${machineName}`;
+
         const unit = getUnitByType(type_machine);
-        
+
         try {
             if (forceChart) {
                 forceChart.destroy();
             }
+
+            // Kiểm tra và xử lý dữ liệu `data.series`
             const lineSeries = data.series.map((s, index) => ({
                 name: s.name,
                 type: 'spline',
-                data: s.data.map(val => parseFloat((val??0).toFixed(2))),
+                data: s.data.map(value => {
+                    if (value === null || value === undefined) {
+                        console.warn(`Null or undefined value found in series "${s.name}"`);
+                        return 0; // Thay thế giá trị null bằng 0
+                    }
+                    return parseFloat(value.toFixed(2));
+                }),
+                color: Highcharts.getOptions().colors[index],
                 marker: {
                     enabled: false,
                     radius: 3,
                     symbol: 'circle'
                 },
-                color: Highcharts.getOptions().colors[index],
                 tooltip: {
-                    pointFormat: '{series.name}: {point.y:.2f}'
+                    pointFormat: 'Force: {point.y:.2f}',
                 }
             }));
-    
+
             // Tạo đường Min/Max force
             const minLine = {
                 name: 'Min Force',
                 type: 'line',
                 data: Array(categories.length).fill(minForce),
-                color: '#03fc3d',
+                color: '#fc0335',
                 dashStyle: 'ShortDash',
                 lineWidth: 2,
                 marker: { enabled: false },
-                tooltip: { pointFormat: 'Min Force: {point.y:.2f}' },
-                enableMouseTracking: false,
+                enableMouseTracking: true,
                 dataLabels: {
                     enabled: true,
                     formatter: function() {
-                      if (this.point.index === this.series.data.length - 1) {
-                        return 'LCL';
-                      }
-                      return null;
+                        if (this.point.index === this.series.data.length - 1) {
+                            return 'LCL';
+                        }
+                        return null;
                     },
                     align: 'left',
                     verticalAlign: 'top'
                 }
             };
-    
+
             const maxLine = {
                 name: 'Max Force',
                 type: 'line',
                 data: Array(categories.length).fill(maxForce),
-                color: '#fc0362',
+                color: '#fc0335',
                 dashStyle: 'ShortDash',
                 lineWidth: 2,
                 marker: { enabled: false },
-                tooltip: { pointFormat: 'Max Force: {point.y:.2f}' },
-                enableMouseTracking: false,
+                enableMouseTracking: true,
                 dataLabels: {
                     enabled: true,
                     formatter: function() {
-                      if (this.point.index === this.series.data.length - 1) {
-                        return 'UCL';
-                      }
-                      return null;
+                        if (this.point.index === this.series.data.length - 1) {
+                            return 'UCL';
+                        }
+                        return null;
                     },
                     align: 'left',
                     verticalAlign: 'top'
-                  }
-            };    
+                }
+            };
+
             const allSeries = [...lineSeries, minLine, maxLine];
-    
+
             forceChart = Highcharts.chart('container', {
                 chart: {
-                    type: 'line',
+                    type: 'spline',
                     zoomType: 'x',
                     backgroundColor: null,
                     plotBackgroundColor: null,
                     animation: { duration: 600, easing: 'easeOutExpo' },
                 },
                 title: {
-                    text: `CPK Screw Force of ${machineName}`,
+                    text: title,
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
                 xAxis: {
                     categories: categories,
-                    title: {
-                        text: 'Time',
-                        style: { color: '#fff', fontSize: '12px' }
-                    },
+                    title: { text: 'Time', style: { color: '#fff', fontSize: '12px' } },
                     labels: { style: { color: '#fff', fontSize: '12px' } }
                 },
                 yAxis: {
@@ -878,7 +883,7 @@ function initializeFilter() {
                         style: { color: '#fff', fontSize: '12px' }
                     },
                     labels: {
-                        format: '{value} kgf.cm',
+                        format: `{value} ${unit}`,
                         style: { color: '#fff', fontSize: '12px' }
                     }
                 },
@@ -886,14 +891,21 @@ function initializeFilter() {
                     align: 'center',
                     verticalAlign: 'bottom',
                     itemStyle: { color: '#fff' },
-                    itemHoverStyle: { color: '#cccccc' }
+                    itemHoverStyle: { color: '#ccc' }
                 },
                 credits: { enabled: false },
                 accessibility: { enabled: false },
+                plotOptions: {
+                    line: {
+                        dataLabels: { enabled: false },
+                        enableMouseTracking: true
+                    }
+                },
                 series: allSeries
             });
+
         } catch (error) {
-            console.error('Error force chart:', error);
+            console.error('Error rendering force chart:', error);
         }
     }
 }
@@ -918,7 +930,7 @@ function initializeDashboard () {
                 forceLimits = data;
                 fetchPage(1);
             })
-            .catch(err => {
+            .catch(err => {                
                 console.error("Lỗi khi lấy ngưỡng lực:", err);
                 fetchPage(1);
             });
@@ -955,17 +967,17 @@ function initializeDashboard () {
         .then(response => response.json())
         .then(data => {
             if (data.pie_chart_data || data.column_chart_data || data.column2_chart_data || data.data_force_chart) {
-                console.log("Pie chart data:", data.pie_chart_data);
+                // console.log("Pie chart data:", data.pie_chart_data);
                 updatePieChart(data.pie_chart_data);
                 drawColumnChart(data.column_chart_data);
                 drawColumn2Chart(data.column2_chart_data, 98);
                 drawForceChart(data.data_force_chart);
-            } else {
+            } else { 
                 console.error("Charts data not available.");
             }
         })
         .catch(error => {
-            console.error("Error fetching pie chart data:", error);
+            console.error("Error fetching chart data:", error);
             // alert("Error fetch data charts:", error)
         });
     }
@@ -1107,7 +1119,7 @@ function initializeDashboard () {
                 }
               },
             title: {
-                text: "Pass/Fail By 5 Day",
+                text: "Pass/Fail By 5 Day of All Machines",
                 align: "left",
                 style: {
                     color: "#fff",
@@ -1183,7 +1195,6 @@ function initializeDashboard () {
             chart = Highcharts.chart("container-pie", chartOptions);
         }
     }
-
     function processDataColumnChart(columnData) {
         if (!columnData || columnData.length === 0) {
             console.error("No data available.");
@@ -1194,13 +1205,11 @@ function initializeDashboard () {
 
         let machineMap = {};
         let drilldownSeries = [];
-
         columnData.forEach(day => {
             const dayIndex = dates.indexOf(day.date);
             if (!day.machines || day.machines.length === 0) return;
 
             day.machines.sort((a, b) => b.fail_count - a.fail_count);
-
             day.machines.forEach(machine => {
                 if (!machineMap[machine.name]) {
                     machineMap[machine.name] = Array(dates.length).fill(null);
@@ -1212,19 +1221,16 @@ function initializeDashboard () {
                     y: 0,
                     custom: { details: [] }
                 }));
-
                 if (Array.isArray(machine.hourly_data)) {
                     machine.hourly_data.forEach(hourItem => {
                         const h = parseInt(hourItem.hour);
                         fullHourlyData[h].y = hourItem.fail_count;
-
                         // Gán `details` cho giờ tương ứng
                         if (Array.isArray(machine.details)) {
                             fullHourlyData[h].custom.details = machine.details.filter(detail => detail.hour === hourItem.hour);
                         }
                     });
                 }
-
                 drilldownSeries.push({
                     id: `${machine.name}-${day.date}`,
                     name: `Detail for ${machine.name} on ${day.date}`,
@@ -1250,10 +1256,8 @@ function initializeDashboard () {
     function showDetailsModal(details) {
         const modal = document.getElementById('detailsModal2');
         const modalBody = modal.querySelector('.modal-body2');
-
         // Xóa nội dung cũ
         modalBody.innerHTML = '';
-
         // Tạo bảng hiển thị details
         const table = document.createElement('table');
         table.classList.add('details-table');
@@ -1262,17 +1266,15 @@ function initializeDashboard () {
                 <tr>
                     <th>Line</th>
                     <th>Machine</th>
-                    <th>Date</th>
                     <th>Time</th>
                     <th>Model Name</th>
                     <th>Serial Number</th>
-                    <th>Force 1</th>
-                    <th>Force 2</th>
-                    <th>Force 3</th>
-                    <th>Force 4</th>
+                    <th>Position 1</th>
+                    <th>Position 2</th>
+                    <th>Position 3</th>
+                    <th>Position 4</th>
                     <th>Min Force</th>
                     <th>Max Force</th>
-                    
                 </tr>
             </thead>
             <tbody>
@@ -1280,14 +1282,13 @@ function initializeDashboard () {
                     <tr>
                         <td>${detail.line || 'N/A'}</td>
                         <td>${detail.machine || 'N/A'}</td>
-                        <td>${detail.date || 'N/A'}</td>
-                        <td>${detail.time || 'N/A'}</td>
+                        <td>${detail.date && detail.time ? `${detail.date} ${detail.time}` : 'N/A'}</td>
                         <td>${detail.model_name || 'N/A'}</td>
                         <td>${detail.serial_number || 'N/A'}</td>
                         <td>${detail.force_1 ?? 'N/A'}</td>
                         <td>${detail.force_2 ?? 'N/A'}</td>
                         <td>${detail.force_3 ?? 'N/A'}</td>
-                        <td>${detail.force_4 ?? 'N/A'}</td>                        
+                        <td>${detail.force_4 ?? 'N/A'}</td>
                         <td>${detail.min_force ?? 'N/A'}</td>
                         <td>${detail.max_force ?? 'N/A'}</td>
                     </tr>
@@ -1295,22 +1296,17 @@ function initializeDashboard () {
             </tbody>
         `;
         modalBody.appendChild(table);
-
         modal.style.display = 'block';
         modal.querySelector('.close-modal2').addEventListener('click', () => {
             modal.style.display = 'none';
         });
     }
-    //setup column chart top machine fail per day 
+    //setup column chart top machine fail per day
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
-        
         if (columnChart) {
-            // Lấy danh sách tên series hiện tại và mới
             const currentSeriesNames = columnChart.series.map(s => s.name);
             const newSeriesNames = seriesData.map(s => s.name);
-
-            // Xác định series cần xóa, thêm, hoặc cập nhật
             const seriesToRemove = currentSeriesNames.filter(name => !newSeriesNames.includes(name));
             const seriesToAdd = seriesData.filter(s => !currentSeriesNames.includes(s.name));
             const seriesToUpdate = seriesData.filter(s => currentSeriesNames.includes(s.name));
@@ -1320,7 +1316,6 @@ function initializeDashboard () {
                 const series = columnChart.series.find(s => s.name === name);
                 if (series) series.remove(false);
             });
-
             // Thêm series mới
             seriesToAdd.forEach(newSeries => {
                 columnChart.addSeries(newSeries, false);
@@ -1490,7 +1485,7 @@ function initializeDashboard () {
                     plotBackgroundColor: null
                 },
                 title: {
-                    text: 'Screw Force Trend',
+                    text: 'Screw Force Trend Of All Machines',
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
@@ -1569,7 +1564,8 @@ function initializeDashboard () {
                             style: {
                                 fontSize: '16px',
                                 fontWeight: 'bold',
-                                color: '#20fc03'
+                                color: '#20fc03',
+                                zIndex: 10
                               }
                         }
                     },
@@ -1584,26 +1580,35 @@ function initializeDashboard () {
     }
     //setup force chart
     function drawForceChart(data) {
-        const categories = data.categories;        
+        const categories = data.categories;
         type_machine = getCurrentMachineType();
         const machineName = data.machine_name || 'Machine NaN';
         const minForce = data.min_force || 0;
         const maxForce = data.max_force || 0;
         const title = type_machine === 'Glue'
-        ? `CPK Glue Force of ${machineName}`
-        : type_machine === 'Shielding'
-            ? `CPK Shielding Force of ${machineName}`
-            : `CPK Force of ${machineName}`;
+            ? `CPK Glue Force of ${machineName}`
+            : type_machine === 'Shielding'
+                ? `CPK Shielding Force of ${machineName}`
+                : `CPK Screw Force of ${machineName}`;
 
-        const unit = getUnitByType(type_machine);        
+        const unit = getUnitByType(type_machine);
+
         try {
             if (forceChart) {
                 forceChart.destroy();
             }
+
+            // Kiểm tra và xử lý dữ liệu `data.series`
             const lineSeries = data.series.map((s, index) => ({
                 name: s.name,
                 type: 'spline',
-                data: s.data.map(value => parseFloat(value.toFixed(2))),
+                data: s.data.map(value => {
+                    if (value === null || value === undefined) {
+                        console.warn(`Null or undefined value found in series "${s.name}"`);
+                        return 0; // Thay thế giá trị null bằng 0
+                    }
+                    return parseFloat(value.toFixed(2));
+                }),
                 color: Highcharts.getOptions().colors[index],
                 marker: {
                     enabled: false,
@@ -1614,7 +1619,8 @@ function initializeDashboard () {
                     pointFormat: 'Force: {point.y:.2f}',
                 }
             }));
-    
+
+            // Tạo đường Min/Max force
             const minLine = {
                 name: 'Min Force',
                 type: 'line',
@@ -1627,16 +1633,16 @@ function initializeDashboard () {
                 dataLabels: {
                     enabled: true,
                     formatter: function() {
-                      if (this.point.index === this.series.data.length - 1) {
-                        return 'LCL';
-                      }
-                      return null;
+                        if (this.point.index === this.series.data.length - 1) {
+                            return 'LCL';
+                        }
+                        return null;
                     },
                     align: 'left',
                     verticalAlign: 'top'
-                  }
+                }
             };
-    
+
             const maxLine = {
                 name: 'Max Force',
                 type: 'line',
@@ -1649,18 +1655,18 @@ function initializeDashboard () {
                 dataLabels: {
                     enabled: true,
                     formatter: function() {
-                      if (this.point.index === this.series.data.length - 1) {
-                        return 'UCL';
-                      }
-                      return null;
+                        if (this.point.index === this.series.data.length - 1) {
+                            return 'UCL';
+                        }
+                        return null;
                     },
                     align: 'left',
                     verticalAlign: 'top'
-                  }
+                }
             };
-    
+
             const allSeries = [...lineSeries, minLine, maxLine];
-    
+
             forceChart = Highcharts.chart('container', {
                 chart: {
                     type: 'spline',
@@ -1669,21 +1675,11 @@ function initializeDashboard () {
                     plotBackgroundColor: null,
                     animation: { duration: 600, easing: 'easeOutExpo' },
                 },
-
                 title: {
                     text: title,
                     align: 'left',
                     style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
                 },
-                subtitle: {
-                    text: 'Click to search by factory, model, line, machine name to view machine others',
-                    align: 'left',
-                    verticalAlign: 'top',
-                    style: {
-                      fontSize: '12px',
-                      color: '#606060'
-                    }
-                  },
                 xAxis: {
                     categories: categories,
                     title: { text: 'Time', style: { color: '#fff', fontSize: '12px' } },
@@ -1715,7 +1711,7 @@ function initializeDashboard () {
                 },
                 series: allSeries
             });
-    
+
         } catch (error) {
             console.error('Error rendering force chart:', error);
         }
