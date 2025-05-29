@@ -103,7 +103,169 @@ function initializeFilter() {
             paginationDiv.innerHTML = '';
             loadingEl.style.display = 'none';
         }
-    }    
+    }//setup column chart top machine fail per day
+function drawColumnChart(columnData) {
+    const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
+    if (columnChart) {
+        // Lấy danh sách tên series hiện tại và mới
+        const currentSeriesNames = columnChart.series.map(s => s.name);
+        const newSeriesNames = seriesData.map(s => s.name);
+
+        // Xác định series cần xóa, thêm, hoặc cập nhật
+        const seriesToRemove = currentSeriesNames.filter(name => !newSeriesNames.includes(name));
+        const seriesToAdd = seriesData.filter(s => !currentSeriesNames.includes(s.name));
+        const seriesToUpdate = seriesData.filter(s => currentSeriesNames.includes(s.name));
+
+        // Xóa series không còn trong dữ liệu mới
+        seriesToRemove.forEach(name => {
+            const series = columnChart.series.find(s => s.name === name);
+            if (series) series.remove(false);
+        });
+
+        // Thêm series mới
+        seriesToAdd.forEach(newSeries => {
+            columnChart.addSeries(newSeries, false);
+        });
+
+        // Cập nhật dữ liệu cho series hiện có
+        seriesToUpdate.forEach(newSeries => {
+            const series = columnChart.series.find(s => s.name === newSeries.name);
+            if (series) series.setData(newSeries.data, false);
+        });
+
+        // Cập nhật trục x và drilldown
+        columnChart.xAxis[0].setCategories(dates, false);
+        columnChart.update({
+            drilldown: { series: drilldownSeries }
+        }, false);
+
+        // Vẽ lại biểu đồ
+        columnChart.redraw();
+        return;
+    }
+
+    columnChart = Highcharts.chart('container-toperr', {
+        chart: {
+            type: 'column',
+            backgroundColor: null,
+            zooming: { type: 'x' },
+            animation: { duration: 600, easing: 'easeOutExpo' }
+        },
+        subtitle: {
+            text: 'Click on the columns to view details',
+            align: 'left',
+            verticalAlign: 'top',
+            style: {
+              fontSize: '12px',
+              color: '#606060'
+            }
+          },
+        title: {
+            text: 'Top 3 Machine Fail Per Day',
+            align: 'left',
+            style: { color: '#fff', fontSize: '16px', fontWeight: 'bold' }
+        },
+        xAxis: [
+            {
+                categories: dates,
+                title: { text: 'Day', style: { color: '#fff', fontSize: '12px' } },
+                labels: { style: { color: '#fff', fontSize: '12px' } },
+                visible: true
+            },
+            {
+                categories: Array.from({ length: 24 }, (_, i) => `${i}:00 - ${i + 1}:00`),
+                title: { text: 'Hour', style: { color: '#fff', fontSize: '12px' } },
+                labels: { style: { color: '#fff', fontSize: '12px' } },
+                visible: false
+            }
+        ],
+        yAxis: {
+            min: 0,
+            title: { text: 'Fail Count', style: { color: '#fff', fontSize: '12px' } },
+            labels: { style: { color: '#fff', fontSize: '12px' } }
+        },
+        tooltip: { shared: true, useHTML: true },
+        plotOptions: {
+            column: {
+                groupPadding: 0.1,
+                states: { hover: { brightness: 0.2 } },
+                stacking: 'normal'
+            },
+            series: {
+                cursor: 'pointer',
+                dataLabels: { enabled: true },
+                point: {
+                    events: {
+                        click: function () {
+                            const drilldownId = `${this.series.name}-${this.category}`;
+                            const drilldownExists = columnChart.options.drilldown.series.some(d => d.id === drilldownId);
+
+                            if (drilldownExists) {
+                                columnChart.xAxis[0].update({ visible: false });
+                                columnChart.xAxis[1].update({ visible: true });
+
+                                const drillSeries = columnChart.options.drilldown.series.find(d => d.id === drilldownId);
+                                const seriesData = drillSeries.data.map(item => ({
+                                    name: item.name,
+                                    y: item.y,
+                                    custom: { details: item.custom.details }
+                                }));
+
+                                columnChart.addSeriesAsDrilldown(this, {
+                                    id: drilldownId,
+                                    name: `Fail Count`,
+                                    data: seriesData,
+                                    xAxis: 1
+                                });
+                                columnChart.applyDrilldown();
+                            }
+                            else if (this.options.custom && this.options.custom.details) {
+                                console.log("Details:", this.options.custom.details);
+                                showDetailsModal(this.options.custom.details);
+                            }
+
+                        }
+                    }
+                }
+            }
+        },
+        accessibility: { enabled: false },
+        series: seriesData,
+        drilldown: { series: drilldownSeries },
+        credits: { enabled: false },
+        legend: {
+            align: 'center',
+            verticalAlign: 'bottom',
+            itemStyle: { color: '#fff' },
+            itemHoverStyle: { color: '#cccccc' }
+        },
+        exporting: {
+            enabled: true,
+            buttons: {
+                contextButton: {
+                    menuItems: [
+                        'viewFullscreen',
+                        'separator',
+                        'downloadPNG',
+                        'downloadJPEG',
+                        'downloadPDF',
+                        'downloadSVG',
+                        'separator',
+                        'downloadCSV',
+                        'downloadXLS',
+                        'viewData'
+                    ]
+                }
+            }
+        }
+    });
+
+    Highcharts.addEvent(columnChart, 'drillup', function () {
+        columnChart.update({
+            xAxis: [{ visible: true }, { visible: false }]
+        });
+    });
+}
     function initForceLimitsAndLoad() {
         fetch(`/api/dashboard/getDefaultForce?type_machine=${getCurrentMachineType()}`)
             .then(res => res.json())
@@ -226,7 +388,7 @@ function initializeFilter() {
             console.error("Dữ liệu biểu đồ tròn không hợp lệ:", pieData);
             return; 
         }
-        const titleText = `Pass/Fail By ${totalDay} Day of ${machine_name || 'Machine NaN'} on ${line || 'Line NaN'}`;
+        const titleText = `Pass/Fail By ${totalDay} Day Of ${machine_name || 'Machine NaN'} on ${line || 'Line NaN'}`;
         const passData = [];
         const failData = [];
         const drilldownPass = [];
@@ -368,7 +530,7 @@ function initializeFilter() {
         } else {
             chart = Highcharts.chart("container-pie", chartOptions);
         }
-    }    
+    }
     function processDataColumnChart(columnData) {
         if (!columnData || columnData.length === 0) {
             console.error("No data available.");
@@ -485,7 +647,7 @@ function initializeFilter() {
             modal.style.display = 'none';
         });
     }
-    //setup column chart top machine fail per day 
+    //setup column chart top machine fail per day
     function drawColumnChart(columnData) {
         const { dates, seriesData, drilldownSeries } = processDataColumnChart(columnData);
 
@@ -778,10 +940,10 @@ function initializeFilter() {
         const minForce = data.min_force || 0;
         const maxForce = data.max_force || 0;
         const title = type_machine === 'Glue'
-            ? `CPK Glue Force of ${machineName}`
+            ? `CPK Glue Force Of ${machineName}`
             : type_machine === 'Shielding'
-                ? `CPK Shielding Force of ${machineName}`
-                : `CPK Screw Force of ${machineName}`;
+                ? `CPK Shielding Force Of ${machineName}`
+                : `CPK Screw Force Of ${machineName}`;
 
         const unit = getUnitByType(type_machine);
 
@@ -909,7 +1071,7 @@ function initializeFilter() {
         }
     }
 }
-//load dashboard
+//load dashboard-
 function initializeDashboard () {
     const tableBody = document.getElementById("table-body");
     const paginationDiv = document.getElementById("pagination");
@@ -1119,7 +1281,7 @@ function initializeDashboard () {
                 }
               },
             title: {
-                text: "Pass/Fail By 5 Day of All Machines",
+                text: "Pass/Fail By 5 Day Of All Machines",
                 align: "left",
                 style: {
                     color: "#fff",
@@ -1586,10 +1748,10 @@ function initializeDashboard () {
         const minForce = data.min_force || 0;
         const maxForce = data.max_force || 0;
         const title = type_machine === 'Glue'
-            ? `CPK Glue Force of ${machineName}`
+            ? `CPK Glue Force Of ${machineName}`
             : type_machine === 'Shielding'
-                ? `CPK Shielding Force of ${machineName}`
-                : `CPK Screw Force of ${machineName}`;
+                ? `CPK Shielding Force Of ${machineName}`
+                : `CPK Screw Force Of ${machineName}`;
 
         const unit = getUnitByType(type_machine);
 

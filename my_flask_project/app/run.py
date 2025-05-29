@@ -320,7 +320,7 @@ def get_paginated_data(page, per_page, type_machine):
 # Hàm lấy tổng số bản ghi trong bảng
 def get_total_records(type_machine):
     if type_machine == 'Screw':
-        query = """SELECT COUNT(*) FROM SCREW_FORCE_INFO"""
+        query = """SELECT COUNT(*) FROM SCREW_FORCE_INFO """
     elif type_machine == 'Glue':
         query = """SELECT COUNT(*) FROM GLUE_FORCE_INFO"""
     elif type_machine == 'Shielding':
