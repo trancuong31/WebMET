@@ -19,6 +19,7 @@ DB_CONFIG = {
     "password": "123456",
     "dsn": "localhost:1521/orcl3"
 }
+#config instant client to connect, interact Oracle
 oracledb.init_oracle_client(lib_dir=r"D:\instantclient\instantclient_23_5")
 CORS(app)
 #kết nối Oracle
@@ -57,7 +58,7 @@ def admin_dashboard():
         flash('Invalid token, please log in again.', 'error')
         return redirect(url_for('login'))
     return render_template('adminDashboard.html', username=username)
-
+#yêu cầu xác thực user (đã login hay chưa) để được thực hiện chức năng nào đó   
 def require_auth(role_required=None):
     def wrapper(f):
         @wraps(f)
@@ -79,7 +80,6 @@ def require_auth(role_required=None):
     return wrapper
 #redirect page index
 @app.route('/index', methods=['GET'])
-
 def index1():
     token = request.cookies.get('token')
     app.logger.info(f"Index page accessed. Token exists: {bool(token)}")
@@ -135,6 +135,7 @@ def dashboard_page_glue():
         return redirect(('login'))
     return render_template('dashboardglue.html', username=username)
 
+#get data table phân trang
 def get_paginated_data(page, per_page, type_machine):
     offset = (page - 1) * per_page
     if type_machine == 'Screw':
@@ -1115,7 +1116,7 @@ def login():
             query = """
                 SELECT PASSWORD, ROLE 
                 FROM USERS 
-                WHERE USERNAME = :username
+                WHERE USERNAME = :username AND ACCOUNT_STATUS = 'active'
             """
             cursor.execute(query, {"username": username})
             row = cursor.fetchone()
@@ -1140,11 +1141,11 @@ def login():
                 resp.set_cookie('refresh_token', refresh_token, httponly=True, secure=False, max_age=7*24*60*60, samesite='Lax')                
                 return resp
             else:
-                return render_template('login.html', error='Incorrect username or password')
+                return render_template('login.html', error='Invalid login or locked account')
         except Exception as e:
             error_message = str(e)
             app.logger.error(f"Login error: {str(e)}")
-            return render_template('login.html', error=f"{error_message} Please check backend.")
+            return render_template('login.html', error=f"{error_message}. Please check backend.")
         finally:
             if cursor:
                 cursor.close()
@@ -1331,7 +1332,7 @@ def get_cascading_options():
 def getinfo():
     try:
         end_time = datetime.now()
-        start_time = end_time - timedelta(days=30)
+        start_time = end_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         type_machine = request.args.get('type_machine')
         if not type_machine:
             return jsonify({"error": "Missing type_machine parameter"}), 400
@@ -1414,14 +1415,12 @@ def fetch_filtered_data(filters, type_machine):
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-
         # Mapping bảng theo loại máy
         table_mapping = {
             'Screw': 'screw_force_info',
             'Glue': 'glue_force_info',
             'Shielding': 'Shielding_cover_force_info'
         }
-
         if type_machine not in table_mapping:
             raise ValueError(f"Unsupported machine type: {type_machine}")
 
@@ -1552,30 +1551,46 @@ def download_excel():
         app.logger.error(f"Error download file Excel: {str(e)}")
         flash("Đã xảy ra lỗi khi tạo file Excel. Vui lòng thử lại sau.", "error")
         return redirect(url_for('dashboard_page'))
-
+#get solution 
 @app.route('/api/getDataSolution', methods=['GET'])
 def get_data_solution():
     try:
+        token = request.cookies.get('token')
+        if not token:
+            return jsonify({"error": "Unauthorized"}), 401
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        role = data.get('role')
+
         type_machine = request.args.get('typeMachine')
         if type_machine == 'Screw':
-            query = """
-                SELECT * FROM force_error WHERE STATUS = 1 and type_machine = 'Screw' ORDER BY ERROR_CODE DESC
-            """ 
+            query = f"""
+                SELECT * FROM force_error WHERE type_machine = 'Screw'
+                {"AND STATUS = 1" if role != 'admin' else ""}
+                ORDER BY ERROR_CODE DESC
+            """
         elif type_machine == 'Glue':
-            query = """
-                SELECT * FROM force_error WHERE STATUS = 1 and type_machine = 'Glue' ORDER BY ERROR_CODE DESC
+            query = f"""
+                SELECT * FROM force_error WHERE type_machine = 'Glue'
+                {"AND STATUS = 1" if role != 'admin' else ""}
+                ORDER BY ERROR_CODE DESC
             """
         elif type_machine == 'Shielding':
-            query = """
-                SELECT * FROM force_error WHERE STATUS = 1 and type_machine = 'Shielding' ORDER BY ERROR_CODE DESC
+            query = f"""
+                SELECT * FROM force_error WHERE type_machine = 'Shielding'
+                {"AND STATUS = 1" if role != 'admin' else ""}
+                ORDER BY ERROR_CODE DESC
             """
-        
         else:
-            raise ValueError("Invalid type_machine. Must be 'Screw' or 'Glue' or 'Shielding'.")
+            query = f"""
+                SELECT * FROM force_error
+                ORDER BY ERROR_CODE DESC
+            """
+
         with get_db_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(query)
                 rows = cursor.fetchall()
+
         result = []
         for row in rows:
             result.append({
@@ -1583,13 +1598,19 @@ def get_data_solution():
                 "error_name": row[1],
                 "root_cause": row[2],
                 "solution": row[3],
-                "status": row[4]
+                "status": row[4],
+                "active": row[4]==1,
             })
         return jsonify(result)
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token expired"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 401
     except Exception as e:
         print(f"Error fetching: {e}")
         return jsonify({"error": "Unable to fetch"}), 500
 
+#update solution
 @app.route('/api/updateDataSolution/<string:id>', methods=['PUT'])
 def update_data_solution(id):
     try:
@@ -1621,7 +1642,7 @@ def update_data_solution(id):
     except Exception as e:
         print(f"Error updating: {e}")
         return jsonify({"error": "Unable to update"}), 500
-
+#delete solotion
 @app.route('/api/deleteDataSolution/<string:id>', methods=['DELETE'])
 def delete_data_solution(id):
     try:
@@ -1639,7 +1660,7 @@ def delete_data_solution(id):
     except Exception as e:
         print(f"Error updating: {e}")
         return jsonify({"error": "Unable to update"}), 500
-
+#add new solution
 @app.route('/api/addDataSolution', methods=['POST'])
 def add_data_soulution():
     try:
@@ -1673,6 +1694,104 @@ def add_data_soulution():
     except Exception as e:
         print(f"Error updating: {e}")
         return jsonify({"error": "Error code was existed"}), 500
+@app.route('/api/updateActiveStatus', methods=['POST'])
+def update_active_status():
+    try:
+        # Lấy dữ liệu từ request
+        data = request.json
+        error_code = data.get('error_code')
+        active = data.get('active')
+
+        # Kiểm tra dữ liệu đầu vào
+        if error_code is None or active is None:
+            return jsonify({"error": "Invalid data"}), 400
+
+        # Cập nhật trạng thái "Active" trong cơ sở dữ liệu
+        query = """
+            UPDATE force_error
+            SET STATUS = :active
+            WHERE ERROR_CODE = :error_code
+        """
+        params = {"active": active, "error_code": error_code}
+
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, params)
+                connection.commit()
+
+        return jsonify({"success": True, "message": "Active status updated successfully"}), 200
+
+    except Exception as e:
+        print(f"Error updating active status: {e}")
+        return jsonify({"error": "Unable to update active status"}), 500
+
+@app.route('/api/getusers', methods=['GET'])
+def get_users():
+    try:
+        query = """
+            SELECT USERNAME, EMAIL, ACCOUNT_STATUS, ROLE FROM USERS
+            ORDER BY USERNAME DESC
+        """
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                rows = cursor.fetchall()
+
+        result = []
+        for row in rows:
+            result.append({
+                "username": row[0],
+                "email": row[1],
+                "account_status": row[2],
+                "role": row[3]
+            })
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching users: {e}")
+        return jsonify({"error": "Unable to fetch users"}), 500
+
+@app.route('/api/updateAccountStatus', methods=['POST'])
+def update_account_status():
+    try:
+        data = request.json
+        username = data.get('username')
+        account_status = data.get('account_status')
+
+        if not username or not account_status:
+            return jsonify({"error": "Invalid data"}), 400
+
+        query = """
+            UPDATE users
+            SET account_status = :account_status
+            WHERE username = :username
+        """
+        params = {"account_status": account_status, "username": username}
+
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query, params)
+                connection.commit()
+
+        return jsonify({"success": True, "message": "Account status updated successfully"}), 200
+    except Exception as e:
+        print(f"Error updating account status: {e}")
+        return jsonify({"error": "Unable to update account status"}), 500
+
+@app.route('/api/sumuser', methods=['GET'])
+def sum_user():
+    try:
+        query = "SELECT COUNT(*) FROM USERS"
+        with get_db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                row = cursor.fetchone() 
+
+        result = {"total_users": row[0]}
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error fetching user count: {e}")
+        return jsonify({"error": "Unable to fetch user count"}), 500
+
 
 if __name__=='__main__':
     app.run( host='0.0.0.0', debug= True, threaded= 4)

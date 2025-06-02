@@ -741,13 +741,13 @@ h1{
   position: absolute;
   top: 0;
   left: 0;
-  flex-wrap: wrap;
+  width: 65%;
   padding: 5px;
   color: #ffffff;
   border-bottom: #fff;
   font-size: 14px;
   box-sizing: border-box;
-  margin-top: -3.5em;
+  margin-top: -4em;
 }
 
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
